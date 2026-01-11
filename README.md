@@ -63,10 +63,23 @@ src/
 - 主题和意象提取 / Theme and imagery extraction
 - 情感分析 / Emotion analysis
 
-## 使用示例 / Usage Example
+## 快速开始 / Quick Start
 
-运行示例程序：
+### 安装 / Installation
+
+确保已安装 Rust (1.70+):
 ```bash
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+
+### 运行示例 / Run Examples
+
+```bash
+# 克隆仓库
+git clone <repository-url>
+cd aevo
+
+# 运行演示程序
 cargo run
 ```
 
@@ -74,6 +87,88 @@ cargo run
 1. 《静夜思》的解析和理解 / Parsing and understanding of "Quiet Night Thoughts"
 2. 语法定义示例 / Grammar definition examples
 3. 进化引擎演示 / Evolution engine demonstration
+4. 解析器功能演示 / Parser functionality demo
+5. 解释器执行演示 / Interpreter execution demo
+
+### 编写第一个程序 / Your First Program
+
+创建一个 `hello.aevo` 文件：
+
+```lisp
+; 定义问候函数
+(def greet (name) (+ "Hello, " name))
+
+; 使用函数
+(greet "Aevolang")
+```
+
+在 Rust 代码中执行：
+
+```rust
+use aevo::parser::AdaptiveParser;
+use aevo::runtime::Interpreter;
+
+let parser = AdaptiveParser::new(true);
+let mut interpreter = Interpreter::new();
+
+let code = r#"
+    (def greet (name) (+ "Hello, " name))
+    (greet "Aevolang")
+"#;
+
+match parser.parse(code) {
+    Ok(ast) => {
+        match interpreter.execute(&ast) {
+            Ok(value) => println!("{}", value),  // 输出: Hello, Aevolang
+            Err(e) => eprintln!("执行错误: {:?}", e),
+        }
+    }
+    Err(e) => eprintln!("解析错误: {:?}", e),
+}
+```
+
+## 使用示例 / Usage Examples
+
+### 基本运算 / Basic Operations
+
+```lisp
+(+ 1 2)           ; 3
+(* 3 4)           ; 12
+(let x 10 (+ x 5)) ; 15
+```
+
+### 函数定义 / Function Definition
+
+```lisp
+(def add (x y) (+ x y))
+(add 3 4)  ; 7
+```
+
+### 递归函数 / Recursive Functions
+
+```lisp
+(def factorial (n)
+    (if (= n 0)
+        1
+        (* n (factorial (- n 1)))))
+
+(factorial 5)  ; 120
+```
+
+### 条件表达式 / Conditional Expressions
+
+```lisp
+(if (> x 0) x (- x))  ; 返回 x 的绝对值
+```
+
+更多示例请查看 [examples/](../examples/) 目录。
+
+## 文档 / Documentation
+
+- [快速入门指南](docs/getting-started.md) - 学习如何使用 Aevolang
+- [语法参考](docs/syntax-reference.md) - 完整的语法文档
+- [高级特性](docs/advanced-features.md) - 深入了解语言特性
+- [示例代码](../examples/) - 各种示例程序
 
 ## 设计哲学 / Design Philosophy
 
@@ -96,18 +191,46 @@ cargo run
 - ✅ 项目基础结构和核心数据类型定义
 - ✅ 基础语法系统和《静夜思》解析示例
 - ✅ 自描述语法机制
-- ✅ NLU系统框架（接口已定义，需要模型集成）
+- ✅ **完整的解析器实现** - 支持 S-expression 语法解析
+- ✅ **完整的解释器实现** - 支持代码执行、函数调用、递归等
 - ✅ 进化引擎核心功能
-- ✅ 执行引擎（解释器）基础实现
+- ✅ NLU系统框架（接口已定义，需要模型集成）
 - ✅ Python兼容层框架（需要PyO3集成）
+
+### 已实现功能 / Implemented Features
+
+- ✅ **词法分析** - 支持数字、字符串、标识符、操作符
+- ✅ **语法分析** - 完整的 S-expression 解析器
+- ✅ **表达式求值** - 支持算术、比较、逻辑运算
+- ✅ **变量绑定** - `let` 支持作用域管理
+- ✅ **函数定义** - `def` 和 `function` 关键字
+- ✅ **函数调用** - 支持用户定义函数和递归
+- ✅ **条件表达式** - `if` 条件分支
+- ✅ **类型系统** - Int, Float, String, Bool, Null
+
+### 测试状态 / Test Status
+
+所有核心功能已通过测试：
+- ✅ 基本运算（加减乘除）
+- ✅ 变量绑定和作用域
+- ✅ 条件表达式
+- ✅ 函数定义和调用
+- ✅ 递归函数（阶乘、斐波那契等）
 
 ## 下一步 / Next Steps
 
-1. 集成NLU模型（本地轻量模型或云API）
-2. 实现完整的解释器功能
+1. ✅ ~~实现完整的解释器功能~~ - 已完成
+2. 实现简单NLU - 基于规则的意图识别（不依赖外部模型）
 3. 集成PyO3实现Python互操作
-4. 实现JIT编译器
-5. 完善进化引擎的学习和预测功能
+4. 实现JIT编译器 - 热点代码优化
+5. 集成NLU模型（本地轻量模型或云API）
+6. 完善进化引擎的学习和预测功能
+7. 添加列表和数据结构支持
+8. 实现模块系统
+
+## 贡献 / Contributing
+
+欢迎贡献代码！请查看 [贡献指南](CONTRIBUTING.md)（待创建）。
 
 ## 许可证 / License
 

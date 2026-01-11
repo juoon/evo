@@ -1,0 +1,66 @@
+; 函数示例 / Function Examples
+
+; ============================================
+; 1. 递归函数 / Recursive Functions
+; ============================================
+
+; 计算阶乘
+(def factorial (n)
+    (if (= n 0)
+        1
+        (* n (factorial (- n 1)))))
+
+(factorial 5)    ; 结果: 120
+(factorial 0)    ; 结果: 1
+
+; 计算斐波那契数列
+(def fibonacci (n)
+    (if (< n 2)
+        n
+        (+ (fibonacci (- n 1))
+           (fibonacci (- n 2)))))
+
+(fibonacci 6)    ; 结果: 8
+
+; ============================================
+; 2. 高阶函数概念 / Higher-order Function Concepts
+; ============================================
+
+; 计算幂
+(def power (base exp)
+    (if (= exp 0)
+        1
+        (* base (power base (- exp 1)))))
+
+(power 2 3)      ; 结果: 8
+(power 5 2)      ; 结果: 25
+
+; 计算最大公约数 (GCD)
+(def gcd (a b)
+    (if (= b 0)
+        a
+        (gcd b (% a b))))
+
+; 注意: % 操作符需要实现
+
+; ============================================
+; 3. 辅助函数 / Helper Functions
+; ============================================
+
+; 判断是否为偶数
+(def isEven (n)
+    (= (% n 2) 0))
+
+; 判断是否为奇数
+(def isOdd (n)
+    (!= (% n 2) 0))
+
+; 计算绝对值
+(def abs (x)
+    (if (< x 0)
+        (- 0 x)
+        x))
+
+(abs -5)         ; 结果: 5
+(abs 5)          ; 结果: 5
+
