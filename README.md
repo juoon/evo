@@ -72,6 +72,42 @@ src/
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
+### Python互操作 / Python Interoperability
+
+Aevolang支持Python互操作，可以从Python代码中调用Aevolang功能。
+
+Aevolang supports Python interoperability, allowing you to call Aevolang functions from Python code.
+
+**安装Python模块 / Install Python Module:**
+
+```bash
+# 安装maturin
+pip install maturin
+
+# 构建并安装Python模块
+maturin develop
+```
+
+**使用示例 / Usage Example:**
+
+```python
+import aevo
+
+# 执行Aevolang代码
+result = aevo.execute("(+ 1 2)")
+print(result)  # 输出: 3
+
+# 使用解释器类
+interpreter = aevo.AevoInterpreter()
+interpreter.execute("(def add (x y) (+ x y))")
+result = interpreter.execute("(add 3 4)")
+print(result)  # 输出: 7
+```
+
+更多信息请查看 [python/README.md](python/README.md)。
+
+For more information, see [python/README.md](python/README.md).
+
 ### 运行示例 / Run Examples
 
 ```bash
@@ -195,7 +231,7 @@ match parser.parse(code) {
 - ✅ **完整的解释器实现** - 支持代码执行、函数调用、递归等
 - ✅ 进化引擎核心功能
 - ✅ **简单NLU系统** - 基于规则的意图识别，支持中英文自然语言输入
-- ✅ Python兼容层框架（需要PyO3集成）
+- ✅ **Python互操作** - 完整的PyO3集成，支持从Python调用Aevolang
 
 ### 已实现功能 / Implemented Features
 
@@ -213,6 +249,12 @@ match parser.parse(code) {
   - 支持中英文操作表达式识别
   - 支持中文数字解析（如"二十三"、"一百"等）
   - 自动生成代码结构
+- ✅ **Python互操作** - PyO3集成
+  - Python模块导出（`aevo`）
+  - 支持从Python调用Aevolang解析器和解释器
+  - 提供`execute`、`eval`、`parse`函数接口
+  - 提供`AevoInterpreter`和`AevoParser`类
+  - 完整的类型转换支持（Int, Float, String, Bool, None）
 
 ### 测试状态 / Test Status
 
@@ -223,12 +265,13 @@ match parser.parse(code) {
 - ✅ 函数定义和调用
 - ✅ 递归函数（阶乘、斐波那契等）
 - ✅ NLU自然语言理解（中英文函数定义、变量定义、操作表达式）
+- ✅ Python互操作（模块导入、函数调用、类型转换）
 
 ## 下一步 / Next Steps
 
 1. ✅ ~~实现完整的解释器功能~~ - 已完成
 2. ✅ ~~实现简单NLU - 基于规则的意图识别（不依赖外部模型）~~ - 已完成
-3. 集成PyO3实现Python互操作
+3. ✅ ~~集成PyO3实现Python互操作~~ - 已完成
 4. 实现JIT编译器 - 热点代码优化
 5. 增强NLU系统 - 支持更复杂的自然语言表达式和上下文理解
 6. 集成NLU模型（本地轻量模型或云API）- 提升理解能力
