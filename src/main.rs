@@ -32,6 +32,104 @@ fn main() {
 
     // 演示解析器 / Demonstrate parser
     demonstrate_parser();
+
+    // 演示解释器 / Demonstrate interpreter
+    demonstrate_interpreter();
+}
+
+/// 演示解释器功能 / Demonstrate interpreter functionality
+fn demonstrate_interpreter() {
+    println!("\n5. 解释器演示 / Interpreter Demo");
+    println!("--------------------------------------------");
+
+    let parser = AdaptiveParser::new(true);
+    let mut interpreter = Interpreter::new();
+
+    // 测试用例
+    let test_cases = vec![
+        ("(+ 1 2)", "简单加法 / Simple addition"),
+        ("(* 3 4)", "乘法运算 / Multiplication"),
+        (
+            "(let x 10 (+ x 5))",
+            "变量绑定和计算 / Variable binding and calculation",
+        ),
+        (
+            "(if true 42 0)",
+            "条件表达式（真） / Conditional expression (true)",
+        ),
+        (
+            "(if false 0 42)",
+            "条件表达式（假） / Conditional expression (false)",
+        ),
+        (
+            "(def add (x y) (+ x y)) (add 3 4)",
+            "函数定义和调用 / Function definition and call",
+        ),
+    ];
+
+    for (code, description) in test_cases {
+        println!("\n测试代码 / Test Code: {}", description);
+        println!("源代码 / Source: {}", code);
+
+        match parser.parse(code) {
+            Ok(ast) => match interpreter.execute(&ast) {
+                Ok(value) => {
+                    println!("执行结果 / Execution Result: {}", value);
+                }
+                Err(e) => {
+                    println!("执行错误 / Execution Error: {:?}", e);
+                }
+            },
+            Err(e) => {
+                println!("解析错误 / Parse Error: {:?}", e);
+            }
+        }
+    }
+
+    // 测试更复杂的例子
+    println!("\n--- 复杂示例 / Complex Examples ---");
+
+    // 定义阶乘函数
+    let factorial_code = r#"
+        (def factorial (n)
+            (if (= n 0)
+                1
+                (* n (factorial (- n 1)))))
+    "#;
+
+    println!("\n定义阶乘函数 / Define factorial function:");
+    println!("{}", factorial_code);
+
+    match parser.parse(factorial_code) {
+        Ok(ast) => {
+            if let Err(e) = interpreter.execute(&ast) {
+                println!("定义函数时出错 / Error defining function: {:?}", e);
+            } else {
+                println!("函数定义成功 / Function defined successfully");
+
+                // 调用阶乘函数
+                let call_code = "(factorial 5)";
+                println!("\n调用阶乘函数 / Call factorial function: {}", call_code);
+
+                match parser.parse(call_code) {
+                    Ok(ast) => match interpreter.execute(&ast) {
+                        Ok(value) => {
+                            println!("执行结果 / Execution Result: {}", value);
+                        }
+                        Err(e) => {
+                            println!("执行错误 / Execution Error: {:?}", e);
+                        }
+                    },
+                    Err(e) => {
+                        println!("解析错误 / Parse Error: {:?}", e);
+                    }
+                }
+            }
+        }
+        Err(e) => {
+            println!("解析错误 / Parse Error: {:?}", e);
+        }
+    }
 }
 
 /// 演示解析器功能 / Demonstrate parser functionality

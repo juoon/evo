@@ -154,6 +154,10 @@ impl Tokenizer {
             }
             _ if ch.is_ascii_digit() => self.read_number(None),
             _ if ch.is_alphabetic() || ch == '_' => self.read_symbol(None),
+            _ if ch == '*' || ch == '/' => {
+                // 处理乘法和除法操作符
+                Ok(Token::Symbol(self.advance().to_string()))
+            }
             _ if ch == '>' || ch == '<' || ch == '=' || ch == '!' => {
                 // 处理比较操作符
                 let op = self.advance().to_string();
@@ -432,6 +436,9 @@ impl ParserState {
         // 解析函数体
         let body = self.parse_element()?;
 
+        // 消费结束括号
+        self.consume(&Token::RightParen, "Expected ')' after function definition")?;
+
         // 转换为表达式（这里简化处理，实际应该创建函数定义节点）
         Ok(GrammarElement::List(vec![
             GrammarElement::Atom(keyword),
@@ -446,6 +453,9 @@ impl ParserState {
         let name = self.parse_element()?;
         let value = self.parse_element()?;
         let body = self.parse_element()?;
+
+        // 消费结束括号
+        self.consume(&Token::RightParen, "Expected ')' after let expression")?;
 
         Ok(GrammarElement::List(vec![
             GrammarElement::Atom("let".to_string()),
@@ -464,6 +474,9 @@ impl ParserState {
         } else {
             GrammarElement::Expr(Box::new(Expr::Literal(Literal::Null)))
         };
+
+        // 消费结束括号
+        self.consume(&Token::RightParen, "Expected ')' after if expression")?;
 
         let cond_expr = self.element_to_expr(&condition)?;
         let then_expr_parsed = self.element_to_expr(&then_expr)?;
@@ -569,17 +582,31 @@ impl ParserState {
             GrammarElement::List(l) => {
                 if l.is_empty() {
                     Ok(Expr::Literal(Literal::Null))
-                } else if let GrammarElement::Atom(func) = &l[0] {
+                } else {
+                    // 获取函数名（支持 Atom 和 Expr(Var(...)) 两种形式）
+                    let func_name = match &l[0] {
+                        GrammarElement::Atom(s) => s.clone(),
+                        GrammarElement::Expr(boxed_expr) => {
+                            if let Expr::Var(s) = boxed_expr.as_ref() {
+                                s.clone()
+                            } else {
+                                return Err(ParseError::SyntaxError(
+                                    "Function name must be an atom or variable".to_string(),
+                                ));
+                            }
+                        }
+                        _ => {
+                            return Err(ParseError::SyntaxError(
+                                "Function name must be an atom or variable".to_string(),
+                            ));
+                        }
+                    };
                     // 函数调用
                     let args: Vec<Expr> = l[1..]
                         .iter()
                         .map(|e| self.element_to_expr(e))
                         .collect::<Result<Vec<_>, _>>()?;
-                    Ok(Expr::Call(func.clone(), args))
-                } else {
-                    Err(ParseError::SyntaxError(
-                        "Invalid list expression".to_string(),
-                    ))
+                    Ok(Expr::Call(func_name, args))
                 }
             }
             GrammarElement::NaturalLang(_) => Err(ParseError::SyntaxError(
