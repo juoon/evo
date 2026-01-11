@@ -87,6 +87,100 @@ Aevolang 完全支持递归函数调用：
 3. **减少函数调用开销**
    - 内联简单函数（未来支持）
 
+## 自然语言理解（NLU） / Natural Language Understanding
+
+Aevolang 现在支持基于规则的自然语言理解，可以将自然语言输入转换为代码结构。
+
+### 函数定义 / Function Definition
+
+**中文示例：**
+```
+"定义一个函数叫add，参数是x和y，返回x加y"
+"定义一个函数multiply，参数是a和b，a乘以b"
+```
+
+**英文示例：**
+```
+"define a function called add that takes x and y and returns x plus y"
+"create a function multiply with parameters a and b that returns a times b"
+```
+
+### 变量定义 / Variable Definition
+
+**中文示例：**
+```
+"定义一个变量x等于10"
+"定义一个变量count等于二十三"
+```
+
+**英文示例：**
+```
+"let variable x be 5"
+"define a variable y equals 20"
+```
+
+### 操作表达式 / Operation Expressions
+
+**中文示例：**
+```
+"3 加 5"
+"8 乘以 7"
+"15 除以 3"
+"100 减去 25"
+```
+
+**英文示例：**
+```
+"10 plus 20"
+"5 times 3"
+"20 divided by 4"
+```
+
+### 使用NLU / Using NLU
+
+在 Rust 代码中使用：
+
+```rust
+use aevo::parser::NLUParser;
+use aevo::parser::AdaptiveParser;
+use aevo::runtime::Interpreter;
+
+let nlu_parser = NLUParser::new_rule_based();
+let code_parser = AdaptiveParser::new(true);
+let mut interpreter = Interpreter::new();
+
+// 解析自然语言
+match nlu_parser.parse("定义一个函数add，参数是x和y，x加y") {
+    Ok(parsed_intent) => {
+        println!("识别意图: {:?}", parsed_intent.intent_type);
+        println!("置信度: {:.2}", parsed_intent.confidence);
+        // 将代码结构转换为可执行代码...
+    }
+    Err(e) => eprintln!("错误: {:?}", e),
+}
+```
+
+### NLU特性 / NLU Features
+
+- ✅ 支持中英文函数定义识别
+- ✅ 支持中英文变量定义识别
+- ✅ 支持中英文操作表达式识别
+- ✅ 支持中文数字解析（如"二十三"、"一百"等）
+- ✅ 自动提取函数名、参数、函数体
+- ✅ 自动提取变量名和值
+- ✅ 自动生成代码结构
+
+### NLU限制 / NLU Limitations
+
+当前版本基于规则匹配，有以下限制：
+
+1. **模式匹配**：需要遵循特定的语言模式
+2. **简单表达式**：主要支持二元运算，复杂表达式支持有限
+3. **上下文理解**：不支持多轮对话和上下文记忆
+4. **错误处理**：对于无法识别的输入，会返回默认值或错误
+
+未来版本将集成机器学习模型以提升理解能力。
+
 ## 未来特性 / Future Features
 
 以下特性正在开发中：
@@ -118,11 +212,10 @@ Aevolang 完全支持递归函数调用：
    (math.sqrt 16)
    ```
 
-5. **自然语言编程**
-   ```lisp
-   ; 用自然语言描述功能
-   "创建一个函数，计算两个数的和"
-   ```
+5. **自然语言编程** ✅ 已实现基础版本
+   - 支持基于规则的意图识别
+   - 支持中英文自然语言输入
+   - 自动生成代码结构
 
 ## 调试技巧 / Debugging Tips
 

@@ -35,6 +35,9 @@ fn main() {
 
     // 演示解释器 / Demonstrate interpreter
     demonstrate_interpreter();
+
+    // 演示NLU自然语言理解 / Demonstrate NLU natural language understanding
+    demonstrate_nlu();
 }
 
 /// 演示解释器功能 / Demonstrate interpreter functionality
@@ -282,4 +285,223 @@ fn demonstrate_evolution_engine() {
     // Demonstrate evolution from natural language (this is just an example, actual implementation requires NLU support)
     println!("\n提示 / Note: 完整的自然语言进化功能需要NLU系统支持");
     println!("Full natural language evolution requires NLU system support");
+}
+
+/// 演示NLU自然语言理解功能 / Demonstrate NLU natural language understanding
+fn demonstrate_nlu() {
+    println!("\n6. NLU自然语言理解演示 / NLU Natural Language Understanding Demo");
+    println!("--------------------------------------------");
+
+    let nlu_parser = NLUParser::new_rule_based();
+    let code_parser = AdaptiveParser::new(true);
+    let mut interpreter = Interpreter::new();
+
+    // 测试用例：中英文自然语言输入
+    let test_cases = vec![
+        (
+            "定义一个函数叫add，参数是x和y，返回x加y",
+            "中文函数定义（完整） / Chinese function definition (complete)",
+        ),
+        (
+            "定义一个函数multiply，参数是a和b，a乘以b",
+            "中文函数定义（简化） / Chinese function definition (simplified)",
+        ),
+        (
+            "define a function called add that takes x and y and returns x plus y",
+            "英文函数定义 / English function definition",
+        ),
+        (
+            "定义一个变量x等于10",
+            "中文变量定义（数字） / Chinese variable definition (number)",
+        ),
+        (
+            "定义一个变量y等于二十三",
+            "中文变量定义（中文数字） / Chinese variable definition (Chinese number)",
+        ),
+        (
+            "let variable x be 5",
+            "英文变量定义 / English variable definition",
+        ),
+        (
+            "3 加 5",
+            "中文加法操作 / Chinese addition operation",
+        ),
+        (
+            "10 plus 20",
+            "英文加法操作 / English addition operation",
+        ),
+        (
+            "8 乘以 7",
+            "中文乘法操作 / Chinese multiplication operation",
+        ),
+        (
+            "15 除以 3",
+            "中文除法操作 / Chinese division operation",
+        ),
+        (
+            "100 减去 25",
+            "中文减法操作 / Chinese subtraction operation",
+        ),
+        (
+            "定义一个函数subtract，参数是x和y，x减去y",
+            "中文函数定义（减法） / Chinese function definition (subtraction)",
+        ),
+    ];
+
+    for (input, description) in test_cases {
+        println!("\n测试输入 / Test Input: {}", description);
+        println!("自然语言 / Natural Language: {}", input);
+
+        match nlu_parser.parse(input) {
+            Ok(parsed_intent) => {
+                println!("识别意图 / Detected Intent: {:?}", parsed_intent.intent_type);
+                println!("置信度 / Confidence: {:.2}", parsed_intent.confidence);
+                println!("生成的代码结构 / Generated Code Structure:");
+                print_ast(&parsed_intent.code_structure, 0, 3);
+
+                // 尝试将生成的代码结构转换为可执行的代码
+                // 注意：这是一个简化版本，实际需要更复杂的转换逻辑
+                if let Some(executable_code) = convert_to_executable(&parsed_intent.code_structure) {
+                    println!("\n可执行代码 / Executable Code: {}", executable_code);
+                    
+                    match code_parser.parse(&executable_code) {
+                        Ok(ast) => {
+                            match interpreter.execute(&ast) {
+                                Ok(value) => {
+                                    println!("执行结果 / Execution Result: {}", value);
+                                }
+                                Err(e) => {
+                                    println!("执行错误 / Execution Error: {:?}", e);
+                                }
+                            }
+                        }
+                        Err(e) => {
+                            println!("代码解析错误 / Code Parse Error: {:?}", e);
+                        }
+                    }
+                }
+            }
+            Err(e) => {
+                println!("NLU解析错误 / NLU Parse Error: {:?}", e);
+            }
+        }
+    }
+
+    // 演示意图提取
+    println!("\n--- 意图提取演示 / Intent Extraction Demo ---");
+    let intent_tests = vec![
+        "定义一个函数叫multiply，接受两个参数a和b",
+        "创建一个函数add，参数是x和y",
+        "定义一个变量count等于一百",
+    ];
+    
+    for intent_test in intent_tests {
+        println!("\n输入 / Input: {}", intent_test);
+        
+        match nlu_parser.extract_intent(intent_test) {
+            Ok(intent) => {
+                println!("提取的意图 / Extracted Intent:");
+                println!("  动作 / Action: {}", intent.action);
+                println!("  实体 / Entities: {:?}", intent.entities);
+                println!("  参数 / Parameters: {:?}", intent.parameters);
+            }
+            Err(e) => {
+                println!("意图提取错误 / Intent Extraction Error: {:?}", e);
+            }
+        }
+    }
+}
+
+/// 将代码结构转换为可执行代码（简化版本）
+/// Convert code structure to executable code (simplified version)
+fn convert_to_executable(elements: &[crate::grammar::core::GrammarElement]) -> Option<String> {
+    if elements.is_empty() {
+        return None;
+    }
+    
+    // 简化实现：只处理第一个元素
+    match &elements[0] {
+        crate::grammar::core::GrammarElement::List(list) => {
+            let mut result = String::from("(");
+            for (i, elem) in list.iter().enumerate() {
+                if i > 0 {
+                    result.push(' ');
+                }
+                match elem {
+                    crate::grammar::core::GrammarElement::Atom(s) => {
+                        result.push_str(s);
+                    }
+                    crate::grammar::core::GrammarElement::List(l) => {
+                        result.push('(');
+                        for (j, sub_elem) in l.iter().enumerate() {
+                            if j > 0 {
+                                result.push(' ');
+                            }
+                            if let crate::grammar::core::GrammarElement::Atom(s) = sub_elem {
+                                result.push_str(s);
+                            }
+                        }
+                        result.push(')');
+                    }
+                    crate::grammar::core::GrammarElement::Expr(e) => {
+                        result.push_str(&format_expr(e));
+                    }
+                    _ => {}
+                }
+            }
+            result.push(')');
+            Some(result)
+        }
+        crate::grammar::core::GrammarElement::Expr(e) => {
+            Some(format_expr(e))
+        }
+        _ => None,
+    }
+}
+
+/// 格式化表达式为字符串
+/// Format expression as string
+fn format_expr(expr: &crate::grammar::core::Expr) -> String {
+    match expr {
+        crate::grammar::core::Expr::Literal(lit) => match lit {
+            crate::grammar::core::Literal::Int(i) => i.to_string(),
+            crate::grammar::core::Literal::Float(f) => f.to_string(),
+            crate::grammar::core::Literal::String(s) => format!("\"{}\"", s),
+            crate::grammar::core::Literal::Bool(b) => b.to_string(),
+            crate::grammar::core::Literal::Null => "null".to_string(),
+        },
+        crate::grammar::core::Expr::Var(v) => v.clone(),
+        crate::grammar::core::Expr::Call(name, args) => {
+            let mut result = format!("({}", name);
+            for arg in args {
+                result.push(' ');
+                result.push_str(&format_expr(arg));
+            }
+            result.push(')');
+            result
+        }
+        crate::grammar::core::Expr::Binary(op, left, right) => {
+            let op_str = match op {
+                crate::grammar::core::BinOp::Add => "+",
+                crate::grammar::core::BinOp::Sub => "-",
+                crate::grammar::core::BinOp::Mul => "*",
+                crate::grammar::core::BinOp::Div => "/",
+                crate::grammar::core::BinOp::Eq => "=",
+                crate::grammar::core::BinOp::Ne => "!=",
+                crate::grammar::core::BinOp::Lt => "<",
+                crate::grammar::core::BinOp::Gt => ">",
+                crate::grammar::core::BinOp::Le => "<=",
+                crate::grammar::core::BinOp::Ge => ">=",
+            };
+            format!("({} {} {})", op_str, format_expr(left), format_expr(right))
+        }
+        crate::grammar::core::Expr::If(cond, then_expr, else_expr) => {
+            format!(
+                "(if {} {} {})",
+                format_expr(cond),
+                format_expr(then_expr),
+                format_expr(else_expr)
+            )
+        }
+    }
 }
