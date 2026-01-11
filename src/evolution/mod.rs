@@ -1,0 +1,12 @@
+// 进化引擎模块 / Evolution engine module
+// 提供语法进化、语义适应、进化记录等功能
+// Provides syntax evolution, semantic adaptation, evolution tracking, etc.
+
+pub mod engine;
+pub mod tracker;
+pub mod knowledge;
+
+pub use engine::*;
+pub use tracker::*;
+pub use knowledge::*;
+
