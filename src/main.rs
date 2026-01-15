@@ -38,6 +38,9 @@ fn main() {
 
     // 演示NLU自然语言理解 / Demonstrate NLU natural language understanding
     demonstrate_nlu();
+
+    // 演示JIT编译器 / Demonstrate JIT compiler
+    demonstrate_jit();
 }
 
 /// 演示解释器功能 / Demonstrate interpreter functionality
@@ -322,22 +325,13 @@ fn demonstrate_nlu() {
             "let variable x be 5",
             "英文变量定义 / English variable definition",
         ),
-        (
-            "3 加 5",
-            "中文加法操作 / Chinese addition operation",
-        ),
-        (
-            "10 plus 20",
-            "英文加法操作 / English addition operation",
-        ),
+        ("3 加 5", "中文加法操作 / Chinese addition operation"),
+        ("10 plus 20", "英文加法操作 / English addition operation"),
         (
             "8 乘以 7",
             "中文乘法操作 / Chinese multiplication operation",
         ),
-        (
-            "15 除以 3",
-            "中文除法操作 / Chinese division operation",
-        ),
+        ("15 除以 3", "中文除法操作 / Chinese division operation"),
         (
             "100 减去 25",
             "中文减法操作 / Chinese subtraction operation",
@@ -354,27 +348,29 @@ fn demonstrate_nlu() {
 
         match nlu_parser.parse(input) {
             Ok(parsed_intent) => {
-                println!("识别意图 / Detected Intent: {:?}", parsed_intent.intent_type);
+                println!(
+                    "识别意图 / Detected Intent: {:?}",
+                    parsed_intent.intent_type
+                );
                 println!("置信度 / Confidence: {:.2}", parsed_intent.confidence);
                 println!("生成的代码结构 / Generated Code Structure:");
                 print_ast(&parsed_intent.code_structure, 0, 3);
 
                 // 尝试将生成的代码结构转换为可执行的代码
                 // 注意：这是一个简化版本，实际需要更复杂的转换逻辑
-                if let Some(executable_code) = convert_to_executable(&parsed_intent.code_structure) {
+                if let Some(executable_code) = convert_to_executable(&parsed_intent.code_structure)
+                {
                     println!("\n可执行代码 / Executable Code: {}", executable_code);
-                    
+
                     match code_parser.parse(&executable_code) {
-                        Ok(ast) => {
-                            match interpreter.execute(&ast) {
-                                Ok(value) => {
-                                    println!("执行结果 / Execution Result: {}", value);
-                                }
-                                Err(e) => {
-                                    println!("执行错误 / Execution Error: {:?}", e);
-                                }
+                        Ok(ast) => match interpreter.execute(&ast) {
+                            Ok(value) => {
+                                println!("执行结果 / Execution Result: {}", value);
                             }
-                        }
+                            Err(e) => {
+                                println!("执行错误 / Execution Error: {:?}", e);
+                            }
+                        },
                         Err(e) => {
                             println!("代码解析错误 / Code Parse Error: {:?}", e);
                         }
@@ -394,10 +390,10 @@ fn demonstrate_nlu() {
         "创建一个函数add，参数是x和y",
         "定义一个变量count等于一百",
     ];
-    
+
     for intent_test in intent_tests {
         println!("\n输入 / Input: {}", intent_test);
-        
+
         match nlu_parser.extract_intent(intent_test) {
             Ok(intent) => {
                 println!("提取的意图 / Extracted Intent:");
@@ -418,7 +414,7 @@ fn convert_to_executable(elements: &[crate::grammar::core::GrammarElement]) -> O
     if elements.is_empty() {
         return None;
     }
-    
+
     // 简化实现：只处理第一个元素
     match &elements[0] {
         crate::grammar::core::GrammarElement::List(list) => {
@@ -452,9 +448,7 @@ fn convert_to_executable(elements: &[crate::grammar::core::GrammarElement]) -> O
             result.push(')');
             Some(result)
         }
-        crate::grammar::core::GrammarElement::Expr(e) => {
-            Some(format_expr(e))
-        }
+        crate::grammar::core::GrammarElement::Expr(e) => Some(format_expr(e)),
         _ => None,
     }
 }
@@ -504,4 +498,113 @@ fn format_expr(expr: &crate::grammar::core::Expr) -> String {
             )
         }
     }
+}
+
+/// 演示JIT编译器功能 / Demonstrate JIT compiler functionality
+fn demonstrate_jit() {
+    println!("\n7. JIT编译器演示 / JIT Compiler Demo");
+    println!("--------------------------------------------");
+
+    use runtime::JITInterpreter;
+    let parser = AdaptiveParser::new(true);
+    let mut jit_interpreter = JITInterpreter::with_threshold(5); // 5次执行后编译 / Compile after 5 executions
+
+    println!("JIT编译器已创建，编译阈值：5次执行 / JIT Compiler created, compilation threshold: 5 executions");
+    println!("\n--- 测试热点代码检测和优化 / Testing Hot Spot Detection and Optimization ---");
+
+    // 定义一个会被多次调用的函数
+    // Define a function that will be called multiple times
+    let define_code = "(def add (x y) (+ x y))";
+    println!("\n定义函数 / Define function: {}", define_code);
+    
+    match parser.parse(define_code) {
+        Ok(ast) => {
+            if let Err(e) = jit_interpreter.execute(&ast) {
+                println!("定义函数时出错 / Error defining function: {:?}", e);
+                return;
+            }
+            println!("函数定义成功 / Function defined successfully");
+        }
+        Err(e) => {
+            println!("解析错误 / Parse Error: {:?}", e);
+            return;
+        }
+    }
+
+    // 多次调用函数以触发JIT编译
+    // Call function multiple times to trigger JIT compilation
+    let call_code = "(add 3 4)";
+    println!("\n多次调用函数以触发JIT编译 / Call function multiple times to trigger JIT compilation:");
+    
+    for i in 1..=10 {
+        match parser.parse(call_code) {
+            Ok(ast) => {
+                match jit_interpreter.execute(&ast) {
+                    Ok(value) => {
+                        if i <= 5 {
+                            println!("  调用 {}: {} (解释执行 / Interpreted)", i, value);
+                        } else if i == 6 {
+                            println!("  调用 {}: {} (JIT编译后执行 / JIT Compiled)", i, value);
+                        } else if i == 10 {
+                            println!("  调用 {}: {} (JIT优化执行 / JIT Optimized)", i, value);
+                        }
+                    }
+                    Err(e) => {
+                        println!("执行错误 / Execution Error: {:?}", e);
+                    }
+                }
+            }
+            Err(e) => {
+                println!("解析错误 / Parse Error: {:?}", e);
+            }
+        }
+    }
+
+    // 显示JIT统计信息
+    // Display JIT statistics
+    println!("\n--- JIT统计信息 / JIT Statistics ---");
+    let stats = jit_interpreter.get_jit_statistics();
+    println!("总热点代码数 / Total hot spots: {}", stats.total_hot_spots);
+    println!("总执行次数 / Total executions: {}", stats.total_executions);
+    println!("编译后执行次数 / Compiled executions: {}", stats.compiled_count);
+    println!("编译阈值 / Compilation threshold: {}", stats.compilation_threshold);
+    println!("JIT启用状态 / JIT enabled: {}", stats.enabled);
+
+    // 显示热点代码列表
+    // Display hot spot code list
+    let hot_spots = jit_interpreter.get_hot_spots();
+    if !hot_spots.is_empty() {
+        println!("\n热点代码列表 / Hot Spot Code List:");
+        for (i, hot_spot) in hot_spots.iter().take(3).enumerate() {
+            println!("  {}. {}", i + 1, hot_spot.chars().take(50).collect::<String>());
+        }
+    }
+
+    // 测试常量折叠优化
+    // Test constant folding optimization
+    println!("\n--- 测试常量折叠优化 / Testing Constant Folding Optimization ---");
+    let constant_fold_code = "(+ 10 20)";
+    println!("测试代码 / Test code: {}", constant_fold_code);
+    
+    for i in 1..=6 {
+        match parser.parse(constant_fold_code) {
+            Ok(ast) => {
+                match jit_interpreter.execute(&ast) {
+                    Ok(value) => {
+                        if i == 6 {
+                            println!("  执行 {}: {} (已优化为常量 / Optimized to constant)", i, value);
+                        }
+                    }
+                    Err(e) => {
+                        println!("执行错误 / Execution Error: {:?}", e);
+                    }
+                }
+            }
+            Err(e) => {
+                println!("解析错误 / Parse Error: {:?}", e);
+            }
+        }
+    }
+
+    println!("\nJIT编译器演示完成 / JIT Compiler Demo Completed");
 }

@@ -3,8 +3,12 @@
 // Provides interpreter, JIT compiler, execution mode selection, etc.
 
 pub mod interpreter;
+pub mod jit;
+pub mod jit_interpreter;
 pub mod mode;
 
 pub use interpreter::*;
+pub use jit::*;
+pub use jit_interpreter::*;
 pub use mode::*;
 

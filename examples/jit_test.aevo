@@ -1,0 +1,14 @@
+; JIT编译器测试示例 / JIT Compiler Test Example
+; 这个示例演示JIT编译器的热点代码优化功能
+; This example demonstrates JIT compiler's hot spot code optimization
+
+; 定义一个会被多次调用的函数（热点代码）
+; Define a function that will be called multiple times (hot spot code)
+(def add (x y) (+ x y))
+
+; 定义一个计算函数
+; Define a calculation function
+(def multiply (a b) (* a b))
+
+; 这些函数在被多次调用后会被JIT编译器优化
+; These functions will be optimized by JIT compiler after multiple calls
