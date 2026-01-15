@@ -1,0 +1,30 @@
+V1.0.7 添加列表和字典数据结构支持
+
+1. 扩展类型系统
+   - Value类型添加List和Dict变体
+   - Literal类型添加List和Dict变体
+   - 支持列表和字典的显示和序列化
+
+2. 解析器支持
+   - 添加列表字面量解析：(list item1 item2 ...) 或 (vec item1 item2 ...)
+   - 添加字典字面量解析：(dict key1 value1 key2 value2 ...) 或 (map key1 value1 ...)
+   - 支持在表达式中使用列表和字典字面量
+
+3. 解释器实现
+   - 实现列表和字典字面量的求值
+   - 支持列表连接（使用+操作符）
+   - 更新所有模式匹配以支持List和Dict
+
+4. 内置函数
+   - 列表操作：list-get, list-set, list-append, list-length
+   - 字典操作：dict-get, dict-set, dict-keys, dict-values, dict-has
+   - 所有函数支持完整错误处理
+
+5. Python互操作更新
+   - 更新PyValue转换以支持列表和字典
+   - 更新value_to_pyobject以支持嵌套结构
+
+6. 测试和文档
+   - 创建data_structures.aevo示例文件
+   - 更新README.md添加列表和字典使用说明
+   - 更新功能列表和测试状态

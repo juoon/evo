@@ -173,6 +173,20 @@ fn value_to_pyobject(py: Python, value: &runtime::interpreter::Value) -> PyObjec
         runtime::interpreter::Value::String(s) => s.to_object(py),
         runtime::interpreter::Value::Bool(b) => b.to_object(py),
         runtime::interpreter::Value::Null => py.None(),
+        runtime::interpreter::Value::List(list) => {
+            let py_list = pyo3::types::PyList::empty_bound(py);
+            for item in list {
+                py_list.append(value_to_pyobject(py, item)).unwrap();
+            }
+            py_list.into()
+        }
+        runtime::interpreter::Value::Dict(dict) => {
+            let py_dict = pyo3::types::PyDict::new_bound(py);
+            for (key, val) in dict {
+                py_dict.set_item(key, value_to_pyobject(py, val)).unwrap();
+            }
+            py_dict.into()
+        }
     }
 }
 

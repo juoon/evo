@@ -1,0 +1,39 @@
+; 数据结构和列表操作示例 / Data Structures and List Operations Example
+
+; 创建列表 / Create list
+(list 1 2 3 4 5)
+
+; 创建字典 / Create dictionary
+(dict "name" "Aevolang" "version" "1.0" "type" "language")
+
+; 列表操作 / List operations
+; 获取列表长度 / Get list length
+(list-length (list 1 2 3))
+
+; 获取列表元素 / Get list element
+(list-get (list 10 20 30) 1)  ; 返回 20 / Returns 20
+
+; 追加元素 / Append element
+(list-append (list 1 2) 3)  ; 返回 [1, 2, 3] / Returns [1, 2, 3]
+
+; 设置列表元素 / Set list element
+(list-set (list 1 2 3) 1 99)  ; 返回 [1, 99, 3] / Returns [1, 99, 3]
+
+; 字典操作 / Dictionary operations
+; 获取字典值 / Get dictionary value
+(dict-get (dict "name" "Aevolang" "version" "1.0") "name")  ; 返回 "Aevolang" / Returns "Aevolang"
+
+; 设置字典值 / Set dictionary value
+(dict-set (dict "x" 1) "y" 2)  ; 返回 {"x": 1, "y": 2} / Returns {"x": 1, "y": 2}
+
+; 获取所有键 / Get all keys
+(dict-keys (dict "a" 1 "b" 2 "c" 3))  ; 返回 ["a", "b", "c"] / Returns ["a", "b", "c"]
+
+; 获取所有值 / Get all values
+(dict-values (dict "a" 1 "b" 2 "c" 3))  ; 返回 [1, 2, 3] / Returns [1, 2, 3]
+
+; 检查键是否存在 / Check if key exists
+(dict-has (dict "name" "Aevolang") "name")  ; 返回 true / Returns true
+
+; 列表连接 / List concatenation
+(+ (list 1 2) (list 3 4))  ; 返回 [1, 2, 3, 4] / Returns [1, 2, 3, 4]

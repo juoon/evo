@@ -184,6 +184,12 @@ impl PyValue {
             crate::runtime::interpreter::Value::String(s) => PyValue::String(s.clone()),
             crate::runtime::interpreter::Value::Bool(b) => PyValue::Bool(*b),
             crate::runtime::interpreter::Value::Null => PyValue::None,
+            crate::runtime::interpreter::Value::List(list) => {
+                PyValue::List(list.iter().map(|v| PyValue::from_aevo_value(v)).collect())
+            }
+            crate::runtime::interpreter::Value::Dict(dict) => {
+                PyValue::Dict(dict.iter().map(|(k, v)| (k.clone(), PyValue::from_aevo_value(v))).collect())
+            }
         }
     }
 
@@ -195,8 +201,12 @@ impl PyValue {
             PyValue::String(s) => crate::runtime::interpreter::Value::String(s.clone()),
             PyValue::Bool(b) => crate::runtime::interpreter::Value::Bool(*b),
             PyValue::None => crate::runtime::interpreter::Value::Null,
-            PyValue::List(_) => crate::runtime::interpreter::Value::Null, // 列表暂不支持
-            PyValue::Dict(_) => crate::runtime::interpreter::Value::Null, // 字典暂不支持
+            PyValue::List(list) => {
+                crate::runtime::interpreter::Value::List(list.iter().map(|v| v.to_aevo_value()).collect())
+            }
+            PyValue::Dict(dict) => {
+                crate::runtime::interpreter::Value::Dict(dict.iter().map(|(k, v)| (k.clone(), v.to_aevo_value())).collect())
+            }
         }
     }
 }

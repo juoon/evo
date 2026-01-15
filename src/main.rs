@@ -41,6 +41,9 @@ fn main() {
 
     // 演示JIT编译器 / Demonstrate JIT compiler
     demonstrate_jit();
+
+    // 演示列表和字典 / Demonstrate lists and dictionaries
+    demonstrate_data_structures();
 }
 
 /// 演示解释器功能 / Demonstrate interpreter functionality
@@ -618,4 +621,75 @@ fn demonstrate_jit() {
     }
 
     println!("\nJIT编译器演示完成 / JIT Compiler Demo Completed");
+}
+
+/// 演示列表和字典功能 / Demonstrate list and dictionary functionality
+fn demonstrate_data_structures() {
+    println!("\n8. 列表和字典演示 / Lists and Dictionaries Demo");
+    println!("--------------------------------------------");
+
+    let parser = AdaptiveParser::new(true);
+    let mut interpreter = Interpreter::new();
+
+    // 测试列表操作
+    println!("\n--- 测试列表操作 / Testing List Operations ---");
+    let list_tests = vec![
+        ("(list 1 2 3)", "创建列表 / Create list"),
+        ("(list-length (list 1 2 3))", "获取列表长度 / Get list length"),
+        ("(list-get (list 10 20 30) 1)", "获取列表元素 / Get list element"),
+        ("(list-append (list 1 2) 3)", "追加元素 / Append element"),
+        ("(+ (list 1 2) (list 3 4))", "列表连接 / List concatenation"),
+    ];
+
+    for (code, description) in list_tests {
+        println!("\n测试: {} / Test: {}", description, description);
+        println!("代码: {} / Code: {}", code, code);
+        match parser.parse(code) {
+            Ok(ast) => {
+                match interpreter.execute(&ast) {
+                    Ok(value) => {
+                        println!("结果: {} / Result: {}", value, value);
+                    }
+                    Err(e) => {
+                        println!("执行错误 / Execution Error: {:?}", e);
+                    }
+                }
+            }
+            Err(e) => {
+                println!("解析错误 / Parse Error: {:?}", e);
+            }
+        }
+    }
+
+    // 测试字典操作
+    println!("\n--- 测试字典操作 / Testing Dictionary Operations ---");
+    let dict_tests = vec![
+        ("(dict \"name\" \"Aevolang\" \"version\" \"1.0\")", "创建字典 / Create dictionary"),
+        ("(dict-get (dict \"name\" \"Aevolang\") \"name\")", "获取字典值 / Get dictionary value"),
+        ("(dict-set (dict \"x\" 1) \"y\" 2)", "设置字典值 / Set dictionary value"),
+        ("(dict-keys (dict \"a\" 1 \"b\" 2))", "获取所有键 / Get all keys"),
+        ("(dict-has (dict \"name\" \"Aevolang\") \"name\")", "检查键是否存在 / Check if key exists"),
+    ];
+
+    for (code, description) in dict_tests {
+        println!("\n测试: {} / Test: {}", description, description);
+        println!("代码: {} / Code: {}", code, code);
+        match parser.parse(code) {
+            Ok(ast) => {
+                match interpreter.execute(&ast) {
+                    Ok(value) => {
+                        println!("结果: {} / Result: {}", value, value);
+                    }
+                    Err(e) => {
+                        println!("执行错误 / Execution Error: {:?}", e);
+                    }
+                }
+            }
+            Err(e) => {
+                println!("解析错误 / Parse Error: {:?}", e);
+            }
+        }
+    }
+
+    println!("\n列表和字典演示完成 / Lists and Dictionaries Demo Completed");
 }

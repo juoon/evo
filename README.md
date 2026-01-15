@@ -197,6 +197,44 @@ match parser.parse(code) {
 (if (> x 0) x (- x))  ; 返回 x 的绝对值
 ```
 
+### 列表操作 / List Operations
+
+```lisp
+; 创建列表 / Create list
+(list 1 2 3 4 5)
+
+; 获取列表元素 / Get list element
+(list-get (list 10 20 30) 1)  ; 返回 20
+
+; 追加元素 / Append element
+(list-append (list 1 2) 3)  ; 返回 [1, 2, 3]
+
+; 获取列表长度 / Get list length
+(list-length (list 1 2 3))  ; 返回 3
+
+; 列表连接 / List concatenation
+(+ (list 1 2) (list 3 4))  ; 返回 [1, 2, 3, 4]
+```
+
+### 字典操作 / Dictionary Operations
+
+```lisp
+; 创建字典 / Create dictionary
+(dict "name" "Aevolang" "version" "1.0")
+
+; 获取字典值 / Get dictionary value
+(dict-get (dict "name" "Aevolang") "name")  ; 返回 "Aevolang"
+
+; 设置字典值 / Set dictionary value
+(dict-set (dict "x" 1) "y" 2)  ; 返回 {"x": 1, "y": 2}
+
+; 获取所有键 / Get all keys
+(dict-keys (dict "a" 1 "b" 2))  ; 返回 ["a", "b"]
+
+; 检查键是否存在 / Check if key exists
+(dict-has (dict "name" "Aevolang") "name")  ; 返回 true
+```
+
 更多示例请查看 [examples/](../examples/) 目录。
 
 ## 文档 / Documentation
@@ -233,6 +271,7 @@ match parser.parse(code) {
 - ✅ **简单NLU系统** - 基于规则的意图识别，支持中英文自然语言输入
 - ✅ **Python互操作** - 完整的PyO3集成，支持从Python调用Aevolang
 - ✅ **JIT编译器** - 热点代码检测和优化，支持常量折叠等优化技术
+- ✅ **列表和字典** - 完整的数据结构支持，包括创建、访问、修改和内置函数
 
 ### 已实现功能 / Implemented Features
 
@@ -243,7 +282,7 @@ match parser.parse(code) {
 - ✅ **函数定义** - `def` 和 `function` 关键字
 - ✅ **函数调用** - 支持用户定义函数和递归
 - ✅ **条件表达式** - `if` 条件分支
-- ✅ **类型系统** - Int, Float, String, Bool, Null
+- ✅ **类型系统** - Int, Float, String, Bool, Null, List, Dict
 - ✅ **自然语言理解（NLU）** - 基于规则的意图识别
   - 支持中英文函数定义识别
   - 支持中英文变量定义识别
@@ -263,6 +302,12 @@ match parser.parse(code) {
   - 热点代码缓存和优化执行
   - 可配置的编译阈值
   - JIT统计信息查询
+- ✅ **列表和字典支持** - 数据结构操作
+  - 列表字面量：`(list item1 item2 ...)` 或 `(vec item1 item2 ...)`
+  - 字典字面量：`(dict key1 value1 key2 value2 ...)` 或 `(map key1 value1 ...)`
+  - 列表操作：`list-get`, `list-set`, `list-append`, `list-length`
+  - 字典操作：`dict-get`, `dict-set`, `dict-keys`, `dict-values`, `dict-has`
+  - 列表连接：使用 `+` 操作符连接两个列表
 
 ### 测试状态 / Test Status
 
@@ -275,6 +320,7 @@ match parser.parse(code) {
 - ✅ NLU自然语言理解（中英文函数定义、变量定义、操作表达式）
 - ✅ Python互操作（模块导入、函数调用、类型转换）
 - ✅ JIT编译器（热点检测、常量折叠、代码优化）
+- ✅ 列表和字典数据结构（创建、访问、修改、内置函数）
 
 ## 下一步 / Next Steps
 
@@ -285,7 +331,7 @@ match parser.parse(code) {
 5. 增强NLU系统 - 支持更复杂的自然语言表达式和上下文理解
 6. 集成NLU模型（本地轻量模型或云API）- 提升理解能力
 7. 完善进化引擎的学习和预测功能
-8. 添加列表和数据结构支持
+8. ✅ ~~添加列表和数据结构支持~~ - 已完成
 9. 实现模块系统
 
 ## 贡献 / Contributing

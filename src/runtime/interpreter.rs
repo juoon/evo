@@ -288,7 +288,7 @@ impl Interpreter {
     /// 评估表达式 / Evaluate expression
     pub fn eval_expr(&mut self, expr: &Expr) -> Result<Value, InterpreterError> {
         match expr {
-            Expr::Literal(lit) => Ok(self.eval_literal(lit)),
+            Expr::Literal(lit) => self.eval_literal(lit),
             Expr::Var(name) => self
                 .environment
                 .get(name)
@@ -312,13 +312,28 @@ impl Interpreter {
     }
 
     /// 评估字面量 / Evaluate literal
-    fn eval_literal(&self, lit: &Literal) -> Value {
+    fn eval_literal(&mut self, lit: &Literal) -> Result<Value, InterpreterError> {
         match lit {
-            Literal::Int(i) => Value::Int(*i),
-            Literal::Float(f) => Value::Float(*f),
-            Literal::String(s) => Value::String(s.clone()),
-            Literal::Bool(b) => Value::Bool(*b),
-            Literal::Null => Value::Null,
+            Literal::Int(i) => Ok(Value::Int(*i)),
+            Literal::Float(f) => Ok(Value::Float(*f)),
+            Literal::String(s) => Ok(Value::String(s.clone())),
+            Literal::Bool(b) => Ok(Value::Bool(*b)),
+            Literal::Null => Ok(Value::Null),
+            Literal::List(exprs) => {
+                let mut list = Vec::new();
+                for expr in exprs {
+                    list.push(self.eval_expr(expr)?);
+                }
+                Ok(Value::List(list))
+            }
+            Literal::Dict(pairs) => {
+                let mut dict = std::collections::HashMap::new();
+                for (key, expr) in pairs {
+                    let value = self.eval_expr(expr)?;
+                    dict.insert(key.clone(), value);
+                }
+                Ok(Value::Dict(dict))
+            }
         }
     }
 
@@ -347,6 +362,11 @@ impl Interpreter {
             (Value::Int(a), Value::Int(b)) => Ok(Value::Int(a + b)),
             (Value::Float(a), Value::Float(b)) => Ok(Value::Float(a + b)),
             (Value::String(a), Value::String(b)) => Ok(Value::String(format!("{}{}", a, b))),
+            (Value::List(a), Value::List(b)) => {
+                let mut result = a.clone();
+                result.extend_from_slice(b);
+                Ok(Value::List(result))
+            }
             _ => Err(InterpreterError::TypeError(
                 "Invalid types for addition".to_string(),
             )),
@@ -406,6 +426,8 @@ impl Interpreter {
             Value::Float(f) => *f != 0.0,
             Value::String(s) => !s.is_empty(),
             Value::Null => false,
+            Value::List(list) => !list.is_empty(),
+            Value::Dict(dict) => !dict.is_empty(),
         }
     }
 
@@ -522,6 +544,175 @@ impl Interpreter {
                 println!();
                 Ok(Value::Null)
             }
+            // 列表操作 / List operations
+            "list-get" | "get" => {
+                if args.len() != 2 {
+                    return Err(InterpreterError::RuntimeError(
+                        "list-get requires 2 arguments: list and index".to_string(),
+                    ));
+                }
+                let list = self.eval_expr(&args[0])?;
+                let index = self.eval_expr(&args[1])?;
+                match (list, index) {
+                    (Value::List(l), Value::Int(i)) => {
+                        if i < 0 || i as usize >= l.len() {
+                            Err(InterpreterError::RuntimeError(format!(
+                                "Index {} out of bounds for list of length {}",
+                                i, l.len()
+                            )))
+                        } else {
+                            Ok(l[i as usize].clone())
+                        }
+                    }
+                    _ => Err(InterpreterError::TypeError(
+                        "list-get requires a list and an integer index".to_string(),
+                    )),
+                }
+            }
+            "list-set" | "set" => {
+                if args.len() != 3 {
+                    return Err(InterpreterError::RuntimeError(
+                        "list-set requires 3 arguments: list, index, value".to_string(),
+                    ));
+                }
+                let list = self.eval_expr(&args[0])?;
+                let index = self.eval_expr(&args[1])?;
+                let value = self.eval_expr(&args[2])?;
+                match (list, index) {
+                    (Value::List(mut l), Value::Int(i)) => {
+                        if i < 0 || i as usize >= l.len() {
+                            Err(InterpreterError::RuntimeError(format!(
+                                "Index {} out of bounds for list of length {}",
+                                i, l.len()
+                            )))
+                        } else {
+                            l[i as usize] = value;
+                            Ok(Value::List(l))
+                        }
+                    }
+                    _ => Err(InterpreterError::TypeError(
+                        "list-set requires a list, an integer index, and a value".to_string(),
+                    )),
+                }
+            }
+            "list-append" | "append" => {
+                if args.len() != 2 {
+                    return Err(InterpreterError::RuntimeError(
+                        "list-append requires 2 arguments: list and value".to_string(),
+                    ));
+                }
+                let list = self.eval_expr(&args[0])?;
+                let value = self.eval_expr(&args[1])?;
+                match list {
+                    Value::List(mut l) => {
+                        l.push(value);
+                        Ok(Value::List(l))
+                    }
+                    _ => Err(InterpreterError::TypeError(
+                        "list-append requires a list".to_string(),
+                    )),
+                }
+            }
+            "list-length" | "length" => {
+                if args.len() != 1 {
+                    return Err(InterpreterError::RuntimeError(
+                        "list-length requires 1 argument: list".to_string(),
+                    ));
+                }
+                let list = self.eval_expr(&args[0])?;
+                match list {
+                    Value::List(l) => Ok(Value::Int(l.len() as i64)),
+                    _ => Err(InterpreterError::TypeError(
+                        "list-length requires a list".to_string(),
+                    )),
+                }
+            }
+            // 字典操作 / Dictionary operations
+            "dict-get" => {
+                if args.len() != 2 {
+                    return Err(InterpreterError::RuntimeError(
+                        "dict-get requires 2 arguments: dict and key".to_string(),
+                    ));
+                }
+                let dict = self.eval_expr(&args[0])?;
+                let key = self.eval_expr(&args[1])?;
+                match (dict, key) {
+                    (Value::Dict(d), Value::String(k)) => {
+                        Ok(d.get(&k).cloned().unwrap_or(Value::Null))
+                    }
+                    _ => Err(InterpreterError::TypeError(
+                        "dict-get requires a dict and a string key".to_string(),
+                    )),
+                }
+            }
+            "dict-set" => {
+                if args.len() != 3 {
+                    return Err(InterpreterError::RuntimeError(
+                        "dict-set requires 3 arguments: dict, key, value".to_string(),
+                    ));
+                }
+                let dict = self.eval_expr(&args[0])?;
+                let key = self.eval_expr(&args[1])?;
+                let value = self.eval_expr(&args[2])?;
+                match (dict, key) {
+                    (Value::Dict(mut d), Value::String(k)) => {
+                        d.insert(k, value);
+                        Ok(Value::Dict(d))
+                    }
+                    _ => Err(InterpreterError::TypeError(
+                        "dict-set requires a dict, a string key, and a value".to_string(),
+                    )),
+                }
+            }
+            "dict-keys" => {
+                if args.len() != 1 {
+                    return Err(InterpreterError::RuntimeError(
+                        "dict-keys requires 1 argument: dict".to_string(),
+                    ));
+                }
+                let dict = self.eval_expr(&args[0])?;
+                match dict {
+                    Value::Dict(d) => {
+                        let keys: Vec<Value> = d.keys().map(|k| Value::String(k.clone())).collect();
+                        Ok(Value::List(keys))
+                    }
+                    _ => Err(InterpreterError::TypeError(
+                        "dict-keys requires a dict".to_string(),
+                    )),
+                }
+            }
+            "dict-values" => {
+                if args.len() != 1 {
+                    return Err(InterpreterError::RuntimeError(
+                        "dict-values requires 1 argument: dict".to_string(),
+                    ));
+                }
+                let dict = self.eval_expr(&args[0])?;
+                match dict {
+                    Value::Dict(d) => {
+                        let values: Vec<Value> = d.values().cloned().collect();
+                        Ok(Value::List(values))
+                    }
+                    _ => Err(InterpreterError::TypeError(
+                        "dict-values requires a dict".to_string(),
+                    )),
+                }
+            }
+            "dict-has" => {
+                if args.len() != 2 {
+                    return Err(InterpreterError::RuntimeError(
+                        "dict-has requires 2 arguments: dict and key".to_string(),
+                    ));
+                }
+                let dict = self.eval_expr(&args[0])?;
+                let key = self.eval_expr(&args[1])?;
+                match (dict, key) {
+                    (Value::Dict(d), Value::String(k)) => Ok(Value::Bool(d.contains_key(&k))),
+                    _ => Err(InterpreterError::TypeError(
+                        "dict-has requires a dict and a string key".to_string(),
+                    )),
+                }
+            }
             _ => Err(InterpreterError::RuntimeError(format!(
                 "Unknown function: {}",
                 name
@@ -578,6 +769,8 @@ impl Interpreter {
             Value::String(_) => "String",
             Value::Bool(_) => "Bool",
             Value::Null => "Null",
+            Value::List(_) => "List",
+            Value::Dict(_) => "Dict",
         }
     }
 }
@@ -601,6 +794,10 @@ pub enum Value {
     Bool(bool),
     /// 空值 / Null
     Null,
+    /// 列表 / List
+    List(Vec<Value>),
+    /// 字典 / Dictionary
+    Dict(std::collections::HashMap<String, Value>),
 }
 
 impl std::fmt::Display for Value {
@@ -611,6 +808,28 @@ impl std::fmt::Display for Value {
             Value::String(s) => write!(f, "{}", s),
             Value::Bool(b) => write!(f, "{}", b),
             Value::Null => write!(f, "null"),
+            Value::List(list) => {
+                write!(f, "[")?;
+                for (i, item) in list.iter().enumerate() {
+                    if i > 0 {
+                        write!(f, ", ")?;
+                    }
+                    write!(f, "{}", item)?;
+                }
+                write!(f, "]")
+            }
+            Value::Dict(dict) => {
+                write!(f, "{{")?;
+                let mut first = true;
+                for (key, value) in dict {
+                    if !first {
+                        write!(f, ", ")?;
+                    }
+                    first = false;
+                    write!(f, "{}: {}", key, value)?;
+                }
+                write!(f, "}}")
+            }
         }
     }
 }

@@ -354,7 +354,7 @@ impl ParserState {
 
         let first = self.parse_element()?;
 
-        // 检查是否是特殊形式（如 def, let, if 等）
+        // 检查是否是特殊形式（如 def, let, if, list, dict 等）
         if let GrammarElement::Atom(ref atom) = &first {
             match atom.as_str() {
                 "def" | "function" => {
@@ -365,6 +365,12 @@ impl ParserState {
                 }
                 "if" => {
                     return self.parse_if();
+                }
+                "list" | "vec" => {
+                    return self.parse_list_literal();
+                }
+                "dict" | "map" => {
+                    return self.parse_dict_literal();
                 }
                 _ => {
                     // 函数调用
@@ -487,6 +493,65 @@ impl ParserState {
             Box::new(then_expr_parsed),
             Box::new(else_expr_parsed),
         ))))
+    }
+
+    fn parse_list_literal(&mut self) -> Result<GrammarElement, ParseError> {
+        // (list item1 item2 ...) 或 (vec item1 item2 ...)
+        let mut items = Vec::new();
+        while !self.check(&Token::RightParen) {
+            items.push(self.parse_element()?);
+        }
+        self.consume(&Token::RightParen, "Expected ')' after list literal")?;
+        
+        // 转换为表达式列表
+        let expr_items: Vec<Expr> = items
+            .iter()
+            .map(|e| self.element_to_expr(e))
+            .collect::<Result<Vec<_>, _>>()?;
+        
+        Ok(GrammarElement::Expr(Box::new(Expr::Literal(Literal::List(expr_items)))))
+    }
+
+    fn parse_dict_literal(&mut self) -> Result<GrammarElement, ParseError> {
+        // (dict key1 value1 key2 value2 ...) 或 (map key1 value1 key2 value2 ...)
+        let mut pairs = Vec::new();
+        while !self.check(&Token::RightParen) {
+            let key_elem = self.parse_element()?;
+            let value_elem = if !self.check(&Token::RightParen) {
+                self.parse_element()?
+            } else {
+                return Err(ParseError::SyntaxError(
+                    "Dictionary requires key-value pairs".to_string(),
+                ));
+            };
+            
+            // 提取键（必须是字符串或标识符）
+            let key = match &key_elem {
+                GrammarElement::Atom(s) => s.clone(),
+                GrammarElement::Expr(boxed_expr) => {
+                    if let Expr::Literal(Literal::String(s)) = boxed_expr.as_ref() {
+                        s.clone()
+                    } else if let Expr::Var(s) = boxed_expr.as_ref() {
+                        s.clone()
+                    } else {
+                        return Err(ParseError::SyntaxError(
+                            "Dictionary key must be a string or identifier".to_string(),
+                        ));
+                    }
+                }
+                _ => {
+                    return Err(ParseError::SyntaxError(
+                        "Dictionary key must be a string or identifier".to_string(),
+                    ));
+                }
+            };
+            
+            let value_expr = self.element_to_expr(&value_elem)?;
+            pairs.push((key, value_expr));
+        }
+        self.consume(&Token::RightParen, "Expected ')' after dict literal")?;
+        
+        Ok(GrammarElement::Expr(Box::new(Expr::Literal(Literal::Dict(pairs)))))
     }
 
     fn parse_quoted(&mut self) -> Result<GrammarElement, ParseError> {

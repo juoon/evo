@@ -45,6 +45,10 @@ pub enum Literal {
     Bool(bool),
     /// 空值 / Null
     Null,
+    /// 列表 / List
+    List(Vec<Expr>),
+    /// 字典 / Dictionary
+    Dict(Vec<(String, Expr)>),
 }
 
 /// 二元运算符 / Binary operator

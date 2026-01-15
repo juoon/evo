@@ -222,8 +222,26 @@ impl JITCompiler {
                 Ok(Literal::Float(a / b))
             }
             // 比较运算 / Comparison operations
-            (BinOp::Eq, left, right) => Ok(Literal::Bool(left == right)),
-            (BinOp::Ne, left, right) => Ok(Literal::Bool(left != right)),
+            (BinOp::Eq, left, right) => {
+                // 列表和字典不能进行常量折叠比较
+                if matches!(left, Literal::List(_) | Literal::Dict(_)) 
+                    || matches!(right, Literal::List(_) | Literal::Dict(_)) {
+                    return Err(InterpreterError::TypeError(
+                        "Cannot fold comparison with list or dict literals".to_string(),
+                    ));
+                }
+                Ok(Literal::Bool(left == right))
+            }
+            (BinOp::Ne, left, right) => {
+                // 列表和字典不能进行常量折叠比较
+                if matches!(left, Literal::List(_) | Literal::Dict(_)) 
+                    || matches!(right, Literal::List(_) | Literal::Dict(_)) {
+                    return Err(InterpreterError::TypeError(
+                        "Cannot fold comparison with list or dict literals".to_string(),
+                    ));
+                }
+                Ok(Literal::Bool(left != right))
+            }
             (BinOp::Lt, Literal::Int(a), Literal::Int(b)) => Ok(Literal::Bool(a < b)),
             (BinOp::Lt, Literal::Float(a), Literal::Float(b)) => Ok(Literal::Bool(a < b)),
             (BinOp::Gt, Literal::Int(a), Literal::Int(b)) => Ok(Literal::Bool(a > b)),
@@ -232,6 +250,13 @@ impl JITCompiler {
             (BinOp::Le, Literal::Float(a), Literal::Float(b)) => Ok(Literal::Bool(a <= b)),
             (BinOp::Ge, Literal::Int(a), Literal::Int(b)) => Ok(Literal::Bool(a >= b)),
             (BinOp::Ge, Literal::Float(a), Literal::Float(b)) => Ok(Literal::Bool(a >= b)),
+            // 列表和字典不支持常量折叠的算术运算
+            (_, Literal::List(_), _) | (_, _, Literal::List(_)) 
+            | (_, Literal::Dict(_), _) | (_, _, Literal::Dict(_)) => {
+                Err(InterpreterError::TypeError(
+                    "Cannot fold binary operation with list or dict literals".to_string(),
+                ))
+            }
             _ => Err(InterpreterError::TypeError(
                 "Invalid types for binary operation".to_string(),
             )),
