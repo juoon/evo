@@ -516,7 +516,7 @@ fn demonstrate_jit() {
     // Define a function that will be called multiple times
     let define_code = "(def add (x y) (+ x y))";
     println!("\n定义函数 / Define function: {}", define_code);
-    
+
     match parser.parse(define_code) {
         Ok(ast) => {
             if let Err(e) = jit_interpreter.execute(&ast) {
@@ -534,26 +534,26 @@ fn demonstrate_jit() {
     // 多次调用函数以触发JIT编译
     // Call function multiple times to trigger JIT compilation
     let call_code = "(add 3 4)";
-    println!("\n多次调用函数以触发JIT编译 / Call function multiple times to trigger JIT compilation:");
-    
+    println!(
+        "\n多次调用函数以触发JIT编译 / Call function multiple times to trigger JIT compilation:"
+    );
+
     for i in 1..=10 {
         match parser.parse(call_code) {
-            Ok(ast) => {
-                match jit_interpreter.execute(&ast) {
-                    Ok(value) => {
-                        if i <= 5 {
-                            println!("  调用 {}: {} (解释执行 / Interpreted)", i, value);
-                        } else if i == 6 {
-                            println!("  调用 {}: {} (JIT编译后执行 / JIT Compiled)", i, value);
-                        } else if i == 10 {
-                            println!("  调用 {}: {} (JIT优化执行 / JIT Optimized)", i, value);
-                        }
-                    }
-                    Err(e) => {
-                        println!("执行错误 / Execution Error: {:?}", e);
+            Ok(ast) => match jit_interpreter.execute(&ast) {
+                Ok(value) => {
+                    if i <= 5 {
+                        println!("  调用 {}: {} (解释执行 / Interpreted)", i, value);
+                    } else if i == 6 {
+                        println!("  调用 {}: {} (JIT编译后执行 / JIT Compiled)", i, value);
+                    } else if i == 10 {
+                        println!("  调用 {}: {} (JIT优化执行 / JIT Optimized)", i, value);
                     }
                 }
-            }
+                Err(e) => {
+                    println!("执行错误 / Execution Error: {:?}", e);
+                }
+            },
             Err(e) => {
                 println!("解析错误 / Parse Error: {:?}", e);
             }
@@ -566,8 +566,14 @@ fn demonstrate_jit() {
     let stats = jit_interpreter.get_jit_statistics();
     println!("总热点代码数 / Total hot spots: {}", stats.total_hot_spots);
     println!("总执行次数 / Total executions: {}", stats.total_executions);
-    println!("编译后执行次数 / Compiled executions: {}", stats.compiled_count);
-    println!("编译阈值 / Compilation threshold: {}", stats.compilation_threshold);
+    println!(
+        "编译后执行次数 / Compiled executions: {}",
+        stats.compiled_count
+    );
+    println!(
+        "编译阈值 / Compilation threshold: {}",
+        stats.compilation_threshold
+    );
     println!("JIT启用状态 / JIT enabled: {}", stats.enabled);
 
     // 显示热点代码列表
@@ -576,7 +582,11 @@ fn demonstrate_jit() {
     if !hot_spots.is_empty() {
         println!("\n热点代码列表 / Hot Spot Code List:");
         for (i, hot_spot) in hot_spots.iter().take(3).enumerate() {
-            println!("  {}. {}", i + 1, hot_spot.chars().take(50).collect::<String>());
+            println!(
+                "  {}. {}",
+                i + 1,
+                hot_spot.chars().take(50).collect::<String>()
+            );
         }
     }
 
@@ -585,21 +595,22 @@ fn demonstrate_jit() {
     println!("\n--- 测试常量折叠优化 / Testing Constant Folding Optimization ---");
     let constant_fold_code = "(+ 10 20)";
     println!("测试代码 / Test code: {}", constant_fold_code);
-    
+
     for i in 1..=6 {
         match parser.parse(constant_fold_code) {
-            Ok(ast) => {
-                match jit_interpreter.execute(&ast) {
-                    Ok(value) => {
-                        if i == 6 {
-                            println!("  执行 {}: {} (已优化为常量 / Optimized to constant)", i, value);
-                        }
-                    }
-                    Err(e) => {
-                        println!("执行错误 / Execution Error: {:?}", e);
+            Ok(ast) => match jit_interpreter.execute(&ast) {
+                Ok(value) => {
+                    if i == 6 {
+                        println!(
+                            "  执行 {}: {} (已优化为常量 / Optimized to constant)",
+                            i, value
+                        );
                     }
                 }
-            }
+                Err(e) => {
+                    println!("执行错误 / Execution Error: {:?}", e);
+                }
+            },
             Err(e) => {
                 println!("解析错误 / Parse Error: {:?}", e);
             }
