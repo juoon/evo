@@ -86,6 +86,30 @@ null        ; 空值
 | String | `"hello"` | 字符串 |
 | Bool | `true`, `false` | 布尔值 |
 | Null | `null` | 空值 |
+| List | `(list 1 2 3)` | 列表 |
+| Dict | `(dict "key" "value")` | 字典 |
+
+### 列表操作 / List Operations
+
+```lisp
+(list 1 2 3)                    ; 创建列表
+(list-length lst)               ; 获取长度
+(list-get lst index)            ; 获取元素
+(list-set lst index value)      ; 设置元素
+(list-append lst item)          ; 追加元素
+(+ list1 list2)                ; 列表连接
+```
+
+### 字典操作 / Dictionary Operations
+
+```lisp
+(dict "key1" "value1" "key2" "value2")  ; 创建字典
+(dict-get dict "key")                   ; 获取值
+(dict-set dict "key" value)             ; 设置值
+(dict-keys dict)                        ; 获取所有键
+(dict-values dict)                      ; 获取所有值
+(dict-has dict "key")                   ; 检查键是否存在
+```
 
 ## 错误类型 / Error Types
 

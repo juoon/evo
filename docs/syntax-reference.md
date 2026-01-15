@@ -98,6 +98,36 @@ myVar       ; 引用变量 myVar
 (>= a b)    ; 大于等于
 ```
 
+### 内置函数 / Built-in Functions
+
+#### 列表函数 / List Functions
+
+```lisp
+(list item1 item2 ...)              ; 创建列表
+(list-length lst)                   ; 获取列表长度
+(list-get lst index)                ; 获取指定索引的元素
+(list-set lst index value)          ; 设置指定索引的元素
+(list-append lst item)              ; 在列表末尾追加元素
+(+ list1 list2)                     ; 连接两个列表
+```
+
+#### 字典函数 / Dictionary Functions
+
+```lisp
+(dict key1 value1 key2 value2 ...)  ; 创建字典（键值对数量必须为偶数）
+(dict-get dict key)                 ; 获取指定键的值
+(dict-set dict key value)           ; 设置键值对
+(dict-keys dict)                    ; 获取所有键的列表
+(dict-values dict)                  ; 获取所有值的列表
+(dict-has dict key)                 ; 检查键是否存在，返回布尔值
+```
+
+#### 其他内置函数 / Other Built-in Functions
+
+```lisp
+(print arg1 arg2 ...)               ; 打印参数到标准输出
+```
+
 ## 数据类型 / Data Types
 
 ### 整数 / Integer
@@ -145,6 +175,45 @@ false
 ```lisp
 null
 nil
+```
+
+### 列表 / List
+
+列表是有序的元素集合：
+
+```lisp
+(list 1 2 3)              ; 创建列表 [1, 2, 3]
+(list "a" "b" "c")        ; 字符串列表
+(list 1 2.5 "mixed")      ; 混合类型列表
+```
+
+列表操作：
+
+```lisp
+(list-length (list 1 2 3))           ; 获取长度: 3
+(list-get (list 10 20 30) 1)         ; 获取索引1的元素: 20
+(list-set (list 1 2 3) 0 10)         ; 设置索引0为10: [10, 2, 3]
+(list-append (list 1 2) 3)           ; 追加元素: [1, 2, 3]
+(+ (list 1 2) (list 3 4))           ; 列表连接: [1, 2, 3, 4]
+```
+
+### 字典 / Dictionary
+
+字典是键值对集合，键必须是字符串：
+
+```lisp
+(dict "name" "Aevolang" "version" "1.0")  ; 创建字典
+(dict "x" 1 "y" 2 "z" 3)                  ; 数字值字典
+```
+
+字典操作：
+
+```lisp
+(dict-get (dict "name" "Aevo") "name")    ; 获取值: "Aevo"
+(dict-set (dict "x" 1) "y" 2)            ; 设置键值: {"x": 1, "y": 2}
+(dict-keys (dict "a" 1 "b" 2))           ; 获取所有键: ["a", "b"]
+(dict-values (dict "a" 1 "b" 2))         ; 获取所有值: [1, 2]
+(dict-has (dict "name" "Aevo") "name")   ; 检查键是否存在: true
 ```
 
 ## 作用域 / Scope

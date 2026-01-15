@@ -181,15 +181,51 @@ match nlu_parser.parse("定义一个函数add，参数是x和y，x加y") {
 
 未来版本将集成机器学习模型以提升理解能力。
 
+## 数据结构 / Data Structures
+
+### 列表操作 ✅ 已实现
+
+Aevolang 现在支持列表数据结构及其基本操作：
+
+```lisp
+; 创建列表
+(list 1 2 3)
+(list "a" "b" "c")
+
+; 列表操作
+(list-length (list 1 2 3))           ; 获取长度
+(list-get (list 10 20 30) 1)         ; 获取元素
+(list-set (list 1 2 3) 0 10)         ; 设置元素
+(list-append (list 1 2) 3)           ; 追加元素
+(+ (list 1 2) (list 3 4))           ; 列表连接
+```
+
+### 字典操作 ✅ 已实现
+
+Aevolang 现在支持字典（键值对）数据结构：
+
+```lisp
+; 创建字典
+(dict "name" "Aevolang" "version" "1.0")
+(dict "x" 1 "y" 2)
+
+; 字典操作
+(dict-get (dict "name" "Aevo") "name")    ; 获取值
+(dict-set (dict "x" 1) "y" 2)            ; 设置键值
+(dict-keys (dict "a" 1 "b" 2))           ; 获取所有键
+(dict-values (dict "a" 1 "b" 2))         ; 获取所有值
+(dict-has (dict "name" "Aevo") "name")   ; 检查键是否存在
+```
+
 ## 未来特性 / Future Features
 
 以下特性正在开发中：
 
-1. **列表操作**
+1. **高级列表操作**
    ```lisp
-   (list 1 2 3)
    (map square (list 1 2 3))
    (filter isEven (list 1 2 3))
+   (reduce + 0 (list 1 2 3))
    ```
 
 2. **模式匹配**

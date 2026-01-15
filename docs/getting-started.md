@@ -34,6 +34,8 @@ Aevolang 使用 S-expression 风格语法（类似 Lisp），所有代码都是�
 true        ; 布尔值 / Boolean
 false       ; 布尔值 / Boolean
 null        ; 空值 / Null
+(list 1 2 3)                    ; 列表 / List
+(dict "name" "Aevo" "v" 1.0)    ; 字典 / Dictionary
 ```
 
 ### 算术运算 / Arithmetic Operations
