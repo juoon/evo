@@ -456,17 +456,34 @@ fn convert_to_executable(elements: &[crate::grammar::core::GrammarElement]) -> O
     }
 }
 
+/// 格式化字面量为字符串
+/// Format literal as string
+fn format_literal(lit: &crate::grammar::core::Literal) -> String {
+    match lit {
+        crate::grammar::core::Literal::Int(i) => i.to_string(),
+        crate::grammar::core::Literal::Float(f) => f.to_string(),
+        crate::grammar::core::Literal::String(s) => format!("\"{}\"", s),
+        crate::grammar::core::Literal::Bool(b) => b.to_string(),
+        crate::grammar::core::Literal::Null => "null".to_string(),
+        crate::grammar::core::Literal::List(items) => {
+            let items_str: Vec<String> = items.iter().map(|item| format_expr(item)).collect();
+            format!("[{}]", items_str.join(", "))
+        }
+        crate::grammar::core::Literal::Dict(pairs) => {
+            let pairs_str: Vec<String> = pairs
+                .iter()
+                .map(|(k, v)| format!("\"{}\": {}", k, format_expr(v)))
+                .collect();
+            format!("{{{}}}", pairs_str.join(", "))
+        }
+    }
+}
+
 /// 格式化表达式为字符串
 /// Format expression as string
 fn format_expr(expr: &crate::grammar::core::Expr) -> String {
     match expr {
-        crate::grammar::core::Expr::Literal(lit) => match lit {
-            crate::grammar::core::Literal::Int(i) => i.to_string(),
-            crate::grammar::core::Literal::Float(f) => f.to_string(),
-            crate::grammar::core::Literal::String(s) => format!("\"{}\"", s),
-            crate::grammar::core::Literal::Bool(b) => b.to_string(),
-            crate::grammar::core::Literal::Null => "null".to_string(),
-        },
+        crate::grammar::core::Expr::Literal(lit) => format_literal(lit),
         crate::grammar::core::Expr::Var(v) => v.clone(),
         crate::grammar::core::Expr::Call(name, args) => {
             let mut result = format!("({}", name);
@@ -635,8 +652,14 @@ fn demonstrate_data_structures() {
     println!("\n--- 测试列表操作 / Testing List Operations ---");
     let list_tests = vec![
         ("(list 1 2 3)", "创建列表 / Create list"),
-        ("(list-length (list 1 2 3))", "获取列表长度 / Get list length"),
-        ("(list-get (list 10 20 30) 1)", "获取列表元素 / Get list element"),
+        (
+            "(list-length (list 1 2 3))",
+            "获取列表长度 / Get list length",
+        ),
+        (
+            "(list-get (list 10 20 30) 1)",
+            "获取列表元素 / Get list element",
+        ),
         ("(list-append (list 1 2) 3)", "追加元素 / Append element"),
         ("(+ (list 1 2) (list 3 4))", "列表连接 / List concatenation"),
     ];
@@ -645,16 +668,14 @@ fn demonstrate_data_structures() {
         println!("\n测试: {} / Test: {}", description, description);
         println!("代码: {} / Code: {}", code, code);
         match parser.parse(code) {
-            Ok(ast) => {
-                match interpreter.execute(&ast) {
-                    Ok(value) => {
-                        println!("结果: {} / Result: {}", value, value);
-                    }
-                    Err(e) => {
-                        println!("执行错误 / Execution Error: {:?}", e);
-                    }
+            Ok(ast) => match interpreter.execute(&ast) {
+                Ok(value) => {
+                    println!("结果: {} / Result: {}", value, value);
                 }
-            }
+                Err(e) => {
+                    println!("执行错误 / Execution Error: {:?}", e);
+                }
+            },
             Err(e) => {
                 println!("解析错误 / Parse Error: {:?}", e);
             }
@@ -664,27 +685,40 @@ fn demonstrate_data_structures() {
     // 测试字典操作
     println!("\n--- 测试字典操作 / Testing Dictionary Operations ---");
     let dict_tests = vec![
-        ("(dict \"name\" \"Aevolang\" \"version\" \"1.0\")", "创建字典 / Create dictionary"),
-        ("(dict-get (dict \"name\" \"Aevolang\") \"name\")", "获取字典值 / Get dictionary value"),
-        ("(dict-set (dict \"x\" 1) \"y\" 2)", "设置字典值 / Set dictionary value"),
-        ("(dict-keys (dict \"a\" 1 \"b\" 2))", "获取所有键 / Get all keys"),
-        ("(dict-has (dict \"name\" \"Aevolang\") \"name\")", "检查键是否存在 / Check if key exists"),
+        (
+            "(dict \"name\" \"Aevolang\" \"version\" \"1.0\")",
+            "创建字典 / Create dictionary",
+        ),
+        (
+            "(dict-get (dict \"name\" \"Aevolang\") \"name\")",
+            "获取字典值 / Get dictionary value",
+        ),
+        (
+            "(dict-set (dict \"x\" 1) \"y\" 2)",
+            "设置字典值 / Set dictionary value",
+        ),
+        (
+            "(dict-keys (dict \"a\" 1 \"b\" 2))",
+            "获取所有键 / Get all keys",
+        ),
+        (
+            "(dict-has (dict \"name\" \"Aevolang\") \"name\")",
+            "检查键是否存在 / Check if key exists",
+        ),
     ];
 
     for (code, description) in dict_tests {
         println!("\n测试: {} / Test: {}", description, description);
         println!("代码: {} / Code: {}", code, code);
         match parser.parse(code) {
-            Ok(ast) => {
-                match interpreter.execute(&ast) {
-                    Ok(value) => {
-                        println!("结果: {} / Result: {}", value, value);
-                    }
-                    Err(e) => {
-                        println!("执行错误 / Execution Error: {:?}", e);
-                    }
+            Ok(ast) => match interpreter.execute(&ast) {
+                Ok(value) => {
+                    println!("结果: {} / Result: {}", value, value);
                 }
-            }
+                Err(e) => {
+                    println!("执行错误 / Execution Error: {:?}", e);
+                }
+            },
             Err(e) => {
                 println!("解析错误 / Parse Error: {:?}", e);
             }
