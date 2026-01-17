@@ -59,6 +59,9 @@ fn main() {
 
     // 演示代码自动重构 / Demonstrate automatic code refactoring
     demonstrate_code_refactoring();
+
+    // 演示自我进化 / Demonstrate self-evolution
+    demonstrate_self_evolution();
 }
 
 /// 演示解释器功能 / Demonstrate interpreter functionality
@@ -1152,4 +1155,38 @@ fn demonstrate_code_refactoring() {
 
     println!("\n提示 / Note: 代码自动重构能够根据分析结果自动改进代码，实现真正的自进化");
     println!("Automatic code refactoring can improve code based on analysis results, achieving true self-evolution");
+}
+
+/// 演示自我进化功能 / Demonstrate self-evolution functionality
+fn demonstrate_self_evolution() {
+    println!("\n14. 自我进化演示 / Self-Evolution Demo");
+    println!("--------------------------------------------");
+
+    use crate::evolution::EvolutionEngine;
+
+    let mut engine = EvolutionEngine::new();
+
+    println!("执行自我进化 / Performing Self-Evolution:");
+    match engine.self_evolve() {
+        Ok(result) => {
+            println!("自我进化结果 / Self-Evolution Result:");
+            println!("  {}", serde_json::to_string_pretty(&result).unwrap_or_default());
+            
+            // 显示自我反思 / Show self-reflection
+            println!("\n自我反思 / Self-Reflection:");
+            let reflection = engine.self_reflect();
+            println!("  {}", serde_json::to_string_pretty(&reflection).unwrap_or_default());
+            
+            // 显示知识图谱统计 / Show knowledge graph statistics
+            println!("\n知识图谱统计 / Knowledge Graph Statistics:");
+            let stats = engine.get_knowledge_stats();
+            println!("  {}", serde_json::to_string_pretty(&stats).unwrap_or_default());
+        }
+        Err(e) => {
+            println!("自我进化错误 / Self-Evolution Error: {:?}", e);
+        }
+    }
+
+    println!("\n提示 / Note: 自我进化功能让语言能够自动分析和改进自身实现，形成完整的自进化闭环");
+    println!("Self-evolution allows the language to automatically analyze and improve its own implementation, forming a complete self-evolution loop");
 }

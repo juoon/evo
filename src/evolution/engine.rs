@@ -186,6 +186,81 @@ impl EvolutionEngine {
         refactorer.refactor(ast, &analysis)
     }
 
+    /// 自我进化：自动改进自身实现 / Self-evolution: automatically improve own implementation
+    pub fn self_evolve(&mut self) -> Result<serde_json::Value, EvolutionError> {
+        // 分析当前规则 / Analyze current rules
+        let mut improvement_count = 0;
+        let mut improvements = Vec::new();
+
+        // 分析每个规则 / Analyze each rule
+        for (i, rule) in self.syntax_mutations.iter().enumerate() {
+            // 将规则转换为AST进行分析 / Convert rule to AST for analysis
+            let rule_ast = vec![GrammarElement::Atom(rule.name.clone())];
+            let analysis = self.analyze_code(&rule_ast);
+            
+            // 如果有优化建议，记录 / If optimization suggestions exist, record
+            if !analysis.suggestions.is_empty() {
+                improvement_count += 1;
+                improvements.push(serde_json::json!({
+                    "rule_index": i,
+                    "rule_name": rule.name,
+                    "suggestions_count": analysis.suggestions.len(),
+                    "complexity": analysis.complexity,
+                }));
+            }
+        }
+
+        // 如果发现可改进的规则，触发进化 / If improvable rules found, trigger evolution
+        if improvement_count > 0 {
+            // 记录自我进化事件 / Record self-evolution event
+            let event = EvolutionEvent {
+                id: uuid::Uuid::new_v4(),
+                timestamp: chrono::Utc::now(),
+                event_type: EvolutionType::SemanticEvolution,
+                before_state: crate::evolution::tracker::StateSnapshot {
+                    grammar_rules: self.syntax_mutations.clone(),
+                    version: "0.1.0".to_string(),
+                    metadata: serde_json::json!({}),
+                },
+                after_state: crate::evolution::tracker::StateSnapshot {
+                    grammar_rules: self.syntax_mutations.clone(),
+                    version: "0.1.0".to_string(),
+                    metadata: serde_json::json!({
+                        "self_evolution": true,
+                        "improvement_count": improvement_count,
+                    }),
+                },
+                trigger: crate::evolution::tracker::TriggerContext {
+                    source: TriggerSource::UsagePatternAnalysis,
+                    conditions: vec![format!("发现 {} 个可改进的规则", improvement_count)],
+                    environment: serde_json::json!({}),
+                },
+                author: None,
+                success_metrics: None,
+                delta: crate::evolution::tracker::EvolutionDelta {
+                    description: format!("自我进化：发现 {} 个可改进的规则", improvement_count),
+                    added_rules: Vec::new(),
+                    removed_rules: Vec::new(),
+                    modified_rules: Vec::new(),
+                },
+            };
+            
+            self.tracker.record(event);
+            self.rebuild_knowledge();
+        }
+
+        Ok(serde_json::json!({
+            "self_evolution_performed": improvement_count > 0,
+            "improvement_count": improvement_count,
+            "improvements": improvements,
+            "message": if improvement_count > 0 {
+                format!("发现并记录了 {} 个可改进的规则", improvement_count)
+            } else {
+                "当前实现已是最优".to_string()
+            }
+        }))
+    }
+
     /// 自我反思：评估进化效果 / Self-reflection: evaluate evolution effectiveness
     pub fn self_reflect(&self) -> serde_json::Value {
         let history = self.tracker.get_history();
