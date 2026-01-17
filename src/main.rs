@@ -62,6 +62,9 @@ fn main() {
 
     // 演示自我进化 / Demonstrate self-evolution
     demonstrate_self_evolution();
+
+    // 演示上下文理解 / Demonstrate context understanding
+    demonstrate_context_understanding();
 }
 
 /// 演示解释器功能 / Demonstrate interpreter functionality
@@ -1189,4 +1192,66 @@ fn demonstrate_self_evolution() {
 
     println!("\n提示 / Note: 自我进化功能让语言能够自动分析和改进自身实现，形成完整的自进化闭环");
     println!("Self-evolution allows the language to automatically analyze and improve its own implementation, forming a complete self-evolution loop");
+}
+
+/// 演示上下文理解功能 / Demonstrate context understanding functionality
+fn demonstrate_context_understanding() {
+    println!("\n15. 上下文理解演示 / Context Understanding Demo");
+    println!("--------------------------------------------");
+
+    use crate::parser::{AdaptiveParser, ContextManager, NLUParser};
+
+    let parser = AdaptiveParser::new(true);
+    let nlu_parser = NLUParser::new(crate::parser::nlu::ModelType::LocalLightweight, true);
+    let mut context = ContextManager::new("session_001".to_string());
+
+    // 多轮对话示例 / Multi-turn conversation example
+    let conversations = vec![
+        ("定义变量x等于5", "第一轮：定义变量"),
+        ("上面的x加上3", "第二轮：引用之前的变量"),
+        ("定义函数add，参数是x和y，返回x加y", "第三轮：定义函数"),
+        ("调用上面的add函数，参数是2和3", "第四轮：引用之前的函数"),
+    ];
+
+    for (input, description) in conversations {
+        println!("\n{} / {}", description, description);
+        println!("输入 / Input: {}", input);
+
+        // 解析输入 / Parse input
+        match nlu_parser.parse(input) {
+            Ok(intent) => {
+                // 添加上下文 / Add context
+                let turn_id = context.add_turn(input.to_string(), Some(intent.clone()));
+                println!("  解析成功 / Parse success, turn ID: {}", turn_id);
+
+                // 使用上下文解析 / Parse with context
+                match context.parse_with_context(input) {
+                    Ok(enhanced_intent) => {
+                        println!("  上下文解析 / Context parsing:");
+                        println!("    引用数量 / References: {}", enhanced_intent.context_references.len());
+                        println!("    解析的变量 / Resolved variables: {}", enhanced_intent.resolved_variables.len());
+                        println!("    解析的函数 / Resolved functions: {}", enhanced_intent.resolved_functions.len());
+
+                        for reference in &enhanced_intent.context_references {
+                            println!("    引用 / Reference: {}", reference.description);
+                        }
+                    }
+                    Err(e) => {
+                        println!("  上下文解析错误 / Context parse error: {:?}", e);
+                    }
+                }
+            }
+            Err(e) => {
+                println!("  解析错误 / Parse error: {:?}", e);
+            }
+        }
+    }
+
+    println!("\n对话历史 / Conversation History:");
+    for turn in context.get_history() {
+        println!("  轮次 {} / Turn {}: {}", turn.turn_id, turn.turn_id, turn.user_input);
+    }
+
+    println!("\n提示 / Note: 上下文理解功能让语言能够理解多轮对话，记住之前的上下文，实现更自然的交互");
+    println!("Context understanding allows the language to understand multi-turn conversations and remember previous context for more natural interaction");
 }
