@@ -8,6 +8,7 @@ pub mod engine;
 pub mod error_recovery;
 pub mod knowledge;
 pub mod learning;
+pub mod optimizer;
 pub mod quality_assessor;
 pub mod tracker;
 
@@ -17,6 +18,7 @@ pub use engine::*;
 pub use error_recovery::*;
 pub use knowledge::*;
 pub use learning::*;
+pub use optimizer::*;
 pub use quality_assessor::*;
 pub use tracker::*;
 
