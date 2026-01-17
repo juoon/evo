@@ -170,6 +170,68 @@ impl EvolutionEngine {
         })
     }
 
+    /// 自我反思：评估进化效果 / Self-reflection: evaluate evolution effectiveness
+    pub fn self_reflect(&self) -> serde_json::Value {
+        let history = self.tracker.get_history();
+        let mut reflection = serde_json::json!({});
+
+        // 统计进化频率 / Statistics on evolution frequency
+        let evolution_count = history.len();
+        let recent_evolutions = history.iter()
+            .filter(|e| {
+                let days_ago = (chrono::Utc::now() - e.timestamp).num_days();
+                days_ago <= 7
+            })
+            .count();
+
+        // 分析进化趋势 / Analyze evolution trends
+        let mut syntax_evolutions = 0;
+        let mut semantic_evolutions = 0;
+        for event in history {
+            match event.event_type {
+                crate::evolution::tracker::EvolutionType::SyntaxEvolution => syntax_evolutions += 1,
+                crate::evolution::tracker::EvolutionType::SemanticEvolution => semantic_evolutions += 1,
+                _ => {}
+            }
+        }
+
+        // 评估知识图谱的丰富度 / Evaluate knowledge graph richness
+        let stats = self.get_knowledge_stats();
+        let knowledge_richness = if stats["nodes_count"].as_u64().unwrap_or(0) > 10 {
+            "丰富"
+        } else if stats["nodes_count"].as_u64().unwrap_or(0) > 5 {
+            "中等"
+        } else {
+            "基础"
+        };
+
+        reflection = serde_json::json!({
+            "total_evolutions": evolution_count,
+            "recent_evolutions_7days": recent_evolutions,
+            "syntax_evolutions": syntax_evolutions,
+            "semantic_evolutions": semantic_evolutions,
+            "knowledge_richness": knowledge_richness,
+            "rules_count": self.syntax_mutations.len(),
+            "knowledge_nodes": stats["nodes_count"],
+            "patterns_discovered": stats["patterns_count"],
+            "self_assessment": if evolution_count > 5 && stats["nodes_count"].as_u64().unwrap_or(0) > 5 {
+                "语言正在积极进化，知识图谱不断丰富"
+            } else if evolution_count > 0 {
+                "语言开始进化，知识图谱正在构建"
+            } else {
+                "语言处于初始状态，等待进化触发"
+            },
+        });
+
+        reflection
+    }
+
+    /// 查找相似规则 / Find similar rules
+    pub fn find_similar_rules(&self, rule_name: &str) -> Vec<(String, f64)> {
+        let entity_id = format!("rule:{}", rule_name);
+        self.knowledge_graph.find_similar_entities(&entity_id, 0.3)
+    }
+
     /// 从诗歌理解中学习并进化 / Learn and evolve from poetry understanding
     pub fn evolve_from_poetry(&mut self, poem: &str) -> Result<Vec<GrammarRule>, EvolutionError> {
         // 解析诗歌 / Parse poetry

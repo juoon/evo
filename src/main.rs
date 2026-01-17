@@ -343,6 +343,31 @@ fn demonstrate_evolution_engine() {
             println!("  进化错误 / Evolution error: {:?}", e);
         }
     }
+
+    // 演示自我反思 / Demonstrate self-reflection
+    println!("\n自我反思 / Self-Reflection:");
+    let reflection = engine.self_reflect();
+    println!("  总进化次数 / Total Evolutions: {}", reflection["total_evolutions"]);
+    println!("  最近7天进化 / Recent 7 Days: {}", reflection["recent_evolutions_7days"]);
+    println!("  语法进化 / Syntax Evolutions: {}", reflection["syntax_evolutions"]);
+    println!("  语义进化 / Semantic Evolutions: {}", reflection["semantic_evolutions"]);
+    println!("  知识丰富度 / Knowledge Richness: {}", reflection["knowledge_richness"]);
+    println!("  自我评估 / Self Assessment: {}", reflection["self_assessment"]);
+
+    // 演示相似规则查找 / Demonstrate similar rule finding
+    if !engine.get_syntax_rules().is_empty() {
+        println!("\n相似规则查找 / Similar Rules Finding:");
+        let first_rule = &engine.get_syntax_rules()[0];
+        let similar = engine.find_similar_rules(&first_rule.name);
+        if similar.is_empty() {
+            println!("  暂无相似规则 / No similar rules found");
+        } else {
+            println!("  规则 '{}' 的相似规则 / Similar rules to '{}':", first_rule.name, first_rule.name);
+            for (rule_id, similarity) in similar.iter().take(3) {
+                println!("    {} (相似度: {:.2})", rule_id, similarity);
+            }
+        }
+    }
 }
 
 /// 演示NLU自然语言理解功能 / Demonstrate NLU natural language understanding

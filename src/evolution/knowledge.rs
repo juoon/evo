@@ -102,13 +102,14 @@ impl EvolutionKnowledgeGraph {
         // 新规则与旧规则的关系 / Relations between new and old rules
         for new_rule in &event.delta.added_rules {
             for old_rule in &event.before_state.grammar_rules {
-                // 检查相似性（简单的名称匹配） / Check similarity (simple name matching)
-                if new_rule.name.contains(&old_rule.name) || old_rule.name.contains(&new_rule.name) {
+                // 计算相似度 / Calculate similarity
+                let similarity = self.calculate_rule_similarity(old_rule, new_rule);
+                if similarity > 0.3 {
                     relations.push(Relation {
                         from: format!("rule:{}", old_rule.name),
                         to: format!("rule:{}", new_rule.name),
                         relation_type: RelationType::EvolvedFrom,
-                        weight: 0.7,
+                        weight: similarity,
                     });
                 }
             }
@@ -163,6 +164,156 @@ impl EvolutionKnowledgeGraph {
         predictions.truncate(5); // 返回前5个预测 / Return top 5 predictions
         
         predictions
+    }
+
+    /// 计算规则相似度 / Calculate rule similarity
+    fn calculate_rule_similarity(&self, rule1: &crate::grammar::rule::GrammarRule, rule2: &crate::grammar::rule::GrammarRule) -> f64 {
+        let mut similarity = 0.0;
+        let mut factors = 0;
+
+        // 名称相似度 / Name similarity
+        if rule1.name == rule2.name {
+            similarity += 1.0;
+        } else if rule1.name.contains(&rule2.name) || rule2.name.contains(&rule1.name) {
+            similarity += 0.6;
+        } else {
+            // 简单的编辑距离相似度 / Simple edit distance similarity
+            let name_sim = self.string_similarity(&rule1.name, &rule2.name);
+            similarity += name_sim * 0.4;
+        }
+        factors += 1;
+
+        // 模式相似度 / Pattern similarity
+        if rule1.pattern.elements.len() == rule2.pattern.elements.len() {
+            let mut pattern_match = 0;
+            for (e1, e2) in rule1.pattern.elements.iter().zip(rule2.pattern.elements.iter()) {
+                if self.pattern_elements_similar(e1, e2) {
+                    pattern_match += 1;
+                }
+            }
+            if rule1.pattern.elements.len() > 0 {
+                similarity += (pattern_match as f64 / rule1.pattern.elements.len() as f64) * 0.4;
+            }
+        }
+        factors += 1;
+
+        // 产生式相似度 / Production similarity
+        let prod_sim = self.production_similarity(&rule1.production, &rule2.production);
+        similarity += prod_sim * 0.2;
+        factors += 1;
+
+        // 归一化 / Normalize
+        if factors > 0 {
+            similarity / factors as f64
+        } else {
+            0.0
+        }
+    }
+
+    /// 字符串相似度（简单的编辑距离） / String similarity (simple edit distance)
+    fn string_similarity(&self, s1: &str, s2: &str) -> f64 {
+        if s1 == s2 {
+            return 1.0;
+        }
+        if s1.is_empty() || s2.is_empty() {
+            return 0.0;
+        }
+        
+        // 简单的共同字符比例 / Simple common character ratio
+        let common_chars: usize = s1.chars()
+            .filter(|c| s2.contains(*c))
+            .count();
+        let max_len = s1.len().max(s2.len());
+        if max_len > 0 {
+            (common_chars as f64 / max_len as f64).min(1.0)
+        } else {
+            0.0
+        }
+    }
+
+    /// 模式元素相似度 / Pattern element similarity
+    fn pattern_elements_similar(&self, e1: &crate::grammar::rule::PatternElement, e2: &crate::grammar::rule::PatternElement) -> bool {
+        match (e1, e2) {
+            (
+                crate::grammar::rule::PatternElement::Keyword(k1),
+                crate::grammar::rule::PatternElement::Keyword(k2),
+            ) => k1 == k2,
+            (
+                crate::grammar::rule::PatternElement::Identifier(i1),
+                crate::grammar::rule::PatternElement::Identifier(i2),
+            ) => i1 == i2,
+            (
+                crate::grammar::rule::PatternElement::NaturalLang(n1),
+                crate::grammar::rule::PatternElement::NaturalLang(n2),
+            ) => n1 == n2 || self.string_similarity(n1, n2) > 0.7,
+            _ => false,
+        }
+    }
+
+    /// 产生式相似度 / Production similarity
+    fn production_similarity(&self, p1: &crate::grammar::rule::Production, p2: &crate::grammar::rule::Production) -> f64 {
+        // 简化：比较目标结构 / Simplified: compare target structure
+        let t1 = serde_json::to_string(&p1.target).unwrap_or_default();
+        let t2 = serde_json::to_string(&p2.target).unwrap_or_default();
+        if t1 == t2 {
+            1.0
+        } else {
+            self.string_similarity(&t1, &t2) * 0.5
+        }
+    }
+
+    /// 查找相似实体 / Find similar entities
+    pub fn find_similar_entities(&self, entity_id: &str, threshold: f64) -> Vec<(String, f64)> {
+        let mut similar = Vec::new();
+        
+        if let Some(node) = self.graph.get(entity_id) {
+            for (other_id, other_node) in &self.graph {
+                if other_id != entity_id {
+                    let similarity = self.calculate_node_similarity(node, other_node);
+                    if similarity >= threshold {
+                        similar.push((other_id.clone(), similarity));
+                    }
+                }
+            }
+        }
+        
+        similar.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+        similar
+    }
+
+    /// 计算节点相似度 / Calculate node similarity
+    fn calculate_node_similarity(&self, node1: &KnowledgeNode, node2: &KnowledgeNode) -> f64 {
+        let mut similarity = 0.0;
+        let mut factors = 0;
+
+        // 节点类型相似度 / Node type similarity
+        if node1.node_type == node2.node_type {
+            similarity += 0.3;
+        }
+        factors += 1;
+
+        // ID相似度 / ID similarity
+        let id_sim = self.string_similarity(&node1.id, &node2.id);
+        similarity += id_sim * 0.4;
+        factors += 1;
+
+        // 事件重叠度 / Event overlap
+        if !node1.events.is_empty() && !node2.events.is_empty() {
+            let common_events: usize = node1.events.iter()
+                .filter(|e| node2.events.contains(e))
+                .count();
+            let max_events = node1.events.len().max(node2.events.len());
+            if max_events > 0 {
+                similarity += (common_events as f64 / max_events as f64) * 0.3;
+            }
+        }
+        factors += 1;
+
+        if factors > 0 {
+            similarity / factors as f64
+        } else {
+            0.0
+        }
     }
 }
 
