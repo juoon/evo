@@ -53,6 +53,9 @@ fn main() {
 
     // 演示代码解释 / Demonstrate code explanation
     demonstrate_code_explanation();
+
+    // 演示代码分析 / Demonstrate code analysis
+    demonstrate_code_analysis();
 }
 
 /// 演示解释器功能 / Demonstrate interpreter functionality
@@ -1013,4 +1016,75 @@ fn demonstrate_code_explanation() {
 
     println!("\n提示 / Note: 代码解释功能帮助理解代码含义，增强代码可读性");
     println!("Code explanation helps understand code meaning and enhances code readability");
+}
+
+/// 演示代码分析功能 / Demonstrate code analysis functionality
+fn demonstrate_code_analysis() {
+    println!("\n12. 代码分析演示 / Code Analysis Demo");
+    println!("--------------------------------------------");
+
+    use crate::parser::AdaptiveParser;
+    use crate::evolution::{CodeAnalyzer, EvolutionEngine};
+
+    let parser = AdaptiveParser::new(true);
+    let analyzer = CodeAnalyzer::new();
+    let engine = EvolutionEngine::new();
+
+    // 测试代码：一个复杂的示例 / Test code: a complex example
+    let test_code = r#"
+(def complex_function (x y)
+  (if (> x 5)
+    (if (> y 10)
+      (if (> (+ x y) 20)
+        (* x y)
+        (+ x y))
+      (- x y))
+    (+ x y)))
+"#;
+
+    println!("测试代码 / Test Code:");
+    println!("{}", test_code);
+
+    match parser.parse(test_code) {
+        Ok(ast) => {
+            // 分析代码 / Analyze code
+            let analysis = analyzer.analyze(&ast);
+            
+            println!("\n代码分析结果 / Code Analysis Result:");
+            println!("复杂度 / Complexity: {:.2}", analysis.complexity);
+            
+            println!("\n代码统计 / Code Statistics:");
+            println!("  函数数量 / Function count: {}", analysis.statistics.function_count);
+            println!("  变量数量 / Variable count: {}", analysis.statistics.variable_count);
+            println!("  平均函数长度 / Avg function length: {:.2}", analysis.statistics.avg_function_length);
+            println!("  最大嵌套深度 / Max nesting depth: {}", analysis.statistics.max_nesting_depth);
+            println!("  表达式复杂度 / Expression complexity: {:.2}", analysis.statistics.expression_complexity);
+
+            println!("\n发现的模式 / Patterns Found:");
+            for pattern in &analysis.patterns {
+                println!("  - {:?}: {} (置信度: {:.2})", pattern.pattern_type, pattern.description, pattern.confidence);
+            }
+
+            println!("\n优化建议 / Optimization Suggestions:");
+            for (i, suggestion) in analysis.suggestions.iter().enumerate() {
+                println!("\n  建议 {} / Suggestion {}:", i + 1, i + 1);
+                println!("    类型 / Type: {:?}", suggestion.suggestion_type);
+                println!("    描述 / Description: {}", suggestion.description);
+                println!("    改进程度 / Improvement: {:.2}", suggestion.improvement);
+            }
+
+            // 使用进化引擎分析 / Use evolution engine to analyze
+            let engine_analysis = engine.analyze_code(&ast);
+            println!("\n使用进化引擎分析 / Analysis using Evolution Engine:");
+            println!("  复杂度 / Complexity: {:.2}", engine_analysis.complexity);
+            println!("  发现 {} 个模式 / Found {} patterns", engine_analysis.patterns.len(), engine_analysis.patterns.len());
+            println!("  生成 {} 个建议 / Generated {} suggestions", engine_analysis.suggestions.len(), engine_analysis.suggestions.len());
+        }
+        Err(e) => {
+            println!("解析错误 / Parse error: {:?}", e);
+        }
+    }
+
+    println!("\n提示 / Note: 代码分析帮助识别代码模式和优化机会，促进代码质量提升");
+    println!("Code analysis helps identify patterns and optimization opportunities, promoting code quality improvement");
 }

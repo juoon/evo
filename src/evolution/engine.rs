@@ -170,6 +170,12 @@ impl EvolutionEngine {
         })
     }
 
+    /// 分析代码并提供优化建议 / Analyze code and provide optimization suggestions
+    pub fn analyze_code(&self, ast: &[GrammarElement]) -> crate::evolution::analyzer::CodeAnalysis {
+        let analyzer = crate::evolution::analyzer::CodeAnalyzer::new();
+        analyzer.analyze(ast)
+    }
+
     /// 自我反思：评估进化效果 / Self-reflection: evaluate evolution effectiveness
     pub fn self_reflect(&self) -> serde_json::Value {
         let history = self.tracker.get_history();
