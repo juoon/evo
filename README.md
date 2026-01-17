@@ -258,6 +258,12 @@ match parser.parse(code) {
 
 ; 检查键是否存在 / Check if key exists
 (dict-has (dict "name" "Aevolang") "name")  ; 返回 true
+
+; 字典合并 / Dictionary merge (V1.0.51)
+(dict-merge (dict "a" 1 "b" 2) (dict "c" 3))  ; 返回 {"a": 1, "b": 2, "c": 3}
+
+; 字典大小 / Dictionary size (V1.0.51)
+(dict-size (dict "x" 1 "y" 2 "z" 3))  ; 返回 3
 ```
 
 ### 模块系统 / Module System
@@ -350,6 +356,8 @@ match parser.parse(code) {
   - 列表操作：`list-get`, `list-set`, `list-append`, `list-length`
   - 字典操作：`dict-get`, `dict-set`, `dict-keys`, `dict-values`, `dict-has`
   - 列表连接：使用 `+` 操作符连接两个列表
+  - **增强列表操作（V1.0.51）**：`list-slice`, `list-reverse`, `list-sort`, `list-unique`, `list-flatten`
+  - **增强字典操作（V1.0.51）**：`dict-merge`, `dict-size`
 - ✅ **模块系统** - 导入与命名空间
   - 导入模块：`(import "module")` 或 `(import "module" "alias")`
   - 模块命名空间调用：`(module.function ...)`
