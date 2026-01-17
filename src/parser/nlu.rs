@@ -282,11 +282,12 @@ impl NLUParser {
         let var_name = self.extract_variable_name(input)?;
         let value = self.extract_variable_value(input)?;
         
-        // 构建变量定义: (let var_name value)
+        // 构建变量定义: (let var_name value var_name)
         let elements = vec![
             GrammarElement::Atom("let".to_string()),
-            GrammarElement::Atom(var_name),
+            GrammarElement::Atom(var_name.clone()),
             value,
+            GrammarElement::Expr(Box::new(Expr::Var(var_name))),
         ];
         
         Ok(vec![GrammarElement::List(elements)])
@@ -392,6 +393,25 @@ impl NLUParser {
         }
         
         result
+    }
+
+    /// 提取变量名（在值关键词前截断） / Extract identifier before value keyword
+    fn extract_identifier_before_value(&self, text: &str) -> String {
+        let keywords = ["等于", "=", "是", "为", "equals", "is", "be"];
+        let mut candidate = text.trim();
+        let mut cut_pos: Option<usize> = None;
+        for keyword in &keywords {
+            if let Some(pos) = candidate.find(keyword) {
+                cut_pos = match cut_pos {
+                    Some(existing) => Some(existing.min(pos)),
+                    None => Some(pos),
+                };
+            }
+        }
+        if let Some(pos) = cut_pos {
+            candidate = &candidate[..pos];
+        }
+        self.extract_identifier(candidate)
     }
 
     /// 提取函数参数 / Extract function parameters
@@ -588,14 +608,31 @@ impl NLUParser {
         // 中文模式：如果 ... [那么/则] ... 否则/不然 ...
         if let Some(if_pos) = input.find("如果") {
             let after_if = &input[if_pos + "如果".len()..];
-            if let Some(else_pos) = after_if.find("否则").or_else(|| after_if.find("不然")) {
+            if let Some(else_pos) = after_if.find("否则") {
                 let cond_then = &after_if[..else_pos];
-                let else_part = &after_if[else_pos + 2..];
+                let else_part = &after_if[else_pos + "否则".len()..];
                 let then_part = cond_then
                     .trim_start_matches("那么")
                     .trim_start_matches("则")
                     .trim();
-                return Ok((cond_then.trim().to_string(), then_part.to_string(), else_part.trim().to_string()));
+                return Ok((
+                    cond_then.trim().to_string(),
+                    then_part.to_string(),
+                    else_part.trim().to_string(),
+                ));
+            }
+            if let Some(else_pos) = after_if.find("不然") {
+                let cond_then = &after_if[..else_pos];
+                let else_part = &after_if[else_pos + "不然".len()..];
+                let then_part = cond_then
+                    .trim_start_matches("那么")
+                    .trim_start_matches("则")
+                    .trim();
+                return Ok((
+                    cond_then.trim().to_string(),
+                    then_part.to_string(),
+                    else_part.trim().to_string(),
+                ));
             }
         }
 
@@ -634,14 +671,14 @@ impl NLUParser {
         for (cn_pattern, en_pattern) in patterns {
             if let Some(pos) = input.find(cn_pattern) {
                 let after = &input[pos + cn_pattern.len()..];
-                let name = self.extract_identifier(after);
+                let name = self.extract_identifier_before_value(after);
                 if !name.is_empty() && name != "x" {
                     return Ok(name);
                 }
             }
             if let Some(pos) = input.find(en_pattern) {
                 let after = &input[pos + en_pattern.len()..];
-                let name = self.extract_identifier(after);
+                let name = self.extract_identifier_before_value(after);
                 if !name.is_empty() && name != "x" {
                     return Ok(name);
                 }
@@ -653,7 +690,7 @@ impl NLUParser {
             if let Some(pos) = input.find(keyword) {
                 let after = &input[pos + keyword.len()..];
                 let cleaned = after.trim_start_matches(|c: char| c == '一' || c == '个' || c == ' ' || c == 'a' || c == 'A');
-                let name = self.extract_identifier(cleaned);
+                let name = self.extract_identifier_before_value(cleaned);
                 if !name.is_empty() && name != "x" {
                     return Ok(name);
                 }
@@ -877,6 +914,11 @@ impl NLUParser {
         }
         if value == "false" || value == "假" {
             return Ok(Expr::Literal(Literal::Bool(false)));
+        }
+
+        // 尝试解析中文数字
+        if let Ok(num) = self.parse_chinese_number(value) {
+            return Ok(Expr::Literal(Literal::Int(num)));
         }
 
         // 尝试解析为字符串字面量
