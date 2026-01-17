@@ -86,6 +86,9 @@ fn main() {
 
     // 演示代码审查 / Demonstrate code review
     demonstrate_code_review();
+
+    // 演示代码文档生成 / Demonstrate code documentation generation
+    demonstrate_documentation_generation();
 }
 
 /// 演示解释器功能 / Demonstrate interpreter functionality
@@ -1933,7 +1936,10 @@ fn demonstrate_code_review() {
                 );
 
                 println!("\n问题统计 / Issue Statistics:");
-                println!("  总问题数 / Total Issues: {}", review_result.summary.total_issues);
+                println!(
+                    "  总问题数 / Total Issues: {}",
+                    review_result.summary.total_issues
+                );
                 println!(
                     "  严重问题 / Critical: {}",
                     review_result.summary.critical_issues
@@ -1945,10 +1951,7 @@ fn demonstrate_code_review() {
                 if !review_result.issues.is_empty() {
                     println!("\n发现的问题 / Issues Found:");
                     for (i, issue) in review_result.issues.iter().take(5).enumerate() {
-                        println!(
-                            "  {}. [{:?}] {}",
-                            i + 1, issue.severity, issue.description
-                        );
+                        println!("  {}. [{:?}] {}", i + 1, issue.severity, issue.description);
                         println!("     规则 / Rule: {}", issue.rule_name);
                         println!("     位置 / Location: {}", issue.location);
                         println!("     建议 / Suggestion: {}", issue.suggestion);
@@ -1979,17 +1982,110 @@ fn demonstrate_code_review() {
         if let Some(latest) = history.last() {
             println!("  最新审查 / Latest Review:");
             println!("    问题数 / Issues: {}", latest.issues_count);
-            println!("    时间 / Time: {}", latest.timestamp.format("%Y-%m-%d %H:%M:%S"));
+            println!(
+                "    时间 / Time: {}",
+                latest.timestamp.format("%Y-%m-%d %H:%M:%S")
+            );
         }
     }
 
     // 显示审查统计 / Show review statistics
     println!("\n审查统计 / Review Statistics:");
     let stats = reviewer.get_review_statistics();
-    println!("  {}", serde_json::to_string_pretty(&stats).unwrap_or_default());
+    println!(
+        "  {}",
+        serde_json::to_string_pretty(&stats).unwrap_or_default()
+    );
 
     println!(
         "\n提示 / Note: 代码审查能够自动检查代码问题，提供详细的审查报告，帮助提高代码质量和规范性"
     );
     println!("Code review can automatically check code issues, provide detailed review reports, and help improve code quality and standards");
+}
+
+/// 演示代码文档生成功能 / Demonstrate code documentation generation functionality
+fn demonstrate_documentation_generation() {
+    println!("\n23. 代码文档生成演示 / Code Documentation Generation Demo");
+    println!("--------------------------------------------");
+
+    use crate::evolution::{CodeAnalyzer, DocumentationGenerator};
+    use crate::evolution::DocFormat;
+    use crate::parser::AdaptiveParser;
+
+    let parser = AdaptiveParser::new(true);
+    let analyzer = CodeAnalyzer::new();
+    let mut doc_generator = DocumentationGenerator::new();
+
+    // 测试代码 / Test code
+    let test_code = r#"
+        (def add (x y) (+ x y))
+        (def multiply (x y) (* x y))
+        (let result (add 3 4))
+    "#;
+
+    println!("测试代码 / Test Code:\n{}", test_code);
+
+    match parser.parse(test_code) {
+        Ok(ast) => {
+            // 分析代码 / Analyze code
+            let analysis = analyzer.analyze(&ast);
+
+            // 生成Markdown文档 / Generate Markdown documentation
+            println!("\n生成Markdown文档 / Generating Markdown Documentation:");
+            let markdown_doc = doc_generator.generate_documentation(&ast, &analysis, DocFormat::Markdown);
+            
+            println!("\n生成的文档 / Generated Documentation:");
+            println!("{}", markdown_doc.content);
+            
+            println!("\n文档统计 / Document Statistics:");
+            println!("  总行数 / Total Lines: {}", markdown_doc.statistics.total_lines);
+            println!("  函数文档数 / Function Docs: {}", markdown_doc.statistics.function_docs);
+            println!("  变量文档数 / Variable Docs: {}", markdown_doc.statistics.variable_docs);
+
+            println!("\n文档质量 / Document Quality:");
+            println!("  完整性 / Completeness: {:.2}%", markdown_doc.quality.completeness);
+            println!("  清晰度 / Clarity: {:.2}%", markdown_doc.quality.clarity);
+            println!("  准确性 / Accuracy: {:.2}%", markdown_doc.quality.accuracy);
+            println!("  总体质量 / Overall: {:.2}%", markdown_doc.quality.overall);
+
+            // 生成API文档 / Generate API documentation
+            println!("\n生成API文档 / Generating API Documentation:");
+            let api_doc = doc_generator.generate_documentation(&ast, &analysis, DocFormat::ApiDoc);
+            println!("API文档长度 / API Doc Length: {} 行 / {} lines", api_doc.statistics.total_lines, api_doc.statistics.total_lines);
+
+            // 生成纯文本文档 / Generate plain text documentation
+            println!("\n生成纯文本文档 / Generating Plain Text Documentation:");
+            let plain_doc = doc_generator.generate_documentation(&ast, &analysis, DocFormat::PlainText);
+            println!("纯文本文档 / Plain Text Doc:\n{}", plain_doc.content);
+        }
+        Err(e) => {
+            println!("解析错误 / Parse error: {:?}", e);
+        }
+    }
+
+    // 显示文档历史 / Show documentation history
+    println!("\n文档生成历史 / Documentation Generation History:");
+    let history = doc_generator.get_doc_history();
+    if history.is_empty() {
+        println!("  暂无历史数据 / No history data yet");
+    } else {
+        println!("  记录数 / Records: {}", history.len());
+        if let Some(latest) = history.last() {
+            println!("  最新文档 / Latest Documentation:");
+            println!("    类型 / Type: {}", latest.doc_type);
+            println!("    长度 / Length: {} 行 / {} lines", latest.doc_length, latest.doc_length);
+            println!("    覆盖函数数 / Functions Covered: {}", latest.functions_covered);
+            println!("    时间 / Time: {}", latest.timestamp.format("%Y-%m-%d %H:%M:%S"));
+        }
+    }
+
+    // 显示文档统计 / Show documentation statistics
+    println!("\n文档统计 / Documentation Statistics:");
+    let stats = doc_generator.get_doc_statistics();
+    println!("  {}", serde_json::to_string_pretty(&stats).unwrap_or_default());
+
+    println!(
+        "\n提示 / Note: 代码文档生成能够自动为代码生成文档，提高代码可读性和可维护性，帮助开发者理解代码"
+    );
+    println!("Code documentation generation can automatically generate documentation for code, improving code readability and maintainability, and helping developers understand code");
 }

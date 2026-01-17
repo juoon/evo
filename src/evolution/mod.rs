@@ -5,6 +5,7 @@
 pub mod analyzer;
 pub mod code_generator;
 pub mod code_reviewer;
+pub mod doc_generator;
 pub mod engine;
 pub mod error_recovery;
 pub mod knowledge;
@@ -16,6 +17,7 @@ pub mod tracker;
 pub use analyzer::*;
 pub use code_generator::*;
 pub use code_reviewer::*;
+pub use doc_generator::*;
 pub use engine::*;
 pub use error_recovery::*;
 pub use knowledge::*;
