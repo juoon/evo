@@ -77,6 +77,9 @@ fn main() {
 
     // 演示智能代码生成 / Demonstrate intelligent code generation
     demonstrate_intelligent_code_generation();
+
+    // 演示代码质量评估 / Demonstrate code quality assessment
+    demonstrate_quality_assessment();
 }
 
 /// 演示解释器功能 / Demonstrate interpreter functionality
@@ -1577,8 +1580,8 @@ fn demonstrate_intelligent_code_generation() {
     println!("\n19. 智能代码生成演示 / Intelligent Code Generation Demo");
     println!("--------------------------------------------");
 
-    use crate::evolution::IntelligentCodeGenerator;
     use crate::evolution::GenerationContext;
+    use crate::evolution::IntelligentCodeGenerator;
 
     let mut generator = IntelligentCodeGenerator::new();
 
@@ -1642,4 +1645,80 @@ fn demonstrate_intelligent_code_generation() {
         "\n提示 / Note: 智能代码生成能够基于上下文、使用模式和学习结果生成更准确的代码，提供代码补全和优化建议"
     );
     println!("Intelligent code generation can generate more accurate code based on context, usage patterns, and learning results, providing code completion and optimization suggestions");
+}
+
+/// 演示代码质量评估功能 / Demonstrate code quality assessment functionality
+fn demonstrate_quality_assessment() {
+    println!("\n20. 代码质量评估演示 / Code Quality Assessment Demo");
+    println!("--------------------------------------------");
+
+    use crate::evolution::{CodeAnalyzer, QualityAssessor};
+    use crate::parser::AdaptiveParser;
+
+    let parser = AdaptiveParser::new(true);
+    let analyzer = CodeAnalyzer::new();
+    let mut assessor = QualityAssessor::new();
+
+    // 测试代码质量评估 / Test code quality assessment
+    let test_codes = vec![
+        ("(let x 5)", "简单变量定义 / Simple variable definition"),
+        ("(def add (x y) (+ x y))", "简单函数定义 / Simple function definition"),
+        ("(if (> x 0) x 0)", "条件表达式 / Conditional expression"),
+    ];
+
+    for (code, description) in test_codes {
+        println!("\n测试: {} / Test: {}", description, description);
+        println!("代码 / Code: {}", code);
+
+        match parser.parse(code) {
+            Ok(ast) => {
+                // 分析代码 / Analyze code
+                let analysis = analyzer.analyze(&ast);
+
+                // 评估质量 / Assess quality
+                let assessment = assessor.assess(&analysis);
+
+                println!("\n质量评估结果 / Quality Assessment Result:");
+                println!("  总体分数 / Overall Score: {:.2}/100", assessment.overall_score);
+                println!("  质量等级 / Quality Grade: {:?}", assessment.grade);
+                println!("  质量趋势 / Quality Trend: {:?}", assessment.trend);
+
+                println!("\n各维度分数 / Dimension Scores:");
+                println!("  可读性 / Readability: {:.2}/100", assessment.dimension_scores.readability);
+                println!("  可维护性 / Maintainability: {:.2}/100", assessment.dimension_scores.maintainability);
+                println!("  性能 / Performance: {:.2}/100", assessment.dimension_scores.performance);
+                println!("  安全性 / Security: {:.2}/100", assessment.dimension_scores.security);
+                println!("  简洁性 / Simplicity: {:.2}/100", assessment.dimension_scores.simplicity);
+
+                if !assessment.suggestions.is_empty() {
+                    println!("\n改进建议 / Improvement Suggestions:");
+                    for (i, suggestion) in assessment.suggestions.iter().take(5).enumerate() {
+                        println!("  {}. [{:?}] {}", i + 1, suggestion.priority, suggestion.description);
+                        println!("     改进方法 / Improvement: {}", suggestion.improvement);
+                    }
+                }
+            }
+            Err(e) => {
+                println!("解析错误 / Parse error: {:?}", e);
+            }
+        }
+    }
+
+    // 显示质量历史 / Show quality history
+    println!("\n质量历史 / Quality History:");
+    let history = assessor.get_quality_history();
+    if history.is_empty() {
+        println!("  暂无历史数据 / No history data yet");
+    } else {
+        println!("  记录数 / Records: {}", history.len());
+        if let Some(latest) = history.last() {
+            println!("  最新分数 / Latest Score: {:.2}/100", latest.overall_score);
+            println!("  最新时间 / Latest Time: {}", latest.timestamp.format("%Y-%m-%d %H:%M:%S"));
+        }
+    }
+
+    println!(
+        "\n提示 / Note: 代码质量评估能够从多个维度评估代码质量，提供改进建议，帮助持续提升代码质量"
+    );
+    println!("Code quality assessment can evaluate code quality from multiple dimensions, provide improvement suggestions, and help continuously improve code quality");
 }
