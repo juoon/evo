@@ -2,11 +2,11 @@
 // 驱动语言的自进化过程
 // Drives the self-evolution process of the language
 
+use crate::evolution::tracker::{EvolutionEvent, EvolutionTracker, EvolutionType, TriggerSource};
 use crate::grammar::core::GrammarElement;
 use crate::grammar::rule::{
     DefinitionMethod, GrammarRule, Pattern, PatternElement, Production, RuleMetadata, Stability,
 };
-use crate::evolution::tracker::{EvolutionTracker, EvolutionEvent, EvolutionType, TriggerSource};
 use crate::parser::nlu::NLUParser;
 use crate::parser::AdaptiveParser;
 use crate::runtime::interpreter::{Interpreter, Value};
@@ -22,24 +22,43 @@ pub struct EvolutionEngine {
     tracker: EvolutionTracker,
     /// NLU解析器 / NLU parser
     nlu_parser: NLUParser,
+    /// 知识图谱 / Knowledge graph
+    knowledge_graph: crate::evolution::knowledge::EvolutionKnowledgeGraph,
 }
 
 impl EvolutionEngine {
     /// 创建新进化引擎 / Create new evolution engine
     pub fn new() -> Self {
         let bootstrap_rules = Self::load_bootstrap_rules();
-        Self {
+        let mut engine = Self {
             syntax_mutations: bootstrap_rules,
             semantic_adaptations: Vec::new(),
             tracker: EvolutionTracker::new(),
             nlu_parser: NLUParser::new(crate::parser::nlu::ModelType::LocalLightweight, true),
-        }
+            knowledge_graph: crate::evolution::knowledge::EvolutionKnowledgeGraph::new(),
+        };
+        
+        // 从历史构建知识图谱 / Build knowledge graph from history
+        engine.rebuild_knowledge();
+        
+        engine
+    }
+    
+    /// 重建知识图谱 / Rebuild knowledge graph
+    fn rebuild_knowledge(&mut self) {
+        let history = self.tracker.get_history();
+        self.knowledge_graph.build_from_history(history);
     }
 
     /// 从自然语言进化 / Evolve from natural language
-    pub fn evolve_from_natural_language(&mut self, nl_input: &str) -> Result<Vec<GrammarRule>, EvolutionError> {
+    pub fn evolve_from_natural_language(
+        &mut self,
+        nl_input: &str,
+    ) -> Result<Vec<GrammarRule>, EvolutionError> {
         // 解析自然语言意图 / Parse natural language intent
-        let intent = self.nlu_parser.extract_intent(nl_input)
+        let intent = self
+            .nlu_parser
+            .extract_intent(nl_input)
             .map_err(|e| EvolutionError::NLUError(format!("{:?}", e)))?;
 
         // 生成语法变体 / Generate syntax variants
@@ -72,7 +91,9 @@ impl EvolutionEngine {
     fn test_variants(&self, variants: Vec<GrammarRule>) -> Result<GrammarRule, EvolutionError> {
         // TODO: 实现变体测试逻辑 / Implement variant testing logic
         // 暂时返回第一个变体 / Temporarily return first variant
-        variants.into_iter().next()
+        variants
+            .into_iter()
+            .next()
             .ok_or(EvolutionError::NoVariants)
     }
 
@@ -112,9 +133,34 @@ impl EvolutionEngine {
             success_metrics: None,
         };
 
-        self.tracker.record(event);
+        self.tracker.record(event.clone());
         self.syntax_mutations.push(rule);
+        
+        // 更新知识图谱 / Update knowledge graph
+        self.knowledge_graph.build_from_history(&[event]);
+        
         Ok(())
+    }
+    
+    /// 预测可能的进化 / Predict possible evolutions
+    pub fn predict_evolutions(&self, goals: Vec<String>) -> Vec<crate::evolution::knowledge::EvolutionPrediction> {
+        let context = crate::evolution::knowledge::EvolutionContext {
+            current_state: serde_json::json!({
+                "rules_count": self.syntax_mutations.len(),
+                "adaptations_count": self.semantic_adaptations.len(),
+            }),
+            goals,
+            constraints: Vec::new(),
+        };
+        self.knowledge_graph.predict_evolutions(&context)
+    }
+    
+    /// 获取知识图谱统计 / Get knowledge graph statistics
+    pub fn get_knowledge_stats(&self) -> serde_json::Value {
+        serde_json::json!({
+            "nodes_count": self.knowledge_graph.get_node_count(),
+            "patterns_count": self.knowledge_graph.get_patterns_count(),
+        })
     }
 
     /// 获取进化历史 / Get evolution history
@@ -220,7 +266,8 @@ impl EvolutionEngine {
 
     fn rule_from_dict(dict: &HashMap<String, Value>) -> Result<GrammarRule, EvolutionError> {
         let name = Self::dict_string(dict, "name").unwrap_or_else(|| "unnamed".to_string());
-        let production = Self::dict_string(dict, "production").unwrap_or_else(|| "Unknown".to_string());
+        let production =
+            Self::dict_string(dict, "production").unwrap_or_else(|| "Unknown".to_string());
         let description = Self::dict_string(dict, "description").unwrap_or_default();
         let variadic = Self::dict_bool(dict, "variadic").unwrap_or(false);
         let keywords = Self::dict_string_list(dict, "keywords");
@@ -300,4 +347,3 @@ pub enum EvolutionError {
     /// 集成失败 / Integration failed
     IntegrationFailed(String),
 }
-

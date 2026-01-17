@@ -285,7 +285,7 @@ fn demonstrate_evolution_engine() {
     println!("\n3. 进化引擎演示 / Evolution Engine Demo");
     println!("--------------------------------------------");
 
-    let engine = EvolutionEngine::new();
+    let mut engine = EvolutionEngine::new();
 
     println!("进化引擎已创建 / Evolution Engine Created");
     println!("历史记录数 / History Count: {}", engine.get_history().len());
@@ -293,11 +293,32 @@ fn demonstrate_evolution_engine() {
         "自举规则数 / Bootstrap Rule Count: {}",
         engine.get_syntax_rules().len()
     );
+    
+    // 知识图谱统计 / Knowledge graph statistics
+    let stats = engine.get_knowledge_stats();
+    println!("知识图谱节点数 / Knowledge Graph Nodes: {}", stats["nodes_count"]);
+    println!("发现模式数 / Discovered Patterns: {}", stats["patterns_count"]);
 
-    // 演示从自然语言进化（这里只是示例，实际实现需要NLU支持）
-    // Demonstrate evolution from natural language (this is just an example, actual implementation requires NLU support)
-    println!("\n提示 / Note: 完整的自然语言进化功能需要NLU系统支持");
-    println!("Full natural language evolution requires NLU system support");
+    // 演示进化预测 / Demonstrate evolution prediction
+    println!("\n进化预测 / Evolution Predictions:");
+    let predictions = engine.predict_evolutions(vec![
+        "支持更多数据结构".to_string(),
+        "改进性能".to_string(),
+    ]);
+    
+    if predictions.is_empty() {
+        println!("  暂无预测 / No predictions yet (需要更多历史数据 / need more history data)");
+    } else {
+        for (i, pred) in predictions.iter().take(3).enumerate() {
+            println!("  {}. {} (置信度: {:.2})", 
+                i + 1, pred.predicted_evolution, pred.confidence);
+            println!("     理由 / Reasoning: {}", pred.reasoning);
+        }
+    }
+
+    // 演示从自然语言进化 / Demonstrate evolution from natural language
+    println!("\n提示 / Note: 使用 evolve_from_natural_language() 从自然语言进化");
+    println!("Use evolve_from_natural_language() to evolve from natural language");
 }
 
 /// 演示NLU自然语言理解功能 / Demonstrate NLU natural language understanding

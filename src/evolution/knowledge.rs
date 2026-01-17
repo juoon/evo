@@ -30,30 +30,151 @@ impl EvolutionKnowledgeGraph {
             let relations = self.extract_relations(event);
 
             // 添加到知识图谱 / Add to knowledge graph
-            for entity in entities {
+            for entity in &entities {
                 let node = self.graph.entry(entity.clone())
-                    .or_insert_with(|| KnowledgeNode::new(entity.clone()));
+                    .or_insert_with(|| {
+                        let mut n = KnowledgeNode::new(entity.clone());
+                        // 根据实体类型设置节点类型 / Set node type based on entity type
+                        if entity.starts_with("rule:") {
+                            n.node_type = NodeType::GrammarRule;
+                        } else if entity.starts_with("trigger:") {
+                            n.node_type = NodeType::Context;
+                        }
+                        n
+                    });
                 node.update_from_event(event);
             }
+            
+            // 存储关系（简化：只记录在节点属性中） / Store relations (simplified: only in node attributes)
+            for rel in &relations {
+                if let Some(node) = self.graph.get_mut(&rel.from) {
+                    let rel_json = serde_json::json!({
+                        "to": rel.to,
+                        "type": format!("{:?}", rel.relation_type),
+                        "weight": rel.weight
+                    });
+                    let rels = node.attributes.entry("relations".to_string())
+                        .or_insert_with(|| serde_json::json!([]));
+                    if let Some(rels_array) = rels.as_array_mut() {
+                        rels_array.push(rel_json);
+                    }
+                }
+            }
         }
+        
+            // 挖掘模式 / Mine patterns after building graph
+        let _ = self.pattern_miner.mine_from_graph(&self.graph);
     }
 
     /// 提取实体 / Extract entities
     fn extract_entities(&self, event: &EvolutionEvent) -> Vec<String> {
-        // TODO: 实现实体提取逻辑 / Implement entity extraction logic
-        vec![event.id.to_string()]
+        let mut entities = vec![event.id.to_string()];
+        
+        // 从语法规则中提取实体 / Extract entities from grammar rules
+        for rule in &event.delta.added_rules {
+            entities.push(format!("rule:{}", rule.name));
+            entities.push(format!("pattern:{}", rule.pattern.elements.len()));
+            entities.push(format!("production:{}", 
+                serde_json::to_string(&rule.production.target).unwrap_or_default()));
+        }
+        
+        // 从触发源提取实体 / Extract entities from trigger source
+        match &event.trigger.source {
+            crate::evolution::tracker::TriggerSource::NaturalLanguageInstruction => {
+                entities.push("trigger:natural_language".to_string());
+            }
+            crate::evolution::tracker::TriggerSource::UserRequest => {
+                entities.push("trigger:user".to_string());
+            }
+            crate::evolution::tracker::TriggerSource::UsagePatternAnalysis => {
+                entities.push("trigger:usage_pattern".to_string());
+            }
+            _ => {}
+        }
+        
+        entities
     }
 
     /// 提取关系 / Extract relations
     fn extract_relations(&self, event: &EvolutionEvent) -> Vec<Relation> {
-        // TODO: 实现关系提取逻辑 / Implement relation extraction logic
-        Vec::new()
+        let mut relations = Vec::new();
+        
+        // 新规则与旧规则的关系 / Relations between new and old rules
+        for new_rule in &event.delta.added_rules {
+            for old_rule in &event.before_state.grammar_rules {
+                // 检查相似性（简单的名称匹配） / Check similarity (simple name matching)
+                if new_rule.name.contains(&old_rule.name) || old_rule.name.contains(&new_rule.name) {
+                    relations.push(Relation {
+                        from: format!("rule:{}", old_rule.name),
+                        to: format!("rule:{}", new_rule.name),
+                        relation_type: RelationType::EvolvedFrom,
+                        weight: 0.7,
+                    });
+                }
+            }
+        }
+        
+        // 事件之间的时间关系 / Temporal relations between events
+        if let Some(prev_event_id) = self.graph.values().flat_map(|n| n.events.last()).next() {
+            relations.push(Relation {
+                from: prev_event_id.to_string(),
+                to: event.id.to_string(),
+                relation_type: RelationType::Influences,
+                weight: 0.5,
+            });
+        }
+        
+        relations
     }
 
     /// 预测可能的进化 / Predict possible evolutions
     pub fn predict_evolutions(&self, context: &EvolutionContext) -> Vec<EvolutionPrediction> {
-        // TODO: 实现进化预测逻辑 / Implement evolution prediction logic
-        Vec::new()
+        let mut predictions = Vec::new();
+        
+        // 基于历史模式进行预测 / Predict based on historical patterns
+        let patterns = self.pattern_miner.mine_from_graph_static(&self.graph);
+        
+        // 根据目标和约束匹配模式 / Match patterns based on goals and constraints
+        for goal in &context.goals {
+            for pattern in &patterns {
+                if pattern.description.contains(goal) {
+                    predictions.push(EvolutionPrediction {
+                        predicted_evolution: format!("基于模式 '{}' 的进化", pattern.description),
+                        confidence: pattern.confidence * 0.8,
+                        reasoning: format!("目标 '{}' 与历史模式匹配", goal),
+                    });
+                }
+            }
+        }
+        
+        // 基于相似实体的预测 / Predict based on similar entities
+        for (entity_id, node) in &self.graph {
+            if node.events.len() > 1 {
+                predictions.push(EvolutionPrediction {
+                    predicted_evolution: format!("实体 '{}' 可能再次进化", entity_id),
+                    confidence: 0.6,
+                    reasoning: format!("该实体已有 {} 次进化历史", node.events.len()),
+                });
+            }
+        }
+        
+        // 按置信度排序 / Sort by confidence
+        predictions.sort_by(|a, b| b.confidence.partial_cmp(&a.confidence).unwrap_or(std::cmp::Ordering::Equal));
+        predictions.truncate(5); // 返回前5个预测 / Return top 5 predictions
+        
+        predictions
+    }
+}
+
+impl EvolutionKnowledgeGraph {
+    /// 获取节点数量 / Get node count
+    pub fn get_node_count(&self) -> usize {
+        self.graph.len()
+    }
+    
+    /// 获取模式数量 / Get patterns count
+    pub fn get_patterns_count(&self) -> usize {
+        self.pattern_miner.patterns.len()
     }
 }
 
@@ -148,8 +269,57 @@ impl PatternMiner {
 
     /// 挖掘模式 / Mine patterns
     pub fn mine(&mut self, events: &[EvolutionEvent]) -> Vec<EvolutionPattern> {
-        // TODO: 实现模式挖掘逻辑 / Implement pattern mining logic
-        Vec::new()
+        let mut patterns = Vec::new();
+        
+        // 简单模式：频繁出现的语法规则进化 / Simple pattern: frequent grammar rule evolution
+        let mut rule_counts: std::collections::HashMap<String, Vec<uuid::Uuid>> = std::collections::HashMap::new();
+        for event in events {
+            for rule in &event.delta.added_rules {
+                rule_counts.entry(rule.name.clone())
+                    .or_insert_with(Vec::new)
+                    .push(event.id);
+            }
+        }
+        
+        for (rule_name, event_ids) in rule_counts {
+            if event_ids.len() > 1 {
+                patterns.push(EvolutionPattern {
+                    id: format!("pattern:{}", rule_name),
+                    description: format!("规则 '{}' 多次进化", rule_name),
+                    confidence: (event_ids.len() as f64 / events.len() as f64).min(1.0),
+                    related_events: event_ids,
+                });
+            }
+        }
+        
+        self.patterns = patterns.clone();
+        patterns
+    }
+    
+    /// 从知识图谱挖掘模式（非可变版本） / Mine patterns from knowledge graph (immutable version)
+    pub fn mine_from_graph_static(&self, graph: &std::collections::HashMap<String, KnowledgeNode>) -> Vec<EvolutionPattern> {
+        let mut patterns = Vec::new();
+        
+        // 查找频繁演变的实体 / Find frequently evolving entities
+        for (entity_id, node) in graph {
+            if node.events.len() > 2 {
+                patterns.push(EvolutionPattern {
+                    id: format!("pattern:{}", entity_id),
+                    description: format!("实体 '{}' 经历多次进化", entity_id),
+                    confidence: (node.events.len() as f64 / 10.0).min(1.0),
+                    related_events: node.events.clone(),
+                });
+            }
+        }
+        
+        patterns
+    }
+    
+    /// 从知识图谱挖掘模式 / Mine patterns from knowledge graph
+    pub fn mine_from_graph(&mut self, graph: &std::collections::HashMap<String, KnowledgeNode>) -> Vec<EvolutionPattern> {
+        let patterns = self.mine_from_graph_static(graph);
+        self.patterns = patterns.clone();
+        patterns
     }
 }
 

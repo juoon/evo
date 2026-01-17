@@ -35,7 +35,7 @@ impl EvolutionTracker {
     }
 
     /// 查找父事件 / Find parent events
-    fn find_parent_events(&self, event: &EvolutionEvent) -> Vec<Uuid> {
+    fn find_parent_events(&self, _event: &EvolutionEvent) -> Vec<Uuid> {
         // TODO: 实现父事件查找逻辑 / Implement parent event finding logic
         Vec::new()
     }
