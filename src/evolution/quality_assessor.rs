@@ -232,12 +232,18 @@ impl QualityAssessor {
 
         // 嵌套深度惩罚 / Nesting depth penalty
         if analysis.statistics.max_nesting_depth > self.thresholds.nesting_depth_threshold {
-            score -= (analysis.statistics.max_nesting_depth - self.thresholds.nesting_depth_threshold) as f64 * 5.0;
+            score -= (analysis.statistics.max_nesting_depth
+                - self.thresholds.nesting_depth_threshold) as f64
+                * 5.0;
         }
 
         // 函数长度惩罚 / Function length penalty
-        if analysis.statistics.avg_function_length > self.thresholds.function_length_threshold as f64 {
-            score -= (analysis.statistics.avg_function_length - self.thresholds.function_length_threshold as f64) * 0.5;
+        if analysis.statistics.avg_function_length
+            > self.thresholds.function_length_threshold as f64
+        {
+            score -= (analysis.statistics.avg_function_length
+                - self.thresholds.function_length_threshold as f64)
+                * 0.5;
         }
 
         (score as f64).max(0.0_f64).min(100.0_f64)
@@ -268,8 +274,12 @@ impl QualityAssessor {
         let mut score = 100.0;
 
         // 表达式复杂度惩罚 / Expression complexity penalty
-        if analysis.statistics.expression_complexity > self.thresholds.expression_complexity_threshold {
-            score -= (analysis.statistics.expression_complexity - self.thresholds.expression_complexity_threshold) * 3.0;
+        if analysis.statistics.expression_complexity
+            > self.thresholds.expression_complexity_threshold
+        {
+            score -= (analysis.statistics.expression_complexity
+                - self.thresholds.expression_complexity_threshold)
+                * 3.0;
         }
 
         // 优化建议数量（建议越多，性能问题越多）/ Number of optimization suggestions (more suggestions = more performance issues)
@@ -284,7 +294,10 @@ impl QualityAssessor {
         let mut score = 100.0;
 
         for pattern in &analysis.patterns {
-            if matches!(pattern.pattern_type, crate::evolution::analyzer::PatternType::UnusedVariable) {
+            if matches!(
+                pattern.pattern_type,
+                crate::evolution::analyzer::PatternType::UnusedVariable
+            ) {
                 score -= 2.0;
             }
         }
@@ -306,7 +319,10 @@ impl QualityAssessor {
 
         // 可简化模式惩罚 / Simplifiable pattern penalty
         for pattern in &analysis.patterns {
-            if matches!(pattern.pattern_type, crate::evolution::analyzer::PatternType::Simplifiable) {
+            if matches!(
+                pattern.pattern_type,
+                crate::evolution::analyzer::PatternType::Simplifiable
+            ) {
                 score -= 3.0;
             }
         }
@@ -398,10 +414,12 @@ impl QualityAssessor {
                 suggestion_type: SuggestionType::Simplify,
                 description: suggestion.description.clone(),
                 priority: Priority::Medium,
-                improvement: format!("{}: {} -> {}", 
+                improvement: format!(
+                    "{}: {} -> {}",
                     format!("{:?}", suggestion.suggestion_type),
                     suggestion.original,
-                    suggestion.suggested),
+                    suggestion.suggested
+                ),
             });
         }
 

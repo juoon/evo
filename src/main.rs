@@ -2155,39 +2155,74 @@ fn demonstrate_test_generation() {
             let test_suite = test_generator.generate_tests(&ast, &analysis);
 
             println!("\n测试统计 / Test Statistics:");
-            println!("  总测试数 / Total Tests: {}", test_suite.statistics.total_tests);
-            println!("  单元测试数 / Unit Tests: {}", test_suite.statistics.unit_tests);
-            println!("  边界测试数 / Boundary Tests: {}", test_suite.statistics.boundary_tests);
-            println!("  集成测试数 / Integration Tests: {}", test_suite.statistics.integration_tests);
+            println!(
+                "  总测试数 / Total Tests: {}",
+                test_suite.statistics.total_tests
+            );
+            println!(
+                "  单元测试数 / Unit Tests: {}",
+                test_suite.statistics.unit_tests
+            );
+            println!(
+                "  边界测试数 / Boundary Tests: {}",
+                test_suite.statistics.boundary_tests
+            );
+            println!(
+                "  集成测试数 / Integration Tests: {}",
+                test_suite.statistics.integration_tests
+            );
 
             println!("\n测试覆盖率 / Test Coverage:");
-            println!("  函数覆盖率 / Function Coverage: {:.2}%", test_suite.coverage.function_coverage);
-            println!("  分支覆盖率 / Branch Coverage: {:.2}%", test_suite.coverage.branch_coverage);
-            println!("  语句覆盖率 / Statement Coverage: {:.2}%", test_suite.coverage.statement_coverage);
-            println!("  总体覆盖率 / Overall Coverage: {:.2}%", test_suite.coverage.overall_coverage);
+            println!(
+                "  函数覆盖率 / Function Coverage: {:.2}%",
+                test_suite.coverage.function_coverage
+            );
+            println!(
+                "  分支覆盖率 / Branch Coverage: {:.2}%",
+                test_suite.coverage.branch_coverage
+            );
+            println!(
+                "  语句覆盖率 / Statement Coverage: {:.2}%",
+                test_suite.coverage.statement_coverage
+            );
+            println!(
+                "  总体覆盖率 / Overall Coverage: {:.2}%",
+                test_suite.coverage.overall_coverage
+            );
 
             if !test_suite.test_cases.is_empty() {
                 println!("\n生成的测试用例 / Generated Test Cases:");
                 for (i, test_case) in test_suite.test_cases.iter().take(5).enumerate() {
-                    println!("  {}. {} ({:?})", i + 1, test_case.name, test_case.test_type);
+                    println!(
+                        "  {}. {} ({:?})",
+                        i + 1,
+                        test_case.name,
+                        test_case.test_type
+                    );
                     println!("     描述 / Description: {}", test_case.description);
                     println!("     测试代码 / Test Code: {}", test_case.test_code);
                     println!("     预期结果 / Expected: {}", test_case.expected_result);
 
                     // 尝试执行测试 / Try to execute test
                     match parser.parse(&test_case.test_code) {
-                        Ok(test_ast) => {
-                            match interpreter.execute(&test_ast) {
-                                Ok(result) => {
-                                    let passed = result.to_string() == test_case.expected_result
-                                        || test_case.expected_result == "结果待验证";
-                                    println!("     执行结果 / Result: {} ({})", result, if passed { "通过 / Pass" } else { "失败 / Fail" });
-                                }
-                                Err(e) => {
-                                    println!("     执行错误 / Execution Error: {:?}", e);
-                                }
+                        Ok(test_ast) => match interpreter.execute(&test_ast) {
+                            Ok(result) => {
+                                let passed = result.to_string() == test_case.expected_result
+                                    || test_case.expected_result == "结果待验证";
+                                println!(
+                                    "     执行结果 / Result: {} ({})",
+                                    result,
+                                    if passed {
+                                        "通过 / Pass"
+                                    } else {
+                                        "失败 / Fail"
+                                    }
+                                );
                             }
-                        }
+                            Err(e) => {
+                                println!("     执行错误 / Execution Error: {:?}", e);
+                            }
+                        },
                         Err(e) => {
                             println!("     解析错误 / Parse Error: {:?}", e);
                         }
@@ -2209,17 +2244,26 @@ fn demonstrate_test_generation() {
         println!("  记录数 / Records: {}", history.len());
         if let Some(latest) = history.last() {
             println!("  最新测试生成 / Latest Test Generation:");
-            println!("    生成测试数 / Tests Generated: {}", latest.tests_generated);
+            println!(
+                "    生成测试数 / Tests Generated: {}",
+                latest.tests_generated
+            );
             println!("    通过数 / Passed: {}", latest.tests_passed);
             println!("    失败数 / Failed: {}", latest.tests_failed);
-            println!("    时间 / Time: {}", latest.timestamp.format("%Y-%m-%d %H:%M:%S"));
+            println!(
+                "    时间 / Time: {}",
+                latest.timestamp.format("%Y-%m-%d %H:%M:%S")
+            );
         }
     }
 
     // 显示测试统计 / Show test statistics
     println!("\n测试统计 / Test Statistics:");
     let stats = test_generator.get_test_statistics();
-    println!("  {}", serde_json::to_string_pretty(&stats).unwrap_or_default());
+    println!(
+        "  {}",
+        serde_json::to_string_pretty(&stats).unwrap_or_default()
+    );
 
     println!(
         "\n提示 / Note: 测试生成能够自动为代码生成测试用例，提高代码质量和可靠性，帮助验证代码正确性"

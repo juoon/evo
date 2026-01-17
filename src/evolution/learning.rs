@@ -62,7 +62,7 @@ impl UsagePatternLearner {
     pub fn record_error(&mut self, error_type: &str, message: &str, context: &str) {
         let pattern_key = format!("{}:{}", error_type, context);
         let suggestion = self.generate_error_suggestion(error_type, message, context);
-        
+
         // 先检查是否存在 / Check if exists first
         if let Some(pattern_list) = self.error_patterns.get_mut(&pattern_key) {
             // 查找现有模式 / Find existing pattern
@@ -71,7 +71,7 @@ impl UsagePatternLearner {
                 return;
             }
         }
-        
+
         // 如果不存在，添加新模式 / If not exists, add new pattern
         self.error_patterns
             .entry(pattern_key)
@@ -94,7 +94,7 @@ impl UsagePatternLearner {
                 return;
             }
         }
-        
+
         // 如果不存在，添加新模式 / If not exists, add new pattern
         self.success_patterns
             .entry(description.to_string())
@@ -108,24 +108,27 @@ impl UsagePatternLearner {
     }
 
     /// 生成错误建议 / Generate error suggestion
-    fn generate_error_suggestion(&self, error_type: &str, message: &str, context: &str) -> Option<String> {
+    fn generate_error_suggestion(
+        &self,
+        error_type: &str,
+        message: &str,
+        context: &str,
+    ) -> Option<String> {
         match error_type {
-            "UndefinedVariable" => {
-                Some(format!("变量未定义，建议检查变量名拼写或在使用前定义变量: {}", message))
-            }
-            "TypeError" => {
-                Some(format!("类型错误，建议检查参数类型: {}", message))
-            }
-            "DivisionByZero" => {
-                Some("除零错误，建议在使用除法前检查除数是否为0".to_string())
-            }
+            "UndefinedVariable" => Some(format!(
+                "变量未定义，建议检查变量名拼写或在使用前定义变量: {}",
+                message
+            )),
+            "TypeError" => Some(format!("类型错误，建议检查参数类型: {}", message)),
+            "DivisionByZero" => Some("除零错误，建议在使用除法前检查除数是否为0".to_string()),
             _ => Some(format!("建议查看错误上下文并修复: {}", context)),
         }
     }
 
     /// 获取常用模式 / Get frequent patterns
     pub fn get_frequent_patterns(&self, threshold: usize) -> Vec<(String, usize)> {
-        let mut patterns: Vec<(String, usize)> = self.usage_frequency
+        let mut patterns: Vec<(String, usize)> = self
+            .usage_frequency
             .iter()
             .filter(|(_, &count)| count >= threshold)
             .map(|(pattern, &count)| (pattern.clone(), count))
@@ -136,7 +139,8 @@ impl UsagePatternLearner {
 
     /// 获取常见错误 / Get common errors
     pub fn get_common_errors(&self, limit: usize) -> Vec<ErrorPattern> {
-        let mut all_errors: Vec<ErrorPattern> = self.error_patterns
+        let mut all_errors: Vec<ErrorPattern> = self
+            .error_patterns
             .values()
             .flat_map(|patterns| patterns.iter().cloned())
             .collect();
@@ -147,7 +151,8 @@ impl UsagePatternLearner {
 
     /// 获取成功模式 / Get success patterns
     pub fn get_success_patterns(&self, limit: usize) -> Vec<SuccessPattern> {
-        let mut all_patterns: Vec<SuccessPattern> = self.success_patterns
+        let mut all_patterns: Vec<SuccessPattern> = self
+            .success_patterns
             .values()
             .flat_map(|patterns| patterns.iter().cloned())
             .collect();
@@ -185,7 +190,10 @@ impl UsagePatternLearner {
             if pattern.usage_count > 5 {
                 insights.push(LearningInsight {
                     insight_type: InsightType::PatternRecognition,
-                    description: format!("常用模式: {} (使用{}次)", pattern.description, pattern.usage_count),
+                    description: format!(
+                        "常用模式: {} (使用{}次)",
+                        pattern.description, pattern.usage_count
+                    ),
                     suggestion: Some(format!("考虑将 '{}' 加入标准库", pattern.code)),
                     priority: pattern.usage_count,
                 });
@@ -208,12 +216,14 @@ impl UsagePatternLearner {
     pub fn analyze_usage(&self) -> UsageStatistics {
         let total_usage: usize = self.usage_frequency.values().sum();
         let unique_patterns = self.usage_frequency.len();
-        let total_errors: usize = self.error_patterns
+        let total_errors: usize = self
+            .error_patterns
             .values()
             .flat_map(|patterns| patterns.iter())
             .map(|p| p.count)
             .sum();
-        let total_successes: usize = self.success_patterns
+        let total_successes: usize = self
+            .success_patterns
             .values()
             .flat_map(|patterns| patterns.iter())
             .map(|p| p.usage_count)
