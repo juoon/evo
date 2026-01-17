@@ -23,22 +23,42 @@ impl EmotionAnalyzer {
     /// 初始化情感词典 / Initialize emotion dictionary
     fn initialize_emotion_dict(&mut self) {
         // 初始化基础情感词汇 / Initialize basic emotion vocabulary
-        // 思乡 / Homesickness
+        
+        // 思乡 / Nostalgia - 《静夜思》核心情感
         self.emotion_dict.insert("思".to_string(), Emotion::Nostalgia);
         self.emotion_dict.insert("故乡".to_string(), Emotion::Nostalgia);
         self.emotion_dict.insert("家乡".to_string(), Emotion::Nostalgia);
+        self.emotion_dict.insert("乡".to_string(), Emotion::Nostalgia);
+        self.emotion_dict.insert("归".to_string(), Emotion::Nostalgia);
         
         // 孤独 / Loneliness
         self.emotion_dict.insert("孤独".to_string(), Emotion::Loneliness);
         self.emotion_dict.insert("寂寞".to_string(), Emotion::Loneliness);
+        self.emotion_dict.insert("独".to_string(), Emotion::Loneliness);
         
-        // 宁静 / Tranquility
+        // 宁静 / Tranquility - 《静夜思》夜晚氛围
         self.emotion_dict.insert("静".to_string(), Emotion::Tranquility);
         self.emotion_dict.insert("安静".to_string(), Emotion::Tranquility);
+        self.emotion_dict.insert("夜".to_string(), Emotion::Tranquility);
         
         // 忧伤 / Melancholy
         self.emotion_dict.insert("忧伤".to_string(), Emotion::Melancholy);
         self.emotion_dict.insert("愁".to_string(), Emotion::Melancholy);
+        self.emotion_dict.insert("悲".to_string(), Emotion::Melancholy);
+        self.emotion_dict.insert("哀".to_string(), Emotion::Melancholy);
+        
+        // 喜悦 / Joy
+        self.emotion_dict.insert("喜".to_string(), Emotion::Joy);
+        self.emotion_dict.insert("乐".to_string(), Emotion::Joy);
+        self.emotion_dict.insert("欢".to_string(), Emotion::Joy);
+        
+        // 愤怒 / Anger
+        self.emotion_dict.insert("怒".to_string(), Emotion::Anger);
+        self.emotion_dict.insert("愤".to_string(), Emotion::Anger);
+        
+        // 惊讶 / Surprise
+        self.emotion_dict.insert("惊".to_string(), Emotion::Surprise);
+        self.emotion_dict.insert("疑".to_string(), Emotion::Surprise);
     }
 
     /// 分析情感 / Analyze emotions

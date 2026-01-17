@@ -61,10 +61,11 @@ modules/                 # 模块目录 / Module directory
 - 编译模式：高性能执行 / Compiled mode: High-performance execution
 - JIT模式：自适应优化 / JIT mode: Adaptive optimization
 
-### 5. 诗歌理解能力 / Poetry Understanding Capability
+### 5. 诗歌理解能力 / Poetry Understanding Capability ✅ 已实现
 - 以《静夜思》为起点的情感理解 / Emotion understanding starting with "Quiet Night Thoughts"
-- 主题和意象提取 / Theme and imagery extraction
-- 情感分析 / Emotion analysis
+- **主题提取** - 基于关键词和情感分析的智能主题识别 / Theme extraction - intelligent theme recognition
+- **意象提取** - 自动识别诗歌中的意象元素及其含义 / Imagery extraction - automatic recognition of imagery elements
+- **情感分析** - 丰富的情感词典，支持多种情感类型 / Emotion analysis - rich emotion dictionary supporting multiple emotion types
 
 ## 快速开始 / Quick Start
 
