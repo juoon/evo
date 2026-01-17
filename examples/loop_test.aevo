@@ -1,0 +1,29 @@
+; 循环结构测试 / Loop structure test
+
+; For循环测试 - 遍历列表 / For loop test - iterate over list
+(for x (list 1 2 3 4 5)
+  (print x))  ; 打印 1, 2, 3, 4, 5
+
+; For循环测试 - 遍历整数范围 / For loop test - iterate over integer range
+(for i 5
+  (print i))  ; 打印 0, 1, 2, 3, 4
+
+; For循环测试 - 累加 / For loop test - sum
+(let sum 0
+  (for x (list 10 20 30)
+    (let sum (+ sum x) sum))
+  sum)  ; 应该返回 60
+
+; While循环测试 / While loop test
+(let count 0
+  (while (< count 5)
+    (let count (+ count 1) count))
+  count)  ; 应该返回 5
+
+; While循环测试 - 计算阶乘 / While loop test - calculate factorial
+(let n 5
+  (let result 1
+    (while (> n 0)
+      (let result (* result n)
+        (let n (- n 1) result)))
+    result))  ; 应该返回 120

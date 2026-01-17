@@ -413,6 +413,15 @@ impl Interpreter {
                 let value = self.eval_expr(value_expr)?;
                 self.eval_match(&value, cases)
             }
+            Expr::For {
+                var,
+                iterable,
+                body,
+            } => {
+                let iterable_value = self.eval_expr(iterable)?;
+                self.eval_for(var, &iterable_value, body)
+            }
+            Expr::While { condition, body } => self.eval_while(condition, body),
         }
     }
 
@@ -525,6 +534,66 @@ impl Interpreter {
             }
             _ => {}
         }
+    }
+
+    /// 评估For循环 / Evaluate for loop
+    fn eval_for(
+        &mut self,
+        var: &str,
+        iterable: &Value,
+        body: &Expr,
+    ) -> Result<Value, InterpreterError> {
+        let items = match iterable {
+            Value::List(list) => list.clone(),
+            Value::Int(end) => {
+                // 如果iterable是整数，创建范围 [0, end)
+                (0..*end as usize).map(|i| Value::Int(i as i64)).collect()
+            }
+            _ => {
+                return Err(InterpreterError::type_error(
+                    "For loop iterable must be a list or integer".to_string(),
+                    None,
+                ));
+            }
+        };
+
+        let mut last_value = Value::Null;
+        for item in items {
+            // 保存旧值（如果存在）
+            let old_value = self.environment.insert(var.to_string(), item);
+
+            // 执行循环体
+            last_value = self.eval_expr(body)?;
+
+            // 恢复旧值（如果存在）
+            if let Some(old) = old_value {
+                self.environment.insert(var.to_string(), old);
+            } else {
+                self.environment.remove(var);
+            }
+        }
+
+        Ok(last_value)
+    }
+
+    /// 评估While循环 / Evaluate while loop
+    fn eval_while(&mut self, condition: &Expr, body: &Expr) -> Result<Value, InterpreterError> {
+        let mut last_value = Value::Null;
+
+        loop {
+            // 评估条件
+            let cond_value = self.eval_expr(condition)?;
+
+            // 如果条件为假，退出循环
+            if !self.is_truthy(&cond_value) {
+                break;
+            }
+
+            // 执行循环体
+            last_value = self.eval_expr(body)?;
+        }
+
+        Ok(last_value)
     }
 
     /// 评估字面量 / Evaluate literal

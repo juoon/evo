@@ -375,6 +375,12 @@ impl ParserState {
                 "match" => {
                     return self.parse_match();
                 }
+                "for" => {
+                    return self.parse_for();
+                }
+                "while" => {
+                    return self.parse_while();
+                }
                 "list" | "vec" => {
                     return self.parse_list_literal();
                 }
@@ -567,6 +573,61 @@ impl ParserState {
             Box::new(value_expr),
             cases,
         ))))
+    }
+
+    fn parse_for(&mut self) -> Result<GrammarElement, ParseError> {
+        // (for var iterable body)
+        let var_elem = self.parse_element()?;
+        let iterable_elem = self.parse_element()?;
+        let body_elem = self.parse_element()?;
+
+        self.consume(&Token::RightParen, "Expected ')' after for expression")?;
+
+        // 提取变量名
+        let var = match &var_elem {
+            GrammarElement::Atom(s) => s.clone(),
+            GrammarElement::Expr(boxed_expr) => {
+                if let Expr::Var(s) = boxed_expr.as_ref() {
+                    s.clone()
+                } else {
+                    return Err(ParseError::syntax_error(
+                        "For loop variable must be an identifier".to_string(),
+                        None,
+                    ));
+                }
+            }
+            _ => {
+                return Err(ParseError::syntax_error(
+                    "For loop variable must be an identifier".to_string(),
+                    None,
+                ));
+            }
+        };
+
+        let iterable_expr = self.element_to_expr(&iterable_elem)?;
+        let body_expr = self.element_to_expr(&body_elem)?;
+
+        Ok(GrammarElement::Expr(Box::new(Expr::For {
+            var,
+            iterable: Box::new(iterable_expr),
+            body: Box::new(body_expr),
+        })))
+    }
+
+    fn parse_while(&mut self) -> Result<GrammarElement, ParseError> {
+        // (while condition body)
+        let condition_elem = self.parse_element()?;
+        let body_elem = self.parse_element()?;
+
+        self.consume(&Token::RightParen, "Expected ')' after while expression")?;
+
+        let condition_expr = self.element_to_expr(&condition_elem)?;
+        let body_expr = self.element_to_expr(&body_elem)?;
+
+        Ok(GrammarElement::Expr(Box::new(Expr::While {
+            condition: Box::new(condition_expr),
+            body: Box::new(body_expr),
+        })))
     }
 
     fn element_to_pattern(&self, elem: &GrammarElement) -> Result<Pattern, ParseError> {

@@ -32,6 +32,22 @@ pub enum Expr {
     If(Box<Expr>, Box<Expr>, Box<Expr>),
     /// 模式匹配 / Pattern matching
     Match(Box<Expr>, Vec<(Pattern, Expr)>),
+    /// For循环 / For loop
+    For {
+        /// 循环变量 / Loop variable
+        var: String,
+        /// 迭代对象（列表或范围）/ Iterable (list or range)
+        iterable: Box<Expr>,
+        /// 循环体 / Loop body
+        body: Box<Expr>,
+    },
+    /// While循环 / While loop
+    While {
+        /// 循环条件 / Loop condition
+        condition: Box<Expr>,
+        /// 循环体 / Loop body
+        body: Box<Expr>,
+    },
 }
 
 /// 字面量类型 / Literal type
