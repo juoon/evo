@@ -83,6 +83,9 @@ fn main() {
 
     // 演示智能优化建议 / Demonstrate intelligent optimization advisor
     demonstrate_optimization_advisor();
+
+    // 演示代码审查 / Demonstrate code review
+    demonstrate_code_review();
 }
 
 /// 演示解释器功能 / Demonstrate interpreter functionality
@@ -1780,7 +1783,10 @@ fn demonstrate_optimization_advisor() {
             // 评估质量 / Assess quality
             let quality = assessor.assess(&analysis);
 
-            println!("\n当前质量分数 / Current Quality Score: {:.2}/100", quality.overall_score);
+            println!(
+                "\n当前质量分数 / Current Quality Score: {:.2}/100",
+                quality.overall_score
+            );
 
             // 生成优化建议 / Generate optimization suggestions
             let optimization_result = advisor.suggest_optimizations(&analysis, &quality);
@@ -1798,18 +1804,33 @@ fn demonstrate_optimization_advisor() {
             if !optimization_result.suggestions.is_empty() {
                 println!("\n优化建议列表 / Optimization Suggestions:");
                 for (i, suggestion) in optimization_result.suggestions.iter().take(5).enumerate() {
-                    println!("  {}. [{}] {}", i + 1, format!("{:?}", suggestion.priority), suggestion.description);
+                    println!(
+                        "  {}. [{}] {}",
+                        i + 1,
+                        format!("{:?}", suggestion.priority),
+                        suggestion.description
+                    );
                     println!("     策略 / Strategy: {}", suggestion.strategy);
-                    println!("     预期改进 / Expected Improvement: {:.2}%", suggestion.expected_improvement);
-                    println!("     置信度 / Confidence: {:.2}%", suggestion.confidence * 100.0);
-                    println!("     具体建议 / Specific: {}", suggestion.specific_suggestion);
+                    println!(
+                        "     预期改进 / Expected Improvement: {:.2}%",
+                        suggestion.expected_improvement
+                    );
+                    println!(
+                        "     置信度 / Confidence: {:.2}%",
+                        suggestion.confidence * 100.0
+                    );
+                    println!(
+                        "     具体建议 / Specific: {}",
+                        suggestion.specific_suggestion
+                    );
                 }
             }
 
             // 预测优化效果 / Predict optimization effect
             println!("\n优化效果预测 / Optimization Effect Prediction:");
             for strategy in &optimization_result.recommended_strategies {
-                let predicted_score = advisor.predict_optimization_effect(strategy, quality.overall_score);
+                let predicted_score =
+                    advisor.predict_optimization_effect(strategy, quality.overall_score);
                 println!(
                     "  策略 '{}' 预测分数 / Strategy '{}' Predicted Score: {:.2}/100",
                     strategy, strategy, predicted_score
@@ -1819,19 +1840,23 @@ fn demonstrate_optimization_advisor() {
             // 模拟应用优化并记录 / Simulate applying optimization and record
             if !optimization_result.suggestions.is_empty() {
                 let first_suggestion = &optimization_result.suggestions[0];
-                let simulated_improvement = first_suggestion.expected_improvement * first_suggestion.confidence;
+                let simulated_improvement =
+                    first_suggestion.expected_improvement * first_suggestion.confidence;
                 let simulated_after_score = quality.overall_score + simulated_improvement;
-                
+
                 advisor.record_optimization(
                     &first_suggestion.strategy,
                     quality.overall_score,
                     simulated_after_score,
                 );
-                
+
                 println!("\n模拟优化结果 / Simulated Optimization Result:");
                 println!("  优化前分数 / Before: {:.2}/100", quality.overall_score);
                 println!("  优化后分数 / After: {:.2}/100", simulated_after_score);
-                println!("  实际改进 / Actual Improvement: {:.2}%", simulated_improvement);
+                println!(
+                    "  实际改进 / Actual Improvement: {:.2}%",
+                    simulated_improvement
+                );
             }
         }
         Err(e) => {
@@ -1850,7 +1875,10 @@ fn demonstrate_optimization_advisor() {
             println!("  最新优化 / Latest Optimization:");
             println!("    策略 / Strategy: {}", latest.strategy);
             println!("    改进 / Improvement: {:.2}%", latest.improvement);
-            println!("    时间 / Time: {}", latest.timestamp.format("%Y-%m-%d %H:%M:%S"));
+            println!(
+                "    时间 / Time: {}",
+                latest.timestamp.format("%Y-%m-%d %H:%M:%S")
+            );
         }
     }
 
@@ -1858,4 +1886,110 @@ fn demonstrate_optimization_advisor() {
         "\n提示 / Note: 智能优化建议能够基于质量评估和学习结果提供针对性的优化建议，预测优化效果，帮助持续改进代码质量"
     );
     println!("Intelligent optimization advisor can provide targeted optimization suggestions based on quality assessment and learning results, predict optimization effects, and help continuously improve code quality");
+}
+
+/// 演示代码审查功能 / Demonstrate code review functionality
+fn demonstrate_code_review() {
+    println!("\n22. 代码审查演示 / Code Review Demo");
+    println!("--------------------------------------------");
+
+    use crate::evolution::{CodeAnalyzer, CodeReviewer, QualityAssessor};
+    use crate::parser::AdaptiveParser;
+
+    let parser = AdaptiveParser::new(true);
+    let analyzer = CodeAnalyzer::new();
+    let mut assessor = QualityAssessor::new();
+    let mut reviewer = CodeReviewer::new();
+
+    // 测试代码 / Test code
+    let test_codes = vec![
+        ("(let x 5)", "简单代码 / Simple code"),
+        (
+            "(def complex-func (x y z) (if (> x 0) (+ (* y 2) z) (- z y)))",
+            "复杂函数 / Complex function",
+        ),
+    ];
+
+    for (code, description) in test_codes {
+        println!("\n测试: {} / Test: {}", description, description);
+        println!("代码 / Code: {}", code);
+
+        match parser.parse(code) {
+            Ok(ast) => {
+                // 分析代码 / Analyze code
+                let analysis = analyzer.analyze(&ast);
+
+                // 评估质量 / Assess quality
+                let quality = assessor.assess(&analysis);
+
+                // 审查代码 / Review code
+                let review_result = reviewer.review_code(&ast, &analysis, &quality);
+
+                println!("\n代码审查结果 / Code Review Result:");
+                println!("  审查等级 / Review Grade: {:?}", review_result.grade);
+                println!(
+                    "  通过率 / Pass Rate: {:.2}%",
+                    review_result.summary.pass_rate
+                );
+
+                println!("\n问题统计 / Issue Statistics:");
+                println!("  总问题数 / Total Issues: {}", review_result.summary.total_issues);
+                println!(
+                    "  严重问题 / Critical: {}",
+                    review_result.summary.critical_issues
+                );
+                println!("  错误 / Errors: {}", review_result.summary.errors);
+                println!("  警告 / Warnings: {}", review_result.summary.warnings);
+                println!("  信息 / Info: {}", review_result.summary.info);
+
+                if !review_result.issues.is_empty() {
+                    println!("\n发现的问题 / Issues Found:");
+                    for (i, issue) in review_result.issues.iter().take(5).enumerate() {
+                        println!(
+                            "  {}. [{:?}] {}",
+                            i + 1, issue.severity, issue.description
+                        );
+                        println!("     规则 / Rule: {}", issue.rule_name);
+                        println!("     位置 / Location: {}", issue.location);
+                        println!("     建议 / Suggestion: {}", issue.suggestion);
+                        println!("     置信度 / Confidence: {:.2}%", issue.confidence * 100.0);
+                    }
+                }
+
+                if !review_result.recommendations.is_empty() {
+                    println!("\n审查建议 / Review Recommendations:");
+                    for (i, recommendation) in review_result.recommendations.iter().enumerate() {
+                        println!("  {}. {}", i + 1, recommendation);
+                    }
+                }
+            }
+            Err(e) => {
+                println!("解析错误 / Parse error: {:?}", e);
+            }
+        }
+    }
+
+    // 显示审查历史 / Show review history
+    println!("\n审查历史 / Review History:");
+    let history = reviewer.get_review_history();
+    if history.is_empty() {
+        println!("  暂无历史数据 / No history data yet");
+    } else {
+        println!("  记录数 / Records: {}", history.len());
+        if let Some(latest) = history.last() {
+            println!("  最新审查 / Latest Review:");
+            println!("    问题数 / Issues: {}", latest.issues_count);
+            println!("    时间 / Time: {}", latest.timestamp.format("%Y-%m-%d %H:%M:%S"));
+        }
+    }
+
+    // 显示审查统计 / Show review statistics
+    println!("\n审查统计 / Review Statistics:");
+    let stats = reviewer.get_review_statistics();
+    println!("  {}", serde_json::to_string_pretty(&stats).unwrap_or_default());
+
+    println!(
+        "\n提示 / Note: 代码审查能够自动检查代码问题，提供详细的审查报告，帮助提高代码质量和规范性"
+    );
+    println!("Code review can automatically check code issues, provide detailed review reports, and help improve code quality and standards");
 }
