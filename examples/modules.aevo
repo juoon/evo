@@ -1,0 +1,8 @@
+; 模块系统示例 / Module system example
+
+; 导入 math 模块
+(import "math")
+
+; 调用模块函数
+(math.add 3 4)      ; 7
+(math.square 5)     ; 25

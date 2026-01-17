@@ -40,6 +40,10 @@ null        ; 空值
 ; 函数定义
 (def name (params...) body)
 (function name (params...) body)
+
+; 模块导入
+(import "module")
+(import "module" "alias")
 ```
 
 ### 函数调用 / Function Calls

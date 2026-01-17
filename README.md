@@ -26,6 +26,8 @@ src/
 ├── runtime/             # 运行时 / Runtime
 │   ├── mod.rs
 │   ├── interpreter.rs   # 解释器 / Interpreter
+│   ├── jit.rs           # JIT编译器 / JIT compiler
+│   ├── jit_interpreter.rs # JIT解释器 / JIT interpreter
 │   └── mode.rs          # 执行模式选择 / Execution mode selection
 ├── python/              # Python兼容层 / Python compatibility layer
 │   ├── mod.rs
@@ -34,6 +36,7 @@ src/
     ├── mod.rs
     ├── parser.rs        # 诗歌解析 / Poetry parser
     └── emotion.rs       # 情感理解 / Emotion understanding
+modules/                 # 模块目录 / Module directory
 ```
 
 ## 核心特性 / Core Features
@@ -235,6 +238,17 @@ match parser.parse(code) {
 (dict-has (dict "name" "Aevolang") "name")  ; 返回 true
 ```
 
+### 模块系统 / Module System
+
+```lisp
+; 导入模块 / Import module
+(import "math")
+
+; 调用模块函数 / Call module function
+(math.add 3 4)      ; 返回 7
+(math.square 5)     ; 返回 25
+```
+
 更多示例请查看 [examples/](../examples/) 目录。
 
 ## 文档 / Documentation
@@ -308,6 +322,10 @@ match parser.parse(code) {
   - 列表操作：`list-get`, `list-set`, `list-append`, `list-length`
   - 字典操作：`dict-get`, `dict-set`, `dict-keys`, `dict-values`, `dict-has`
   - 列表连接：使用 `+` 操作符连接两个列表
+- ✅ **模块系统** - 导入与命名空间
+  - 导入模块：`(import "module")` 或 `(import "module" "alias")`
+  - 模块命名空间调用：`(module.function ...)`
+  - 默认搜索路径：`modules/`, `examples/`, 当前目录
 
 ### 测试状态 / Test Status
 
@@ -321,6 +339,8 @@ match parser.parse(code) {
 - ✅ Python互操作（模块导入、函数调用、类型转换）
 - ✅ JIT编译器（热点检测、常量折叠、代码优化）
 - ✅ 列表和字典数据结构（创建、访问、修改、内置函数）
+- ✅ 模块系统（import、命名空间调用、模块文件加载）
+- ✅ 模块系统（import、命名空间、示例模块）
 
 ## 下一步 / Next Steps
 
@@ -332,7 +352,7 @@ match parser.parse(code) {
 6. 集成NLU模型（本地轻量模型或云API）- 提升理解能力
 7. 完善进化引擎的学习和预测功能
 8. ✅ ~~添加列表和数据结构支持~~ - 已完成
-9. 实现模块系统
+9. ✅ ~~实现模块系统~~ - 已完成
 
 ## 贡献 / Contributing
 

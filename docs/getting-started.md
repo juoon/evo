@@ -73,6 +73,16 @@ null        ; 空值 / Null
 (add 3 4)                ; 调用函数: 7
 ```
 
+### 模块导入 / Module Import
+
+使用 `import` 导入模块：
+
+```lisp
+(import "math")
+(math.add 3 4)      ; 调用模块函数: 7
+(math.square 5)     ; 调用模块函数: 25
+```
+
 ### 比较操作符 / Comparison Operators
 
 ```lisp

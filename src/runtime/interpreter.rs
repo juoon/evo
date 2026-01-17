@@ -3,8 +3,11 @@
 // Interpreter for executing Aevolang code
 
 use crate::grammar::core::{BinOp, Expr, GrammarElement, Literal};
+use crate::parser::AdaptiveParser;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::fs;
+use std::path::PathBuf;
 
 /// 解释器 / Interpreter
 pub struct Interpreter {
@@ -12,6 +15,8 @@ pub struct Interpreter {
     environment: HashMap<String, Value>,
     /// 函数定义 / Function definitions
     functions: HashMap<String, Function>,
+    /// 模块缓存 / Module cache
+    modules: HashMap<String, Module>,
 }
 
 /// 函数定义 / Function definition
@@ -23,12 +28,24 @@ struct Function {
     body: GrammarElement,
 }
 
+/// 模块 / Module
+#[derive(Debug, Clone)]
+struct Module {
+    /// 模块名称 / Module name
+    name: String,
+    /// 模块变量 / Module environment
+    environment: HashMap<String, Value>,
+    /// 模块函数 / Module functions
+    functions: HashMap<String, Function>,
+}
+
 impl Interpreter {
     /// 创建新解释器 / Create new interpreter
     pub fn new() -> Self {
         let mut interpreter = Self {
             environment: HashMap::new(),
             functions: HashMap::new(),
+            modules: HashMap::new(),
         };
         // 注册内置函数 / Register built-in functions
         interpreter.register_builtins();
@@ -536,6 +553,21 @@ impl Interpreter {
         args: &[Expr],
     ) -> Result<Value, InterpreterError> {
         match name {
+            "import" => {
+                if args.is_empty() || args.len() > 2 {
+                    return Err(InterpreterError::RuntimeError(
+                        "import requires 1 or 2 arguments: module_name [alias]".to_string(),
+                    ));
+                }
+                let module_name = self.module_name_from_expr(&args[0])?;
+                let alias = if args.len() == 2 {
+                    self.module_name_from_expr(&args[1])?
+                } else {
+                    module_name.clone()
+                };
+                self.import_module(&module_name, &alias)?;
+                Ok(Value::Null)
+            }
             "print" => {
                 for arg in args {
                     let value = self.eval_expr(arg)?;
@@ -718,6 +750,100 @@ impl Interpreter {
                 name
             ))),
         }
+    }
+
+    /// 从表达式解析模块名称 / Parse module name from expression
+    fn module_name_from_expr(&self, expr: &Expr) -> Result<String, InterpreterError> {
+        match expr {
+            Expr::Literal(Literal::String(s)) => Ok(s.clone()),
+            Expr::Var(name) => Ok(name.clone()),
+            _ => Err(InterpreterError::RuntimeError(
+                "Module name must be a string literal or identifier".to_string(),
+            )),
+        }
+    }
+
+    /// 导入模块 / Import module
+    fn import_module(&mut self, module_name: &str, alias: &str) -> Result<(), InterpreterError> {
+        let module = if let Some(module) = self.modules.get(module_name).cloned() {
+            module
+        } else {
+            let module = self.load_module(module_name)?;
+            self.modules.insert(module_name.to_string(), module.clone());
+            module
+        };
+
+        // 将模块内容导入到当前环境（带命名空间前缀）
+        for (name, value) in &module.environment {
+            let qualified_name = format!("{}.{}", alias, name);
+            self.environment
+                .insert(qualified_name, value.clone());
+        }
+        for (name, function) in &module.functions {
+            let qualified_name = format!("{}.{}", alias, name);
+            self.functions
+                .insert(qualified_name, function.clone());
+        }
+
+        Ok(())
+    }
+
+    /// 加载模块 / Load module
+    fn load_module(&self, module_name: &str) -> Result<Module, InterpreterError> {
+        let path = self.resolve_module_path(module_name)?;
+        let code = fs::read_to_string(&path).map_err(|e| {
+            InterpreterError::RuntimeError(format!(
+                "Failed to read module '{}': {}",
+                module_name, e
+            ))
+        })?;
+
+        let parser = AdaptiveParser::new(true);
+        let ast = parser.parse(&code).map_err(|e| {
+            InterpreterError::RuntimeError(format!(
+                "Failed to parse module '{}': {:?}",
+                module_name, e
+            ))
+        })?;
+
+        let mut module_interpreter = Interpreter::new();
+        module_interpreter.execute(&ast).map_err(|e| {
+            InterpreterError::RuntimeError(format!(
+                "Failed to execute module '{}': {:?}",
+                module_name, e
+            ))
+        })?;
+
+        Ok(Module {
+            name: module_name.to_string(),
+            environment: module_interpreter.environment.clone(),
+            functions: module_interpreter.functions.clone(),
+        })
+    }
+
+    /// 解析模块路径 / Resolve module path
+    fn resolve_module_path(&self, module_name: &str) -> Result<PathBuf, InterpreterError> {
+        let mut candidates = Vec::new();
+        let name = if module_name.ends_with(".aevo") {
+            module_name.to_string()
+        } else {
+            format!("{}.aevo", module_name)
+        };
+
+        candidates.push(PathBuf::from("modules").join(&name));
+        candidates.push(PathBuf::from("examples").join(&name));
+        candidates.push(PathBuf::from(&name));
+
+        for path in candidates {
+            if path.exists() {
+                return Ok(path);
+            }
+        }
+
+        Err(InterpreterError::RuntimeError(format!(
+            "Module '{}' not found in modules/, examples/, or current directory",
+            module_name
+        )))
     }
 
     /// 比较值 / Compare values

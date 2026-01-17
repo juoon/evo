@@ -217,6 +217,23 @@ Aevolang 现在支持字典（键值对）数据结构：
 (dict-has (dict "name" "Aevo") "name")   ; 检查键是否存在
 ```
 
+## 模块系统 / Module System ✅ 已实现
+
+Aevolang 现在支持模块导入和命名空间调用：
+
+```lisp
+; 导入模块
+(import "math")
+
+; 调用模块函数
+(math.add 3 4)
+(math.square 5)
+
+; 使用别名
+(import "math" "m")
+(m.square 6)
+```
+
 ## 未来特性 / Future Features
 
 以下特性正在开发中：

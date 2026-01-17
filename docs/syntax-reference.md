@@ -76,6 +76,22 @@ myVar       ; 引用变量 myVar
         (* n (factorial (- n 1)))))
 ```
 
+#### import - 模块导入
+
+```lisp
+(import "module")
+(import "module" "alias")
+```
+
+示例：
+```lisp
+(import "math")
+(math.add 3 4)
+
+(import "math" "m")
+(m.square 5)
+```
+
 ## 操作符 / Operators
 
 ### 算术操作符 / Arithmetic Operators

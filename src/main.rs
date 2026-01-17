@@ -44,6 +44,9 @@ fn main() {
 
     // 演示列表和字典 / Demonstrate lists and dictionaries
     demonstrate_data_structures();
+
+    // 演示模块系统 / Demonstrate module system
+    demonstrate_modules();
 }
 
 /// 演示解释器功能 / Demonstrate interpreter functionality
@@ -726,4 +729,56 @@ fn demonstrate_data_structures() {
     }
 
     println!("\n列表和字典演示完成 / Lists and Dictionaries Demo Completed");
+}
+
+/// 演示模块系统功能 / Demonstrate module system functionality
+fn demonstrate_modules() {
+    println!("\n9. 模块系统演示 / Module System Demo");
+    println!("--------------------------------------------");
+
+    let parser = AdaptiveParser::new(true);
+    let mut interpreter = Interpreter::new();
+
+    // 导入模块 / Import module
+    let import_code = r#"(import "math")"#;
+    println!("\n导入模块 / Import module: {}", import_code);
+    match parser.parse(import_code) {
+        Ok(ast) => match interpreter.execute(&ast) {
+            Ok(_) => println!("模块导入成功 / Module imported successfully"),
+            Err(e) => {
+                println!("导入错误 / Import Error: {:?}", e);
+                return;
+            }
+        },
+        Err(e) => {
+            println!("解析错误 / Parse Error: {:?}", e);
+            return;
+        }
+    }
+
+    // 调用模块函数 / Call module functions
+    let module_calls = vec![
+        ("(math.add 3 4)", "模块加法 / Module add"),
+        ("(math.square 5)", "模块平方 / Module square"),
+    ];
+
+    for (code, description) in module_calls {
+        println!("\n测试: {} / Test: {}", description, description);
+        println!("代码: {} / Code: {}", code, code);
+        match parser.parse(code) {
+            Ok(ast) => match interpreter.execute(&ast) {
+                Ok(value) => {
+                    println!("结果: {} / Result: {}", value, value);
+                }
+                Err(e) => {
+                    println!("执行错误 / Execution Error: {:?}", e);
+                }
+            },
+            Err(e) => {
+                println!("解析错误 / Parse Error: {:?}", e);
+            }
+        }
+    }
+
+    println!("\n模块系统演示完成 / Module System Demo Completed");
 }

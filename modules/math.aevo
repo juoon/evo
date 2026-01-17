@@ -1,0 +1,10 @@
+; 模块示例：math / Module example: math
+; 提供常用数学函数 / Provides common math functions
+
+(def add (x y) (+ x y))
+(def sub (x y) (- x y))
+(def mul (x y) (* x y))
+(def square (x) (* x x))
+
+; 常量
+(let pi 3.14159 pi)
