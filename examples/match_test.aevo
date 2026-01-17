@@ -1,0 +1,34 @@
+; 模式匹配测试 / Pattern matching test
+; 测试match表达式的各种模式匹配功能 / Test various pattern matching features of match expression
+
+; 测试1: 基本字面量匹配 / Test 1: Basic literal matching
+(match 1
+  (1 "one")
+  (2 "two")
+  (_ "other"))  ; 应该返回 "one" / Should return "one"
+
+; 测试2: 通配符匹配 / Test 2: Wildcard matching
+(match 42
+  (0 "zero")
+  (1 "one")
+  (_ "other"))  ; 应该返回 "other" / Should return "other"
+
+; 测试3: 变量绑定 / Test 3: Variable binding
+(match 10
+  (x (+ x 5)))  ; 应该返回 15 / Should return 15
+
+; 测试4: 字符串匹配 / Test 4: String matching
+(match "hello"
+  ("hello" "greeting")
+  ("world" "planet")
+  (_ "unknown"))  ; 应该返回 "greeting" / Should return "greeting"
+
+; 测试5: 列表模式匹配 / Test 5: List pattern matching
+(match (list 1 2 3)
+  ((list a b c) (+ a (+ b c)))  ; 应该返回 6 / Should return 6
+  (_ 0))
+
+; 测试6: 嵌套模式匹配 / Test 6: Nested pattern matching
+(match (list 1 (list 2 3))
+  ((list x (list y z)) (+ x (+ y z)))  ; 应该返回 6 / Should return 6
+  (_ 0))

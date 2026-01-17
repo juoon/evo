@@ -2,7 +2,7 @@
 // 执行Aevolang代码的解释器
 // Interpreter for executing Aevolang code
 
-use crate::grammar::core::{BinOp, Expr, GrammarElement, Literal};
+use crate::grammar::core::{BinOp, Expr, GrammarElement, Literal, Pattern};
 use crate::parser::AdaptiveParser;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -402,6 +402,119 @@ impl Interpreter {
                     self.eval_expr(else_expr)
                 }
             }
+            Expr::Match(value_expr, cases) => {
+                let value = self.eval_expr(value_expr)?;
+                self.eval_match(&value, cases)
+            }
+        }
+    }
+
+    /// 评估模式匹配 / Evaluate pattern matching
+    fn eval_match(
+        &mut self,
+        value: &Value,
+        cases: &[(Pattern, Expr)],
+    ) -> Result<Value, InterpreterError> {
+        for (pattern, expr) in cases {
+            if self.pattern_matches(pattern, value)? {
+                // 绑定模式中的变量
+                self.bind_pattern_variables(pattern, value)?;
+                let result = self.eval_expr(expr)?;
+                // 恢复环境（移除绑定的变量）
+                self.unbind_pattern_variables(pattern);
+                return Ok(result);
+            }
+        }
+        Err(InterpreterError::RuntimeError(
+            "No pattern matched in match expression".to_string(),
+        ))
+    }
+
+    /// 检查模式是否匹配值 / Check if pattern matches value
+    fn pattern_matches(&self, pattern: &Pattern, value: &Value) -> Result<bool, InterpreterError> {
+        match (pattern, value) {
+            (Pattern::Wildcard, _) => Ok(true),
+            (Pattern::Var(_), _) => Ok(true), // 变量模式总是匹配
+            (Pattern::Literal(lit), val) => match (lit, val) {
+                (Literal::Int(i), Value::Int(j)) => Ok(i == j),
+                (Literal::Float(f), Value::Float(g)) => Ok((f - g).abs() < f64::EPSILON),
+                (Literal::String(s), Value::String(t)) => Ok(s == t),
+                (Literal::Bool(b), Value::Bool(c)) => Ok(b == c),
+                (Literal::Null, Value::Null) => Ok(true),
+                _ => Ok(false),
+            },
+            (Pattern::List(patterns), Value::List(values)) => {
+                if patterns.len() != values.len() {
+                    return Ok(false);
+                }
+                for (pat, val) in patterns.iter().zip(values.iter()) {
+                    if !self.pattern_matches(pat, val)? {
+                        return Ok(false);
+                    }
+                }
+                Ok(true)
+            }
+            (Pattern::Dict(patterns), Value::Dict(values)) => {
+                // 检查所有模式键是否都在值中，且匹配
+                for (key, pat) in patterns {
+                    if let Some(val) = values.get(key) {
+                        if !self.pattern_matches(pat, val)? {
+                            return Ok(false);
+                        }
+                    } else {
+                        return Ok(false);
+                    }
+                }
+                Ok(true)
+            }
+            _ => Ok(false),
+        }
+    }
+
+    /// 绑定模式中的变量到环境 / Bind pattern variables to environment
+    fn bind_pattern_variables(
+        &mut self,
+        pattern: &Pattern,
+        value: &Value,
+    ) -> Result<(), InterpreterError> {
+        match (pattern, value) {
+            (Pattern::Var(name), val) => {
+                self.environment.insert(name.clone(), val.clone());
+            }
+            (Pattern::List(patterns), Value::List(values)) => {
+                for (pat, val) in patterns.iter().zip(values.iter()) {
+                    self.bind_pattern_variables(pat, val)?;
+                }
+            }
+            (Pattern::Dict(patterns), Value::Dict(values)) => {
+                for (key, pat) in patterns {
+                    if let Some(val) = values.get(key) {
+                        self.bind_pattern_variables(pat, val)?;
+                    }
+                }
+            }
+            _ => {}
+        }
+        Ok(())
+    }
+
+    /// 解绑模式中的变量 / Unbind pattern variables from environment
+    fn unbind_pattern_variables(&mut self, pattern: &Pattern) {
+        match pattern {
+            Pattern::Var(name) => {
+                self.environment.remove(name);
+            }
+            Pattern::List(patterns) => {
+                for pat in patterns {
+                    self.unbind_pattern_variables(pat);
+                }
+            }
+            Pattern::Dict(patterns) => {
+                for (_, pat) in patterns {
+                    self.unbind_pattern_variables(pat);
+                }
+            }
+            _ => {}
         }
     }
 
@@ -648,12 +761,12 @@ impl Interpreter {
                 self.environment.remove(param);
             }
         }
-        
+
         // 恢复捕获的环境（只恢复之前存在的变量）
         for (key, old_value) in saved_env {
             self.environment.insert(key, old_value);
         }
-        
+
         // 移除Lambda执行时新增的变量（这些变量不在捕获环境中，也不在参数中）
         // 注意：这里我们只移除那些在Lambda执行前不存在于环境中的变量
         // 由于我们已经恢复了saved_env中的变量，这里不需要额外处理

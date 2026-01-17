@@ -2,7 +2,7 @@
 // 能够根据扩展的语法规则动态调整解析行为
 // Can dynamically adjust parsing behavior based on extended grammar rules
 
-use crate::grammar::core::{BinOp, Expr, GrammarElement, Literal};
+use crate::grammar::core::{BinOp, Expr, GrammarElement, Literal, Pattern};
 use crate::grammar::rule::GrammarRule;
 
 /// 自适应解析器 / Adaptive parser
@@ -369,6 +369,9 @@ impl ParserState {
                 "lambda" => {
                     return self.parse_lambda();
                 }
+                "match" => {
+                    return self.parse_match();
+                }
                 "list" | "vec" => {
                     return self.parse_list_literal();
                 }
@@ -524,6 +527,72 @@ impl ParserState {
             GrammarElement::List(args_list),
             body,
         ]))
+    }
+
+    fn parse_match(&mut self) -> Result<GrammarElement, ParseError> {
+        // (match value (pattern1 expr1) (pattern2 expr2) ...)
+        let value_elem = self.parse_element()?;
+        let value_expr = self.element_to_expr(&value_elem)?;
+
+        let mut cases = Vec::new();
+        while !self.check(&Token::RightParen) {
+            // 每个case是一个列表: (pattern expr)
+            if !self.check(&Token::LeftParen) {
+                return Err(ParseError::SyntaxError(
+                    "Expected '(' for match case".to_string(),
+                ));
+            }
+            self.consume(&Token::LeftParen, "Expected '(' for match case")?;
+
+            // 解析模式
+            let pattern_elem = self.parse_element()?;
+            let pattern = self.element_to_pattern(&pattern_elem)?;
+
+            // 解析表达式
+            let expr_elem = self.parse_element()?;
+            let expr = self.element_to_expr(&expr_elem)?;
+
+            self.consume(&Token::RightParen, "Expected ')' after match case")?;
+
+            cases.push((pattern, expr));
+        }
+
+        self.consume(&Token::RightParen, "Expected ')' after match expression")?;
+
+        Ok(GrammarElement::Expr(Box::new(Expr::Match(
+            Box::new(value_expr),
+            cases,
+        ))))
+    }
+
+    fn element_to_pattern(&self, elem: &GrammarElement) -> Result<Pattern, ParseError> {
+        use crate::grammar::core::Pattern::*;
+        match elem {
+            GrammarElement::Atom(s) => {
+                if s == "_" {
+                    Ok(Wildcard)
+                } else {
+                    Ok(Var(s.clone()))
+                }
+            }
+            GrammarElement::Expr(boxed_expr) => match boxed_expr.as_ref() {
+                Expr::Literal(lit) => Ok(Literal(lit.clone())),
+                Expr::Var(name) => Ok(Var(name.clone())),
+                _ => Err(ParseError::SyntaxError(
+                    "Invalid pattern in match expression".to_string(),
+                )),
+            },
+            GrammarElement::List(list) => {
+                let mut patterns = Vec::new();
+                for item in list {
+                    patterns.push(self.element_to_pattern(item)?);
+                }
+                Ok(List(patterns))
+            }
+            _ => Err(ParseError::SyntaxError(
+                "Invalid pattern in match expression".to_string(),
+            )),
+        }
     }
 
     fn parse_list_literal(&mut self) -> Result<GrammarElement, ParseError> {

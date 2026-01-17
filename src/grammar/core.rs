@@ -30,6 +30,8 @@ pub enum Expr {
     Binary(BinOp, Box<Expr>, Box<Expr>),
     /// 条件表达式 / Conditional expression
     If(Box<Expr>, Box<Expr>, Box<Expr>),
+    /// 模式匹配 / Pattern matching
+    Match(Box<Expr>, Vec<(Pattern, Expr)>),
 }
 
 /// 字面量类型 / Literal type
@@ -74,6 +76,21 @@ pub enum BinOp {
     Le,
     /// 大于等于 / Greater than or equal
     Ge,
+}
+
+/// 模式 / Pattern
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum Pattern {
+    /// 字面量模式 / Literal pattern
+    Literal(Literal),
+    /// 变量绑定模式 / Variable binding pattern
+    Var(String),
+    /// 通配符模式 / Wildcard pattern
+    Wildcard,
+    /// 列表模式 / List pattern
+    List(Vec<Pattern>),
+    /// 字典模式 / Dictionary pattern
+    Dict(Vec<(String, Pattern)>),
 }
 
 /// 核心语法常量 / Core grammar constants
