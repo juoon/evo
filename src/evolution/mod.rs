@@ -4,12 +4,14 @@
 
 pub mod analyzer;
 pub mod engine;
+pub mod error_recovery;
 pub mod knowledge;
 pub mod learning;
 pub mod tracker;
 
 pub use analyzer::*;
 pub use engine::*;
+pub use error_recovery::*;
 pub use knowledge::*;
 pub use learning::*;
 pub use tracker::*;

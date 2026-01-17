@@ -71,6 +71,9 @@ fn main() {
 
     // 演示使用模式学习 / Demonstrate usage pattern learning
     demonstrate_usage_learning();
+
+    // 演示错误恢复 / Demonstrate error recovery
+    demonstrate_error_recovery();
 }
 
 /// 演示解释器功能 / Demonstrate interpreter functionality
@@ -1382,4 +1385,73 @@ fn demonstrate_usage_learning() {
 
     println!("\n提示 / Note: 使用模式学习让语言能够从实际使用中学习，自动识别常见模式和错误，持续改进自身能力");
     println!("Usage pattern learning allows the language to learn from actual usage, automatically identify common patterns and errors, and continuously improve its capabilities");
+}
+
+/// 演示错误恢复功能 / Demonstrate error recovery functionality
+fn demonstrate_error_recovery() {
+    println!("\n18. 错误恢复演示 / Error Recovery Demo");
+    println!("--------------------------------------------");
+
+    use crate::parser::AdaptiveParser;
+    use crate::runtime::Interpreter;
+    use crate::evolution::ErrorRecoverer;
+
+    let parser = AdaptiveParser::new(true);
+    let mut interpreter = Interpreter::new();
+    let recoverer = ErrorRecoverer::new();
+
+    // 测试错误恢复 / Test error recovery
+    let error_cases = vec![
+        ("(let y (+ x 1))", "未定义变量x / Undefined variable x"),
+        ("(+ \"hello\" 5)", "类型错误 / Type error"),
+        ("(/ 10 0)", "除零错误 / Division by zero"),
+    ];
+
+    for (code, description) in error_cases {
+        println!("\n测试: {} / Test: {}", description, description);
+        println!("代码 / Code: {}", code);
+
+        match parser.parse(code) {
+            Ok(ast) => {
+                match interpreter.execute(&ast) {
+                    Ok(value) => {
+                        println!("执行成功 / Execution successful: {}", value);
+                    }
+                    Err(error) => {
+                        println!("执行错误 / Execution error: {:?}", error);
+
+                        // 尝试恢复错误 / Try to recover from error
+                        let recovery = recoverer.recover_from_error(&error, code);
+                        println!("错误恢复结果 / Error Recovery Result:");
+                        println!("  是否恢复 / Recovered: {}", recovery.recovered);
+                        if let Some(method) = &recovery.method {
+                            println!("  恢复方法 / Method: {}", method);
+                        }
+                        if !recovery.suggestions.is_empty() {
+                            println!("  修复建议 / Fix Suggestions:");
+                            for (i, suggestion) in recovery.suggestions.iter().enumerate() {
+                                println!("    {}. {}", i + 1, suggestion);
+                            }
+                        }
+                        if let Some(fixed) = &recovery.fixed_code {
+                            println!("  修复后的代码 / Fixed Code:\n{}", fixed);
+                        }
+                    }
+                }
+            }
+            Err(e) => {
+                println!("解析错误 / Parse error: {:?}", e);
+            }
+        }
+    }
+
+    // 显示常见修复规则 / Show common fix rules
+    println!("\n常见修复规则 / Common Fix Rules:");
+    let common_fixes = recoverer.get_common_fixes();
+    for (i, rule) in common_fixes.iter().take(5).enumerate() {
+        println!("  {}. {} (置信度: {:.2})", i + 1, rule.description, rule.confidence);
+    }
+
+    println!("\n提示 / Note: 错误恢复功能能够自动识别常见错误并提供修复建议，提高代码质量和开发效率");
+    println!("Error recovery can automatically identify common errors and provide fix suggestions, improving code quality and development efficiency");
 }
