@@ -9,6 +9,7 @@ use crate::grammar::rule::{
 };
 use crate::parser::nlu::NLUParser;
 use crate::parser::AdaptiveParser;
+use crate::poetry::PoetryParser;
 use crate::runtime::interpreter::{Interpreter, Value};
 use std::collections::HashMap;
 
@@ -22,6 +23,8 @@ pub struct EvolutionEngine {
     tracker: EvolutionTracker,
     /// NLU解析器 / NLU parser
     nlu_parser: NLUParser,
+    /// 诗歌解析器 / Poetry parser
+    poetry_parser: PoetryParser,
     /// 知识图谱 / Knowledge graph
     knowledge_graph: crate::evolution::knowledge::EvolutionKnowledgeGraph,
 }
@@ -35,15 +38,16 @@ impl EvolutionEngine {
             semantic_adaptations: Vec::new(),
             tracker: EvolutionTracker::new(),
             nlu_parser: NLUParser::new(crate::parser::nlu::ModelType::LocalLightweight, true),
+            poetry_parser: PoetryParser::new(),
             knowledge_graph: crate::evolution::knowledge::EvolutionKnowledgeGraph::new(),
         };
-        
+
         // 从历史构建知识图谱 / Build knowledge graph from history
         engine.rebuild_knowledge();
-        
+
         engine
     }
-    
+
     /// 重建知识图谱 / Rebuild knowledge graph
     fn rebuild_knowledge(&mut self) {
         let history = self.tracker.get_history();
@@ -135,15 +139,18 @@ impl EvolutionEngine {
 
         self.tracker.record(event.clone());
         self.syntax_mutations.push(rule);
-        
+
         // 更新知识图谱 / Update knowledge graph
         self.knowledge_graph.build_from_history(&[event]);
-        
+
         Ok(())
     }
-    
+
     /// 预测可能的进化 / Predict possible evolutions
-    pub fn predict_evolutions(&self, goals: Vec<String>) -> Vec<crate::evolution::knowledge::EvolutionPrediction> {
+    pub fn predict_evolutions(
+        &self,
+        goals: Vec<String>,
+    ) -> Vec<crate::evolution::knowledge::EvolutionPrediction> {
         let context = crate::evolution::knowledge::EvolutionContext {
             current_state: serde_json::json!({
                 "rules_count": self.syntax_mutations.len(),
@@ -154,13 +161,161 @@ impl EvolutionEngine {
         };
         self.knowledge_graph.predict_evolutions(&context)
     }
-    
+
     /// 获取知识图谱统计 / Get knowledge graph statistics
     pub fn get_knowledge_stats(&self) -> serde_json::Value {
         serde_json::json!({
             "nodes_count": self.knowledge_graph.get_node_count(),
             "patterns_count": self.knowledge_graph.get_patterns_count(),
         })
+    }
+
+    /// 从诗歌理解中学习并进化 / Learn and evolve from poetry understanding
+    pub fn evolve_from_poetry(&mut self, poem: &str) -> Result<Vec<GrammarRule>, EvolutionError> {
+        // 解析诗歌 / Parse poetry
+        let analysis = self.poetry_parser.parse(poem).map_err(|e| {
+            EvolutionError::IntegrationFailed(format!("Failed to parse poetry: {:?}", e))
+        })?;
+
+        // 从诗歌分析中提取知识并添加到知识图谱 / Extract knowledge from poetry analysis and add to knowledge graph
+        let mut new_entities = Vec::new();
+        let mut new_relations = Vec::new();
+
+        // 添加情感作为知识节点 / Add emotions as knowledge nodes
+        let emotion_entity = format!("emotion:{:?}", analysis.emotion_analysis.primary_emotion);
+        new_entities.push(emotion_entity.clone());
+
+        // 添加主题作为知识节点 / Add themes as knowledge nodes
+        for theme in &analysis.themes {
+            let theme_entity = format!("theme:{}", theme.name);
+            new_entities.push(theme_entity.clone());
+            
+            // 情感与主题的关系 / Relation between emotion and theme
+            new_relations.push(crate::evolution::knowledge::Relation {
+                from: emotion_entity.clone(),
+                to: theme_entity,
+                relation_type: crate::evolution::knowledge::RelationType::Influences,
+                weight: theme.confidence,
+            });
+        }
+
+        // 添加意象作为知识节点 / Add imagery as knowledge nodes
+        for img in &analysis.imagery {
+            let imagery_entity = format!("imagery:{}", img.element);
+            new_entities.push(imagery_entity.clone());
+            
+            // 意象与主题的关系 / Relation between imagery and themes
+            for theme in &analysis.themes {
+                if theme.confidence > 0.5 {
+                    new_relations.push(crate::evolution::knowledge::Relation {
+                        from: format!("theme:{}", theme.name),
+                        to: imagery_entity.clone(),
+                        relation_type: crate::evolution::knowledge::RelationType::Similar,
+                        weight: img.frequency as f64 / 10.0,
+                    });
+                }
+            }
+        }
+
+        // 将新知识添加到知识图谱 / Add new knowledge to knowledge graph
+        self.knowledge_graph.add_entities_and_relations(&new_entities, &new_relations);
+
+        // 基于诗歌理解生成可能的语法规则 / Generate possible grammar rules based on poetry understanding
+        let generated_rules = self.generate_rules_from_poetry(&analysis)?;
+
+        // 记录进化事件 / Record evolution event
+        if !generated_rules.is_empty() {
+            let event = EvolutionEvent {
+                id: uuid::Uuid::new_v4(),
+                timestamp: chrono::Utc::now(),
+                event_type: EvolutionType::SemanticEvolution,
+                before_state: crate::evolution::tracker::StateSnapshot {
+                    grammar_rules: self.syntax_mutations.clone(),
+                    version: "0.1.0".to_string(),
+                    metadata: serde_json::json!({}),
+                },
+                after_state: crate::evolution::tracker::StateSnapshot {
+                    grammar_rules: {
+                        let mut rules = self.syntax_mutations.clone();
+                        rules.extend(generated_rules.iter().cloned());
+                        rules
+                    },
+                    version: "0.1.2".to_string(),
+                    metadata: serde_json::json!({
+                        "poetry_analysis": serde_json::json!({
+                            "primary_emotion": format!("{:?}", analysis.emotion_analysis.primary_emotion),
+                            "themes": analysis.themes.iter().map(|t| t.name.clone()).collect::<Vec<_>>(),
+                        }),
+                    }),
+                },
+                delta: crate::evolution::tracker::EvolutionDelta {
+                    added_rules: generated_rules.clone(),
+                    modified_rules: Vec::new(),
+                    removed_rules: Vec::new(),
+                    description: format!(
+                        "Evolution from poetry understanding: emotion {:?}, themes: {}",
+                        analysis.emotion_analysis.primary_emotion,
+                        analysis.themes.iter().map(|t| t.name.as_str()).collect::<Vec<_>>().join(", ")
+                    ),
+                },
+                trigger: crate::evolution::tracker::TriggerContext {
+                    source: TriggerSource::NaturalLanguageInstruction,
+                    conditions: vec!["poetry_understanding".to_string()],
+                    environment: serde_json::json!({
+                        "poem_length": poem.len(),
+                        "verses_count": analysis.verses.len(),
+                    }),
+                },
+                author: None,
+                success_metrics: None,
+            };
+
+            self.tracker.record(event.clone());
+            self.knowledge_graph.build_from_history(&[event]);
+            
+            // 集成生成的规则 / Integrate generated rules
+            for rule in &generated_rules {
+                self.syntax_mutations.push(rule.clone());
+            }
+        }
+
+        Ok(generated_rules)
+    }
+
+    /// 从诗歌分析生成规则 / Generate rules from poetry analysis
+    fn generate_rules_from_poetry(&self, analysis: &crate::poetry::PoemAnalysis) -> Result<Vec<GrammarRule>, EvolutionError> {
+        let mut rules = Vec::new();
+
+        // 基于情感生成规则（简化示例） / Generate rules based on emotion (simplified example)
+        let emotion_name = format!("{:?}", analysis.emotion_analysis.primary_emotion).to_lowercase();
+        
+        // 如果主要情感是思乡，可以生成相关的语法规则 / If primary emotion is nostalgia, generate related syntax rules
+        if analysis.emotion_analysis.primary_emotion == crate::poetry::emotion::Emotion::Nostalgia {
+            // 创建一个简化规则示例 / Create a simplified rule example
+            let rule = GrammarRule::new(
+                format!("poetry_emotion_{}", emotion_name),
+                Pattern {
+                    elements: vec![PatternElement::NaturalLang("思乡".to_string())],
+                    variadic: false,
+                },
+                Production {
+                    target: GrammarElement::Atom("nostalgia".to_string()),
+                    transform: Vec::new(),
+                    conditions: Vec::new(),
+                },
+                RuleMetadata {
+                    version: "0.1.0".to_string(),
+                    defined_by: DefinitionMethod::Evolutionary,
+                    stability: Stability::Experimental,
+                    description: format!("Generated from poetry understanding: {}", emotion_name),
+                    examples: vec!["思乡".to_string()],
+                    natural_lang_synonyms: vec!["思乡".to_string(), "怀念".to_string(), "思念".to_string()],
+                },
+            );
+            rules.push(rule);
+        }
+
+        Ok(rules)
     }
 
     /// 获取进化历史 / Get evolution history

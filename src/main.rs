@@ -319,6 +319,30 @@ fn demonstrate_evolution_engine() {
     // 演示从自然语言进化 / Demonstrate evolution from natural language
     println!("\n提示 / Note: 使用 evolve_from_natural_language() 从自然语言进化");
     println!("Use evolve_from_natural_language() to evolve from natural language");
+
+    // 演示从诗歌理解中进化 / Demonstrate evolution from poetry understanding
+    println!("\n从诗歌理解中进化 / Evolution from Poetry Understanding:");
+    let poem = r#"
+床前明月光，
+疑是地上霜。
+举头望明月，
+低头思故乡。
+"#;
+    match engine.evolve_from_poetry(poem) {
+        Ok(rules) => {
+            println!("  从诗歌理解中生成的规则数 / Rules generated: {}", rules.len());
+            if !rules.is_empty() {
+                println!("  生成的规则示例 / Example rule: {}", rules[0].name);
+            }
+            
+            // 更新统计 / Update statistics
+            let stats_after = engine.get_knowledge_stats();
+            println!("  进化后知识图谱节点数 / Knowledge nodes after evolution: {}", stats_after["nodes_count"]);
+        }
+        Err(e) => {
+            println!("  进化错误 / Evolution error: {:?}", e);
+        }
+    }
 }
 
 /// 演示NLU自然语言理解功能 / Demonstrate NLU natural language understanding

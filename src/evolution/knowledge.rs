@@ -176,6 +176,43 @@ impl EvolutionKnowledgeGraph {
     pub fn get_patterns_count(&self) -> usize {
         self.pattern_miner.patterns.len()
     }
+    
+    /// 添加实体和关系 / Add entities and relations
+    pub fn add_entities_and_relations(&mut self, entities: &[String], relations: &[Relation]) {
+        // 添加实体节点 / Add entity nodes
+        for entity in entities {
+            let node = self.graph.entry(entity.clone())
+                .or_insert_with(|| {
+                    let mut n = KnowledgeNode::new(entity.clone());
+                    // 根据实体类型设置节点类型 / Set node type based on entity type
+                    if entity.starts_with("emotion:") {
+                        n.node_type = NodeType::Concept;
+                    } else if entity.starts_with("theme:") {
+                        n.node_type = NodeType::Concept;
+                    } else if entity.starts_with("imagery:") {
+                        n.node_type = NodeType::Concept;
+                    }
+                    n
+                });
+            // 可以在这里更新节点属性 / Can update node attributes here
+        }
+        
+        // 存储关系 / Store relations
+        for rel in relations {
+            if let Some(node) = self.graph.get_mut(&rel.from) {
+                let rel_json = serde_json::json!({
+                    "to": rel.to,
+                    "type": format!("{:?}", rel.relation_type),
+                    "weight": rel.weight
+                });
+                let rels = node.attributes.entry("relations".to_string())
+                    .or_insert_with(|| serde_json::json!([]));
+                if let Some(rels_array) = rels.as_array_mut() {
+                    rels_array.push(rel_json);
+                }
+            }
+        }
+    }
 }
 
 impl Default for EvolutionKnowledgeGraph {
