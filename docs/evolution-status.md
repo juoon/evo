@@ -1,7 +1,7 @@
 # Aevolang 进化状态总结 / Evolution Status Summary
 
 ## 当前版本
-**V1.0.49** - 循环结构支持 - 实现for和while循环，完善控制流特性
+**V1.0.50** - 异常处理机制 - 实现try-catch异常处理，提升错误处理能力
 
 ## 已实现的核心能力
 

@@ -381,6 +381,9 @@ impl ParserState {
                 "while" => {
                     return self.parse_while();
                 }
+                "try" => {
+                    return self.parse_try();
+                }
                 "list" | "vec" => {
                     return self.parse_list_literal();
                 }

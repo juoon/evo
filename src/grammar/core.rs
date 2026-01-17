@@ -48,6 +48,15 @@ pub enum Expr {
         /// 循环体 / Loop body
         body: Box<Expr>,
     },
+    /// Try-Catch异常处理 / Try-Catch exception handling
+    Try {
+        /// Try块 / Try block
+        try_body: Box<Expr>,
+        /// Catch变量名（可选）/ Catch variable name (optional)
+        catch_var: Option<String>,
+        /// Catch处理块 / Catch handler block
+        catch_body: Box<Expr>,
+    },
 }
 
 /// 字面量类型 / Literal type

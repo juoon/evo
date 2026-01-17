@@ -422,6 +422,11 @@ impl Interpreter {
                 self.eval_for(var, &iterable_value, body)
             }
             Expr::While { condition, body } => self.eval_while(condition, body),
+            Expr::Try {
+                try_body,
+                catch_var,
+                catch_body,
+            } => self.eval_try(try_body, catch_var, catch_body),
         }
     }
 
@@ -594,6 +599,41 @@ impl Interpreter {
         }
 
         Ok(last_value)
+    }
+
+    /// 评估Try-Catch异常处理 / Evaluate try-catch exception handling
+    fn eval_try(
+        &mut self,
+        try_body: &Expr,
+        catch_var: &Option<String>,
+        catch_body: &Expr,
+    ) -> Result<Value, InterpreterError> {
+        // 尝试执行try块
+        match self.eval_expr(try_body) {
+            Ok(value) => Ok(value),
+            Err(error) => {
+                // 如果有catch变量，将错误信息绑定到变量
+                if let Some(var) = catch_var {
+                    let error_message = Value::String(error.to_string());
+                    let old_value = self.environment.insert(var.clone(), error_message);
+
+                    // 执行catch块
+                    let result = self.eval_expr(catch_body)?;
+
+                    // 恢复旧值（如果存在）
+                    if let Some(old) = old_value {
+                        self.environment.insert(var.clone(), old);
+                    } else {
+                        self.environment.remove(&var);
+                    }
+
+                    Ok(result)
+                } else {
+                    // 没有catch变量，直接执行catch块
+                    self.eval_expr(catch_body)
+                }
+            }
+        }
     }
 
     /// 评估字面量 / Evaluate literal

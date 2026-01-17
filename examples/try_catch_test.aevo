@@ -1,0 +1,34 @@
+; Try-Catch异常处理测试 / Try-Catch exception handling test
+
+; 测试1: 基本try-catch / Test 1: Basic try-catch
+(try
+  (+ 1 2)  ; 正常执行，返回3
+  catch
+  0)  ; 如果出错返回0
+
+; 测试2: 捕获错误 / Test 2: Catch error
+(try
+  (/ 10 0)  ; 除以零错误
+  catch error
+  (print error))  ; 打印错误信息
+
+; 测试3: 捕获未定义变量错误 / Test 3: Catch undefined variable error
+(try
+  undefined_var  ; 未定义变量
+  catch err
+  (print err))  ; 打印错误信息
+
+; 测试4: 嵌套try-catch / Test 4: Nested try-catch
+(try
+  (try
+    (/ 1 0)
+    catch
+    0)
+  catch
+  -1)  ; 外层catch
+
+; 测试5: 正常执行不触发catch / Test 5: Normal execution doesn't trigger catch
+(try
+  (* 2 3)  ; 正常执行，返回6
+  catch
+  "error")  ; 不会执行
