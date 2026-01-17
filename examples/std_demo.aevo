@@ -1,0 +1,23 @@
+; 标准库演示 / Standard library demo
+
+(import "std")
+
+; 列表操作演示 / List operations demo
+(let numbers (list 1 2 3 4 5)
+  (let doubled (std.map (lambda (x) (* x 2)) numbers)
+    (print "Doubled:" doubled)))
+
+; 过滤演示 / Filter demo
+(let numbers (list 1 2 3 4 5 6 7 8 9 10)
+  (let evens (std.filter (lambda (x) (= (% x 2) 0)) numbers)
+    (print "Even numbers:" evens)))
+
+; 归约演示 / Reduce demo
+(let numbers (list 1 2 3 4 5)
+  (let sum (std.reduce + 0 numbers)
+    (print "Sum:" sum)))
+
+; 数学函数演示 / Math functions demo
+(print "Absolute value of -5:" (std.abs -5))
+(print "Max of 3 and 7:" (std.max 3 7))
+(print "Factorial of 5:" (std.factorial 5))

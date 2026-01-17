@@ -1,0 +1,106 @@
+; 标准库模块 / Standard library module
+; 提供常用工具函数，用Aevolang实现 / Provides common utility functions, implemented in Aevolang
+
+; 列表操作 / List operations
+; 注意：由于Aevolang当前不支持lambda，这些高级函数需要后续支持
+; Note: Since Aevolang doesn't support lambda yet, these advanced functions need future support
+; 当前提供基础工具函数 / Currently provides basic utility functions
+
+(def list-tail (lst n)
+  (if (= n 0)
+    lst
+    (if (> (list-length lst) 0)
+      (list-tail (list-slice lst 1) (- n 1))
+      (list))))
+
+(def list-slice (lst start)
+  (if (= start 0)
+    lst
+    (if (> (list-length lst) 0)
+      (list-slice (list-drop-first lst) (- start 1))
+      (list))))
+
+(def list-drop-first (lst)
+  (if (= (list-length lst) 0)
+    (list)
+    (if (= (list-length lst) 1)
+      (list)
+      (list-drop-first-helper lst 1 (list)))))
+
+(def list-drop-first-helper (lst idx result)
+  (if (>= idx (list-length lst))
+    result
+    (list-drop-first-helper
+      lst
+      (+ idx 1)
+      (list-append result (list (list-get lst idx))))))
+
+(def filter (pred lst)
+  (if (= (list-length lst) 0)
+    (list)
+    (let first (list-get lst 0)
+      (if (pred first)
+        (list-append
+          (list first)
+          (filter pred (list-slice lst 1)))
+        (filter pred (list-slice lst 1))))))
+
+(def reduce (func init lst)
+  (if (= (list-length lst) 0)
+    init
+    (reduce func (func init (list-get lst 0)) (list-slice lst 1))))
+
+; 数学函数 / Math functions
+(def abs (x)
+  (if (< x 0)
+    (- 0 x)
+    x))
+
+(def max (x y)
+  (if (> x y)
+    x
+    y))
+
+(def min (x y)
+  (if (< x y)
+    x
+    y))
+
+(def factorial (n)
+  (if (= n 0)
+    1
+    (if (= n 1)
+      1
+      (* n (factorial (- n 1))))))
+
+; 字符串操作（简化版，基于列表） / String operations (simplified, based on lists)
+(def string-length (str)
+  (list-length str))
+
+; 工具函数 / Utility functions
+(def identity (x) x)
+
+; 注意：compose和apply需要lambda支持，暂时注释
+; Note: compose and apply need lambda support, commented for now
+; (def compose (f g)
+;   (lambda (x) (f (g x))))
+
+; 条件组合 / Conditional composition
+(def and (x y)
+  (if x
+    (if y
+      true
+      false)
+    false))
+
+(def or (x y)
+  (if x
+    true
+    (if y
+      true
+      false)))
+
+(def not (x)
+  (if x
+    false
+    true))

@@ -47,6 +47,9 @@ fn main() {
 
     // 演示模块系统 / Demonstrate module system
     demonstrate_modules();
+
+    // 演示标准库 / Demonstrate standard library
+    demonstrate_std_library();
 }
 
 /// 演示解释器功能 / Demonstrate interpreter functionality
@@ -891,4 +894,53 @@ fn demonstrate_modules() {
     }
 
     println!("\n模块系统演示完成 / Module System Demo Completed");
+}
+
+/// 演示标准库 / Demonstrate standard library
+fn demonstrate_std_library() {
+    println!("\n10. 标准库演示 / Standard Library Demo");
+    println!("--------------------------------------------");
+
+    let parser = AdaptiveParser::new(true);
+    let mut interpreter = Interpreter::new();
+
+    // 导入标准库 / Import standard library
+    let import_code = "(import \"std\")";
+    match parser.parse(import_code) {
+        Ok(ast) => {
+            if let Err(e) = interpreter.execute(&ast) {
+                println!("导入标准库错误 / Import error: {:?}", e);
+                return;
+            }
+        }
+        Err(e) => {
+            println!("解析错误 / Parse error: {:?}", e);
+            return;
+        }
+    }
+
+    // 测试标准库函数 / Test standard library functions
+    let test_cases = vec![
+        ("(std.abs -5)", "绝对值 / Absolute value"),
+        ("(std.max 3 7)", "最大值 / Maximum"),
+        ("(std.min 3 7)", "最小值 / Minimum"),
+        ("(std.factorial 5)", "阶乘 / Factorial"),
+    ];
+
+    for (code, description) in test_cases {
+        println!("\n测试 / Test: {}", description);
+        println!("代码 / Code: {}", code);
+        match parser.parse(code) {
+            Ok(ast) => {
+                match interpreter.execute(&ast) {
+                    Ok(value) => println!("结果 / Result: {}", value),
+                    Err(e) => println!("执行错误 / Execution error: {:?}", e),
+                }
+            }
+            Err(e) => println!("解析错误 / Parse error: {:?}", e),
+        }
+    }
+
+    println!("\n提示 / Note: 标准库提供了map、filter、reduce等高级列表操作");
+    println!("Standard library provides map, filter, reduce and other advanced list operations");
 }

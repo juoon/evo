@@ -333,6 +333,11 @@ match parser.parse(code) {
   - 导入模块：`(import "module")` 或 `(import "module" "alias")`
   - 模块命名空间调用：`(module.function ...)`
   - 默认搜索路径：`modules/`, `examples/`, 当前目录
+- ✅ **标准库模块** - 用Aevolang实现的核心功能
+  - 标准库：`(import "std")` 提供常用工具函数
+  - 数学函数：`std.abs`, `std.max`, `std.min`, `std.factorial`
+  - 逻辑函数：`std.and`, `std.or`, `std.not`
+  - 增强自举能力：更多功能用语言本身实现
 
 ### 测试状态 / Test Status
 
@@ -378,6 +383,12 @@ match parser.parse(code) {
     - 实现进化回滚机制：rollback_to_event()
     - 实现谱系树结构查询
     - 实现祖先链和后代事件查询
+14. ✅ ~~标准库模块（std.aevo）- 增强自举能力~~ - 已完成
+    - 创建标准库模块，用Aevolang实现常用工具函数
+    - 数学函数：abs、max、min、factorial
+    - 逻辑函数：and、or、not
+    - 工具函数：identity
+    - 为未来高级函数（map、filter、reduce）预留接口
 
 ## 贡献 / Contributing
 
