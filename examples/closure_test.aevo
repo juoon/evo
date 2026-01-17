@@ -1,0 +1,23 @@
+; Lambda闭包测试 / Lambda closure test
+; 测试Lambda表达式捕获外部环境变量的能力 / Test Lambda expression's ability to capture external environment variables
+
+; 测试1: 基本闭包 / Test 1: Basic closure
+(let multiplier 3
+  (let multiply (lambda (x) (* multiplier x))
+    (multiply 4)))  ; 应该返回 12 / Should return 12
+
+; 测试2: 多层闭包 / Test 2: Multi-level closure
+(let x 10
+  (let y 20
+    (let add (lambda (z) (+ x (+ y z)))
+      (add 5))))  ; 应该返回 35 / Should return 35
+
+; 测试3: 闭包与参数遮蔽 / Test 3: Closure with parameter shadowing
+(let x 100
+  (let func (lambda (x) (+ x 10))  ; 参数x遮蔽外部x
+    (func 5)))  ; 应该返回 15 (使用参数x，不是外部的100) / Should return 15 (uses parameter x, not external 100)
+
+; 测试4: 闭包在map中使用 / Test 4: Closure used in map
+(let base 5
+  (let add_base (lambda (x) (+ base x))
+    (map add_base (list 1 2 3 4))))  ; 应该返回 [6, 7, 8, 9] / Should return [6, 7, 8, 9]

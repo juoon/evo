@@ -122,7 +122,30 @@ impl ContextManager {
         let mut references = Vec::new();
 
         // 检查"上面的"、"之前的"、"刚才的"等引用 / Check for "above", "previous", "just now" references
-        let reference_keywords = vec!["上面", "之前", "刚才", "之前定义的", "上面的变量"];
+        let reference_keywords = vec![
+            "上面",
+            "之前",
+            "刚才",
+            "之前定义的",
+            "上面的变量",
+            "上面的函数",
+            "above",
+            "previous",
+            "last",
+            "before",
+            "earlier",
+            "刚才的",
+            "之前的",
+            "它",
+            "这个",
+            "那个",
+            "it",
+            "this",
+            "that",
+            "the above",
+            "the previous",
+        ];
+
         for keyword in reference_keywords {
             if input.contains(keyword) {
                 // 查找最近的匹配 / Find nearest match
@@ -136,6 +159,38 @@ impl ContextManager {
             }
         }
 
+        // 检查数字引用（如"第1个"、"第一个"、"first"等）
+        let number_patterns = vec![
+            ("第一个", 0),
+            ("第二个", 1),
+            ("第三个", 2),
+            ("第四个", 3),
+            ("第五个", 4),
+            ("first", 0),
+            ("second", 1),
+            ("third", 2),
+            ("fourth", 3),
+            ("fifth", 4),
+            ("第1个", 0),
+            ("第2个", 1),
+            ("第3个", 2),
+            ("第4个", 3),
+            ("第5个", 4),
+        ];
+
+        for (pattern, index) in number_patterns {
+            if input.contains(pattern) && index < self.history.len() {
+                let turn_index = self.history.len() - 1 - index;
+                if let Some(turn) = self.history.get(turn_index) {
+                    references.push(ContextReference {
+                        reference_type: ReferenceType::PreviousTurn,
+                        turn_id: turn.turn_id,
+                        description: format!("引用第{}个对话: {}", index + 1, turn.user_input),
+                    });
+                }
+            }
+        }
+
         references
     }
 
@@ -143,10 +198,41 @@ impl ContextManager {
     fn resolve_variables(&self, input: &str) -> HashMap<String, GrammarElement> {
         let mut resolved = HashMap::new();
 
+        // 将输入分割为单词，用于更精确的匹配 / Split input into words for more precise matching
+        let input_words: Vec<&str> = input.split_whitespace().collect();
+
         // 检查输入中提到的变量名 / Check for variable names mentioned in input
         for (var_name, var_value) in &self.variables {
-            if input.contains(var_name) {
+            // 检查是否作为完整单词出现 / Check if it appears as a complete word
+            let is_word_match = input_words.iter().any(|word| {
+                // 移除标点符号后比较 / Compare after removing punctuation
+                word.trim_matches(|c: char| !c.is_alphanumeric()) == var_name
+            });
+
+            // 也检查简单包含（用于中文等没有空格分隔的语言） / Also check simple contains (for languages without spaces like Chinese)
+            if is_word_match || input.contains(var_name) {
                 resolved.insert(var_name.clone(), var_value.clone());
+            }
+        }
+
+        // 从历史对话中提取变量引用 / Extract variable references from conversation history
+        for turn in self.history.iter().rev().take(5) {
+            if let Some(intent) = &turn.intent {
+                if let crate::parser::nlu::IntentType::DefineVariable = intent.intent_type {
+                    // 检查是否在输入中引用了这个变量 / Check if this variable is referenced in input
+                    for code_elem in &intent.code_structure {
+                        if let GrammarElement::Atom(name) = code_elem {
+                            let is_word_match = input_words.iter().any(|word| {
+                                word.trim_matches(|c: char| !c.is_alphanumeric()) == name
+                            });
+                            if (is_word_match || input.contains(name))
+                                && !resolved.contains_key(name)
+                            {
+                                resolved.insert(name.clone(), code_elem.clone());
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -157,10 +243,41 @@ impl ContextManager {
     fn resolve_functions(&self, input: &str) -> HashMap<String, ParsedIntent> {
         let mut resolved = HashMap::new();
 
+        // 将输入分割为单词，用于更精确的匹配 / Split input into words for more precise matching
+        let input_words: Vec<&str> = input.split_whitespace().collect();
+
         // 检查输入中提到的函数名 / Check for function names mentioned in input
         for (func_name, func_intent) in &self.functions {
-            if input.contains(func_name) {
+            // 检查是否作为完整单词出现 / Check if it appears as a complete word
+            let is_word_match = input_words.iter().any(|word| {
+                // 移除标点符号后比较 / Compare after removing punctuation
+                word.trim_matches(|c: char| !c.is_alphanumeric()) == func_name
+            });
+
+            // 也检查简单包含（用于中文等没有空格分隔的语言） / Also check simple contains (for languages without spaces like Chinese)
+            if is_word_match || input.contains(func_name) {
                 resolved.insert(func_name.clone(), func_intent.clone());
+            }
+        }
+
+        // 从历史对话中提取函数引用 / Extract function references from conversation history
+        for turn in self.history.iter().rev().take(5) {
+            if let Some(intent) = &turn.intent {
+                if let crate::parser::nlu::IntentType::DefineFunction = intent.intent_type {
+                    // 检查是否在输入中引用了这个函数 / Check if this function is referenced in input
+                    for code_elem in &intent.code_structure {
+                        if let GrammarElement::Atom(name) = code_elem {
+                            let is_word_match = input_words.iter().any(|word| {
+                                word.trim_matches(|c: char| !c.is_alphanumeric()) == name
+                            });
+                            if (is_word_match || input.contains(name))
+                                && !resolved.contains_key(name)
+                            {
+                                resolved.insert(name.clone(), intent.clone());
+                            }
+                        }
+                    }
+                }
             }
         }
 

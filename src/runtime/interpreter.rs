@@ -17,8 +17,8 @@ pub struct Interpreter {
     functions: HashMap<String, Function>,
     /// 模块缓存 / Module cache
     modules: HashMap<String, Module>,
-    /// Lambda注册表 / Lambda registry (用于存储Lambda函数体)
-    lambda_registry: HashMap<String, (Vec<String>, GrammarElement)>,
+    /// Lambda注册表 / Lambda registry (用于存储Lambda函数体和捕获的环境)
+    lambda_registry: HashMap<String, (Vec<String>, GrammarElement, HashMap<String, Value>)>,
     /// Lambda计数器 / Lambda counter (用于生成唯一ID)
     lambda_counter: u64,
 }
@@ -355,16 +355,22 @@ impl Interpreter {
             GrammarElement::List(rest[1..].to_vec())
         };
 
-        // 捕获当前环境（用于闭包）- 暂时不使用，但保留接口
-        let _captured_env = Some(self.environment.clone());
+        // 捕获当前环境（用于闭包）
+        // 只捕获不在参数列表中的变量，避免参数遮蔽
+        let captured_env: HashMap<String, Value> = self
+            .environment
+            .iter()
+            .filter(|(key, _)| !params.contains(key))
+            .map(|(k, v)| (k.clone(), v.clone()))
+            .collect();
 
         // 生成唯一的Lambda ID
         self.lambda_counter += 1;
         let lambda_id = format!("__lambda_{}", self.lambda_counter);
 
-        // 注册Lambda函数体
+        // 注册Lambda函数体和捕获的环境
         self.lambda_registry
-            .insert(lambda_id.clone(), (params.clone(), body));
+            .insert(lambda_id.clone(), (params.clone(), body, captured_env));
 
         // 返回Lambda值
         Ok(Value::Lambda {
@@ -595,8 +601,8 @@ impl Interpreter {
             )));
         }
 
-        // 从注册表中获取Lambda函数体
-        let (_, body) = self
+        // 从注册表中获取Lambda函数体和捕获的环境
+        let (_, body, captured_env) = self
             .lambda_registry
             .get(lambda_id)
             .ok_or_else(|| {
@@ -613,25 +619,44 @@ impl Interpreter {
             .map(|e| self.eval_expr(e))
             .collect::<Result<Vec<_>, _>>()?;
 
-        // 保存当前环境
+        // 保存当前环境（用于恢复）
         let mut saved_env = HashMap::new();
+
+        // 首先恢复捕获的环境（闭包变量）
+        for (key, value) in &captured_env {
+            if let Some(old) = self.environment.insert(key.clone(), value.clone()) {
+                saved_env.insert(key.clone(), old);
+            }
+        }
+
+        // 然后设置参数（参数会遮蔽捕获的环境中的同名变量）
+        let mut saved_params = HashMap::new();
         for (param, value) in params.iter().zip(arg_values.iter()) {
             if let Some(old) = self.environment.insert(param.clone(), value.clone()) {
-                saved_env.insert(param.clone(), old);
+                saved_params.insert(param.clone(), old);
             }
         }
 
         // 执行Lambda函数体
         let result = self.eval_element(&body)?;
 
-        // 恢复环境
+        // 恢复环境：先恢复参数，再恢复捕获的环境
         for param in params {
-            if let Some(old) = saved_env.remove(param) {
+            if let Some(old) = saved_params.remove(param) {
                 self.environment.insert(param.clone(), old);
             } else {
                 self.environment.remove(param);
             }
         }
+        
+        // 恢复捕获的环境（只恢复之前存在的变量）
+        for (key, old_value) in saved_env {
+            self.environment.insert(key, old_value);
+        }
+        
+        // 移除Lambda执行时新增的变量（这些变量不在捕获环境中，也不在参数中）
+        // 注意：这里我们只移除那些在Lambda执行前不存在于环境中的变量
+        // 由于我们已经恢复了saved_env中的变量，这里不需要额外处理
 
         Ok(result)
     }
