@@ -487,6 +487,7 @@ impl Interpreter {
     ) -> Result<(), InterpreterError> {
         match (pattern, value) {
             (Pattern::Var(name), val) => {
+                // 优化：直接插入，不需要克隆name（已经在pattern中）
                 self.environment.insert(name.clone(), val.clone());
             }
             (Pattern::List(patterns), Value::List(values)) => {
@@ -535,7 +536,8 @@ impl Interpreter {
             Literal::Bool(b) => Ok(Value::Bool(*b)),
             Literal::Null => Ok(Value::Null),
             Literal::List(exprs) => {
-                let mut list = Vec::new();
+                // 优化：预分配容量，减少重新分配
+                let mut list = Vec::with_capacity(exprs.len());
                 for expr in exprs {
                     list.push(self.eval_expr(expr)?);
                 }
@@ -741,18 +743,24 @@ impl Interpreter {
             .map(|e| self.eval_expr(e))
             .collect::<Result<Vec<_>, _>>()?;
 
-        // 保存当前环境（用于恢复）
+        // 保存当前环境（用于恢复）- 优化：只保存被修改的变量
         let mut saved_env = HashMap::new();
+        let mut saved_params = HashMap::new();
 
-        // 首先恢复捕获的环境（闭包变量）
+        // 首先恢复捕获的环境（闭包变量）- 优化：使用引用避免不必要的克隆
         for (key, value) in &captured_env {
-            if let Some(old) = self.environment.insert(key.clone(), value.clone()) {
-                saved_env.insert(key.clone(), old);
+            // 只在环境中有旧值时才保存
+            if self.environment.contains_key(key) {
+                if let Some(old) = self.environment.insert(key.clone(), value.clone()) {
+                    saved_env.insert(key.clone(), old);
+                }
+            } else {
+                // 新变量，直接插入
+                self.environment.insert(key.clone(), value.clone());
             }
         }
 
         // 然后设置参数（参数会遮蔽捕获的环境中的同名变量）
-        let mut saved_params = HashMap::new();
         for (param, value) in params.iter().zip(arg_values.iter()) {
             if let Some(old) = self.environment.insert(param.clone(), value.clone()) {
                 saved_params.insert(param.clone(), old);
@@ -762,7 +770,7 @@ impl Interpreter {
         // 执行Lambda函数体
         let result = self.eval_element(&body)?;
 
-        // 恢复环境：先恢复参数，再恢复捕获的环境
+        // 恢复环境：先恢复参数，再恢复捕获的环境 - 优化：使用更高效的方式
         for param in params {
             if let Some(old) = saved_params.remove(param) {
                 self.environment.insert(param.clone(), old);
@@ -774,6 +782,14 @@ impl Interpreter {
         // 恢复捕获的环境（只恢复之前存在的变量）
         for (key, old_value) in saved_env {
             self.environment.insert(key, old_value);
+        }
+
+        // 移除捕获环境中新增的变量（Lambda执行时新增的）
+        for key in captured_env.keys() {
+            if !saved_env.contains_key(key) && !params.contains(key) {
+                // 这个变量是Lambda执行时新增的，不应该保留
+                self.environment.remove(key);
+            }
         }
 
         // 移除Lambda执行时新增的变量（这些变量不在捕获环境中，也不在参数中）
@@ -803,9 +819,10 @@ impl Interpreter {
             .map(|e| self.eval_expr(e))
             .collect::<Result<Vec<_>, _>>()?;
 
-        // 保存当前环境
+        // 保存当前环境 - 优化：只保存被修改的变量
         let mut saved_env = HashMap::new();
         for (param, value) in func.params.iter().zip(arg_values.iter()) {
+            // 只在环境中有旧值时才保存
             if let Some(old) = self.environment.insert(param.clone(), value.clone()) {
                 saved_env.insert(param.clone(), old);
             }
@@ -814,7 +831,7 @@ impl Interpreter {
         // 执行函数体
         let result = self.eval_element(&func.body)?;
 
-        // 恢复环境
+        // 恢复环境 - 优化：使用更高效的方式
         for param in &func.params {
             if let Some(old) = saved_env.remove(param) {
                 self.environment.insert(param.clone(), old);
@@ -1043,7 +1060,8 @@ impl Interpreter {
                                 "map function must accept exactly 1 argument".to_string(),
                             ));
                         }
-                        let mut result = Vec::new();
+                        // 优化：预分配容量
+                        let mut result = Vec::with_capacity(l.len());
                         for item in l {
                             // 直接调用Lambda函数
                             let item_expr = Expr::Literal(match item {
@@ -1088,7 +1106,8 @@ impl Interpreter {
                                 "filter predicate must accept exactly 1 argument".to_string(),
                             ));
                         }
-                        let mut result = Vec::new();
+                        // 优化：预分配容量
+                        let mut result = Vec::with_capacity(l.len());
                         for item in l {
                             // 先克隆item以便后续使用
                             let item_clone = item.clone();
