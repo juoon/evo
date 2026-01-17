@@ -74,6 +74,9 @@ fn main() {
 
     // 演示错误恢复 / Demonstrate error recovery
     demonstrate_error_recovery();
+
+    // 演示智能代码生成 / Demonstrate intelligent code generation
+    demonstrate_intelligent_code_generation();
 }
 
 /// 演示解释器功能 / Demonstrate interpreter functionality
@@ -289,17 +292,15 @@ fn demonstrate_poetry_understanding() {
                 Ok(code) => {
                     println!("生成的代码 / Generated Code:");
                     println!("{}", code);
-                    
+
                     // 尝试执行生成的代码 / Try to execute generated code
                     let code_parser = AdaptiveParser::new(true);
                     let mut code_interpreter = Interpreter::new();
                     match code_parser.parse(&code) {
-                        Ok(ast) => {
-                            match code_interpreter.execute(&ast) {
-                                Ok(_) => println!("代码执行成功 / Code executed successfully"),
-                                Err(e) => println!("代码执行错误 / Code execution error: {:?}", e),
-                            }
-                        }
+                        Ok(ast) => match code_interpreter.execute(&ast) {
+                            Ok(_) => println!("代码执行成功 / Code executed successfully"),
+                            Err(e) => println!("代码执行错误 / Code execution error: {:?}", e),
+                        },
                         Err(e) => println!("代码解析错误 / Code parse error: {:?}", e),
                     }
                 }
@@ -346,25 +347,33 @@ fn demonstrate_evolution_engine() {
         "自举规则数 / Bootstrap Rule Count: {}",
         engine.get_syntax_rules().len()
     );
-    
+
     // 知识图谱统计 / Knowledge graph statistics
     let stats = engine.get_knowledge_stats();
-    println!("知识图谱节点数 / Knowledge Graph Nodes: {}", stats["nodes_count"]);
-    println!("发现模式数 / Discovered Patterns: {}", stats["patterns_count"]);
+    println!(
+        "知识图谱节点数 / Knowledge Graph Nodes: {}",
+        stats["nodes_count"]
+    );
+    println!(
+        "发现模式数 / Discovered Patterns: {}",
+        stats["patterns_count"]
+    );
 
     // 演示进化预测 / Demonstrate evolution prediction
     println!("\n进化预测 / Evolution Predictions:");
-    let predictions = engine.predict_evolutions(vec![
-        "支持更多数据结构".to_string(),
-        "改进性能".to_string(),
-    ]);
-    
+    let predictions =
+        engine.predict_evolutions(vec!["支持更多数据结构".to_string(), "改进性能".to_string()]);
+
     if predictions.is_empty() {
         println!("  暂无预测 / No predictions yet (需要更多历史数据 / need more history data)");
     } else {
         for (i, pred) in predictions.iter().take(3).enumerate() {
-            println!("  {}. {} (置信度: {:.2})", 
-                i + 1, pred.predicted_evolution, pred.confidence);
+            println!(
+                "  {}. {} (置信度: {:.2})",
+                i + 1,
+                pred.predicted_evolution,
+                pred.confidence
+            );
             println!("     理由 / Reasoning: {}", pred.reasoning);
         }
     }
@@ -383,14 +392,20 @@ fn demonstrate_evolution_engine() {
 "#;
     match engine.evolve_from_poetry(poem) {
         Ok(rules) => {
-            println!("  从诗歌理解中生成的规则数 / Rules generated: {}", rules.len());
+            println!(
+                "  从诗歌理解中生成的规则数 / Rules generated: {}",
+                rules.len()
+            );
             if !rules.is_empty() {
                 println!("  生成的规则示例 / Example rule: {}", rules[0].name);
             }
-            
+
             // 更新统计 / Update statistics
             let stats_after = engine.get_knowledge_stats();
-            println!("  进化后知识图谱节点数 / Knowledge nodes after evolution: {}", stats_after["nodes_count"]);
+            println!(
+                "  进化后知识图谱节点数 / Knowledge nodes after evolution: {}",
+                stats_after["nodes_count"]
+            );
         }
         Err(e) => {
             println!("  进化错误 / Evolution error: {:?}", e);
@@ -400,12 +415,30 @@ fn demonstrate_evolution_engine() {
     // 演示自我反思 / Demonstrate self-reflection
     println!("\n自我反思 / Self-Reflection:");
     let reflection = engine.self_reflect();
-    println!("  总进化次数 / Total Evolutions: {}", reflection["total_evolutions"]);
-    println!("  最近7天进化 / Recent 7 Days: {}", reflection["recent_evolutions_7days"]);
-    println!("  语法进化 / Syntax Evolutions: {}", reflection["syntax_evolutions"]);
-    println!("  语义进化 / Semantic Evolutions: {}", reflection["semantic_evolutions"]);
-    println!("  知识丰富度 / Knowledge Richness: {}", reflection["knowledge_richness"]);
-    println!("  自我评估 / Self Assessment: {}", reflection["self_assessment"]);
+    println!(
+        "  总进化次数 / Total Evolutions: {}",
+        reflection["total_evolutions"]
+    );
+    println!(
+        "  最近7天进化 / Recent 7 Days: {}",
+        reflection["recent_evolutions_7days"]
+    );
+    println!(
+        "  语法进化 / Syntax Evolutions: {}",
+        reflection["syntax_evolutions"]
+    );
+    println!(
+        "  语义进化 / Semantic Evolutions: {}",
+        reflection["semantic_evolutions"]
+    );
+    println!(
+        "  知识丰富度 / Knowledge Richness: {}",
+        reflection["knowledge_richness"]
+    );
+    println!(
+        "  自我评估 / Self Assessment: {}",
+        reflection["self_assessment"]
+    );
 
     // 演示相似规则查找 / Demonstrate similar rule finding
     if !engine.get_syntax_rules().is_empty() {
@@ -415,7 +448,10 @@ fn demonstrate_evolution_engine() {
         if similar.is_empty() {
             println!("  暂无相似规则 / No similar rules found");
         } else {
-            println!("  规则 '{}' 的相似规则 / Similar rules to '{}':", first_rule.name, first_rule.name);
+            println!(
+                "  规则 '{}' 的相似规则 / Similar rules to '{}':",
+                first_rule.name, first_rule.name
+            );
             for (rule_id, similarity) in similar.iter().take(3) {
                 println!("    {} (相似度: {:.2})", rule_id, similarity);
             }
@@ -428,22 +464,24 @@ fn demonstrate_evolution_engine() {
     if !history.is_empty() {
         let first_event = &history[0];
         println!("  第一个事件ID / First Event ID: {}", first_event.id);
-        
+
         // 获取祖先链 / Get ancestor chain
         let ancestors = engine.get_event_ancestors(first_event.id);
         println!("  祖先事件数 / Ancestor Events: {}", ancestors.len());
-        
+
         // 获取后代事件 / Get descendant events
         let descendants = engine.get_event_descendants(first_event.id);
         println!("  后代事件数 / Descendant Events: {}", descendants.len());
-        
+
         // 获取谱系树 / Get genealogy tree
         let tree = engine.get_genealogy_tree(Some(first_event.id));
         if tree != serde_json::json!({}) {
-            println!("  谱系树结构 / Genealogy Tree Structure: 已生成 (包含{}个节点)", 
-                tree["children"].as_array().map(|c| c.len()).unwrap_or(0));
+            println!(
+                "  谱系树结构 / Genealogy Tree Structure: 已生成 (包含{}个节点)",
+                tree["children"].as_array().map(|c| c.len()).unwrap_or(0)
+            );
         }
-        
+
         println!("  提示 / Note: 使用 rollback_to_event() 可以回滚到指定事件之前的状态");
         println!("  Use rollback_to_event() to rollback to state before specified event");
     } else {
@@ -981,12 +1019,10 @@ fn demonstrate_std_library() {
         println!("\n测试 / Test: {}", description);
         println!("代码 / Code: {}", code);
         match parser.parse(code) {
-            Ok(ast) => {
-                match interpreter.execute(&ast) {
-                    Ok(value) => println!("结果 / Result: {}", value),
-                    Err(e) => println!("执行错误 / Execution error: {:?}", e),
-                }
-            }
+            Ok(ast) => match interpreter.execute(&ast) {
+                Ok(value) => println!("结果 / Result: {}", value),
+                Err(e) => println!("执行错误 / Execution error: {:?}", e),
+            },
             Err(e) => println!("解析错误 / Parse error: {:?}", e),
         }
     }
@@ -1017,12 +1053,12 @@ fn demonstrate_code_explanation() {
     for (code, description) in test_cases {
         println!("\n测试 / Test: {}", description);
         println!("代码 / Code: {}", code);
-        
+
         match parser.parse(code) {
             Ok(ast) => {
                 println!("\n中文解释 / Chinese Explanation:");
                 println!("  {}", explainer_chinese.explain_ast(&ast));
-                
+
                 println!("\n英文解释 / English Explanation:");
                 println!("  {}", explainer_english.explain_ast(&ast));
             }
@@ -1041,8 +1077,8 @@ fn demonstrate_code_analysis() {
     println!("\n12. 代码分析演示 / Code Analysis Demo");
     println!("--------------------------------------------");
 
-    use crate::parser::AdaptiveParser;
     use crate::evolution::{CodeAnalyzer, EvolutionEngine};
+    use crate::parser::AdaptiveParser;
 
     let parser = AdaptiveParser::new(true);
     let analyzer = CodeAnalyzer::new();
@@ -1067,20 +1103,38 @@ fn demonstrate_code_analysis() {
         Ok(ast) => {
             // 分析代码 / Analyze code
             let analysis = analyzer.analyze(&ast);
-            
+
             println!("\n代码分析结果 / Code Analysis Result:");
             println!("复杂度 / Complexity: {:.2}", analysis.complexity);
-            
+
             println!("\n代码统计 / Code Statistics:");
-            println!("  函数数量 / Function count: {}", analysis.statistics.function_count);
-            println!("  变量数量 / Variable count: {}", analysis.statistics.variable_count);
-            println!("  平均函数长度 / Avg function length: {:.2}", analysis.statistics.avg_function_length);
-            println!("  最大嵌套深度 / Max nesting depth: {}", analysis.statistics.max_nesting_depth);
-            println!("  表达式复杂度 / Expression complexity: {:.2}", analysis.statistics.expression_complexity);
+            println!(
+                "  函数数量 / Function count: {}",
+                analysis.statistics.function_count
+            );
+            println!(
+                "  变量数量 / Variable count: {}",
+                analysis.statistics.variable_count
+            );
+            println!(
+                "  平均函数长度 / Avg function length: {:.2}",
+                analysis.statistics.avg_function_length
+            );
+            println!(
+                "  最大嵌套深度 / Max nesting depth: {}",
+                analysis.statistics.max_nesting_depth
+            );
+            println!(
+                "  表达式复杂度 / Expression complexity: {:.2}",
+                analysis.statistics.expression_complexity
+            );
 
             println!("\n发现的模式 / Patterns Found:");
             for pattern in &analysis.patterns {
-                println!("  - {:?}: {} (置信度: {:.2})", pattern.pattern_type, pattern.description, pattern.confidence);
+                println!(
+                    "  - {:?}: {} (置信度: {:.2})",
+                    pattern.pattern_type, pattern.description, pattern.confidence
+                );
             }
 
             println!("\n优化建议 / Optimization Suggestions:");
@@ -1095,8 +1149,16 @@ fn demonstrate_code_analysis() {
             let engine_analysis = engine.analyze_code(&ast);
             println!("\n使用进化引擎分析 / Analysis using Evolution Engine:");
             println!("  复杂度 / Complexity: {:.2}", engine_analysis.complexity);
-            println!("  发现 {} 个模式 / Found {} patterns", engine_analysis.patterns.len(), engine_analysis.patterns.len());
-            println!("  生成 {} 个建议 / Generated {} suggestions", engine_analysis.suggestions.len(), engine_analysis.suggestions.len());
+            println!(
+                "  发现 {} 个模式 / Found {} patterns",
+                engine_analysis.patterns.len(),
+                engine_analysis.patterns.len()
+            );
+            println!(
+                "  生成 {} 个建议 / Generated {} suggestions",
+                engine_analysis.suggestions.len(),
+                engine_analysis.suggestions.len()
+            );
         }
         Err(e) => {
             println!("解析错误 / Parse error: {:?}", e);
@@ -1112,8 +1174,8 @@ fn demonstrate_code_refactoring() {
     println!("\n13. 代码自动重构演示 / Automatic Code Refactoring Demo");
     println!("--------------------------------------------");
 
-    use crate::parser::AdaptiveParser;
     use crate::evolution::EvolutionEngine;
+    use crate::parser::AdaptiveParser;
 
     let parser = AdaptiveParser::new(true);
     let engine = EvolutionEngine::new();
@@ -1133,27 +1195,42 @@ fn demonstrate_code_refactoring() {
             let analysis = engine.analyze_code(&ast);
             println!("\n代码分析 / Code Analysis:");
             println!("  复杂度 / Complexity: {:.2}", analysis.complexity);
-            println!("  发现 {} 个模式 / Found {} patterns", analysis.patterns.len(), analysis.patterns.len());
-            println!("  生成 {} 个建议 / Generated {} suggestions", analysis.suggestions.len(), analysis.suggestions.len());
+            println!(
+                "  发现 {} 个模式 / Found {} patterns",
+                analysis.patterns.len(),
+                analysis.patterns.len()
+            );
+            println!(
+                "  生成 {} 个建议 / Generated {} suggestions",
+                analysis.suggestions.len(),
+                analysis.suggestions.len()
+            );
 
             // 自动重构 / Automatic refactoring
             let refactored = engine.refactor_code(&ast);
-            
+
             println!("\n重构后的代码 / Refactored Code:");
             // 简化显示：显示重构后的AST结构 / Simplified display: show refactored AST structure
             println!("  重构完成，代码已优化 / Refactoring complete, code optimized");
             println!("  原始AST元素数 / Original AST elements: {}", ast.len());
-            println!("  重构后AST元素数 / Refactored AST elements: {}", refactored.len());
+            println!(
+                "  重构后AST元素数 / Refactored AST elements: {}",
+                refactored.len()
+            );
 
             // 测试常量折叠优化 / Test constant folding optimization
             let constant_code = "(+ (* 3 2) (* 4 5))";
             println!("\n常量折叠测试 / Constant Folding Test:");
             println!("  原始代码 / Original: {}", constant_code);
-            
+
             match parser.parse(constant_code) {
                 Ok(constant_ast) => {
                     let refactored_const = engine.refactor_code(&constant_ast);
-                    println!("  重构后 / Refactored: {} 个元素 / {} elements", refactored_const.len(), refactored_const.len());
+                    println!(
+                        "  重构后 / Refactored: {} 个元素 / {} elements",
+                        refactored_const.len(),
+                        refactored_const.len()
+                    );
                 }
                 Err(e) => {
                     println!("  解析错误 / Parse error: {:?}", e);
@@ -1182,17 +1259,26 @@ fn demonstrate_self_evolution() {
     match engine.self_evolve() {
         Ok(result) => {
             println!("自我进化结果 / Self-Evolution Result:");
-            println!("  {}", serde_json::to_string_pretty(&result).unwrap_or_default());
-            
+            println!(
+                "  {}",
+                serde_json::to_string_pretty(&result).unwrap_or_default()
+            );
+
             // 显示自我反思 / Show self-reflection
             println!("\n自我反思 / Self-Reflection:");
             let reflection = engine.self_reflect();
-            println!("  {}", serde_json::to_string_pretty(&reflection).unwrap_or_default());
-            
+            println!(
+                "  {}",
+                serde_json::to_string_pretty(&reflection).unwrap_or_default()
+            );
+
             // 显示知识图谱统计 / Show knowledge graph statistics
             println!("\n知识图谱统计 / Knowledge Graph Statistics:");
             let stats = engine.get_knowledge_stats();
-            println!("  {}", serde_json::to_string_pretty(&stats).unwrap_or_default());
+            println!(
+                "  {}",
+                serde_json::to_string_pretty(&stats).unwrap_or_default()
+            );
         }
         Err(e) => {
             println!("自我进化错误 / Self-Evolution Error: {:?}", e);
@@ -1237,9 +1323,18 @@ fn demonstrate_context_understanding() {
                 match context.parse_with_context(input) {
                     Ok(enhanced_intent) => {
                         println!("  上下文解析 / Context parsing:");
-                        println!("    引用数量 / References: {}", enhanced_intent.context_references.len());
-                        println!("    解析的变量 / Resolved variables: {}", enhanced_intent.resolved_variables.len());
-                        println!("    解析的函数 / Resolved functions: {}", enhanced_intent.resolved_functions.len());
+                        println!(
+                            "    引用数量 / References: {}",
+                            enhanced_intent.context_references.len()
+                        );
+                        println!(
+                            "    解析的变量 / Resolved variables: {}",
+                            enhanced_intent.resolved_variables.len()
+                        );
+                        println!(
+                            "    解析的函数 / Resolved functions: {}",
+                            enhanced_intent.resolved_functions.len()
+                        );
 
                         for reference in &enhanced_intent.context_references {
                             println!("    引用 / Reference: {}", reference.description);
@@ -1258,10 +1353,15 @@ fn demonstrate_context_understanding() {
 
     println!("\n对话历史 / Conversation History:");
     for turn in context.get_history() {
-        println!("  轮次 {} / Turn {}: {}", turn.turn_id, turn.turn_id, turn.user_input);
+        println!(
+            "  轮次 {} / Turn {}: {}",
+            turn.turn_id, turn.turn_id, turn.user_input
+        );
     }
 
-    println!("\n提示 / Note: 上下文理解功能让语言能够理解多轮对话，记住之前的上下文，实现更自然的交互");
+    println!(
+        "\n提示 / Note: 上下文理解功能让语言能够理解多轮对话，记住之前的上下文，实现更自然的交互"
+    );
     println!("Context understanding allows the language to understand multi-turn conversations and remember previous context for more natural interaction");
 }
 
@@ -1304,12 +1404,10 @@ fn demonstrate_enhanced_std() {
         println!("\n测试 / Test: {}", description);
         println!("代码 / Code: {}", code);
         match parser.parse(code) {
-            Ok(ast) => {
-                match interpreter.execute(&ast) {
-                    Ok(value) => println!("结果 / Result: {}", value),
-                    Err(e) => println!("执行错误 / Execution error: {:?}", e),
-                }
-            }
+            Ok(ast) => match interpreter.execute(&ast) {
+                Ok(value) => println!("结果 / Result: {}", value),
+                Err(e) => println!("执行错误 / Execution error: {:?}", e),
+            },
             Err(e) => println!("解析错误 / Parse error: {:?}", e),
         }
     }
@@ -1336,14 +1434,14 @@ fn demonstrate_usage_learning() {
     engine.record_usage("变量定义");
     engine.record_usage("列表操作");
     engine.record_usage("变量定义");
-    
+
     // 模拟错误记录 / Simulate error recording
     println!("\n记录错误 / Recording Errors:");
     engine.record_error("UndefinedVariable", "变量x未定义", "(let y (+ x 1))");
     engine.record_error("UndefinedVariable", "变量y未定义", "(let z (+ y 1))");
     engine.record_error("TypeError", "类型不匹配", "(+ \"hello\" 5)");
     engine.record_error("UndefinedVariable", "变量x未定义", "(let y (+ x 1))");
-    
+
     // 模拟成功记录 / Simulate success recording
     println!("\n记录成功 / Recording Successes:");
     engine.record_success("变量定义", "(let x 5)");
@@ -1355,7 +1453,10 @@ fn demonstrate_usage_learning() {
     println!("\n学习洞察 / Learning Insights:");
     match engine.learn_from_usage() {
         Ok(result) => {
-            println!("  {}", serde_json::to_string_pretty(&result).unwrap_or_default());
+            println!(
+                "  {}",
+                serde_json::to_string_pretty(&result).unwrap_or_default()
+            );
         }
         Err(e) => {
             println!("  学习错误 / Learning error: {:?}", e);
@@ -1370,13 +1471,21 @@ fn demonstrate_usage_learning() {
     println!("  总错误数 / Total errors: {}", stats.total_errors);
     println!("  总成功数 / Total successes: {}", stats.total_successes);
     println!("  错误率 / Error rate: {:.2}%", stats.error_rate * 100.0);
-    println!("  成功率 / Success rate: {:.2}%", stats.success_rate * 100.0);
+    println!(
+        "  成功率 / Success rate: {:.2}%",
+        stats.success_rate * 100.0
+    );
 
     // 获取学习洞察详情 / Get detailed learning insights
     println!("\n详细洞察 / Detailed Insights:");
     let insights = engine.get_learning_insights();
     for (i, insight) in insights.iter().take(5).enumerate() {
-        println!("  {}. {:?}: {}", i + 1, insight.insight_type, insight.description);
+        println!(
+            "  {}. {:?}: {}",
+            i + 1,
+            insight.insight_type,
+            insight.description
+        );
         if let Some(suggestion) = &insight.suggestion {
             println!("     建议 / Suggestion: {}", suggestion);
         }
@@ -1392,9 +1501,9 @@ fn demonstrate_error_recovery() {
     println!("\n18. 错误恢复演示 / Error Recovery Demo");
     println!("--------------------------------------------");
 
+    use crate::evolution::ErrorRecoverer;
     use crate::parser::AdaptiveParser;
     use crate::runtime::Interpreter;
-    use crate::evolution::ErrorRecoverer;
 
     let parser = AdaptiveParser::new(true);
     let mut interpreter = Interpreter::new();
@@ -1449,9 +1558,88 @@ fn demonstrate_error_recovery() {
     println!("\n常见修复规则 / Common Fix Rules:");
     let common_fixes = recoverer.get_common_fixes();
     for (i, rule) in common_fixes.iter().take(5).enumerate() {
-        println!("  {}. {} (置信度: {:.2})", i + 1, rule.description, rule.confidence);
+        println!(
+            "  {}. {} (置信度: {:.2})",
+            i + 1,
+            rule.description,
+            rule.confidence
+        );
     }
 
-    println!("\n提示 / Note: 错误恢复功能能够自动识别常见错误并提供修复建议，提高代码质量和开发效率");
+    println!(
+        "\n提示 / Note: 错误恢复功能能够自动识别常见错误并提供修复建议，提高代码质量和开发效率"
+    );
     println!("Error recovery can automatically identify common errors and provide fix suggestions, improving code quality and development efficiency");
+}
+
+/// 演示智能代码生成功能 / Demonstrate intelligent code generation functionality
+fn demonstrate_intelligent_code_generation() {
+    println!("\n19. 智能代码生成演示 / Intelligent Code Generation Demo");
+    println!("--------------------------------------------");
+
+    use crate::evolution::IntelligentCodeGenerator;
+    use crate::evolution::GenerationContext;
+
+    let mut generator = IntelligentCodeGenerator::new();
+
+    // 模拟使用模式（通过代码生成自动记录）/ Simulate usage patterns (automatically recorded through code generation)
+    // 使用模式会在代码生成过程中自动记录 / Usage patterns will be automatically recorded during code generation
+
+    // 测试代码生成 / Test code generation
+    let test_intents = vec![
+        ("定义一个变量", "Define a variable"),
+        ("创建一个函数", "Create a function"),
+        ("计算两个数的和", "Calculate sum of two numbers"),
+        ("处理列表数据", "Process list data"),
+    ];
+
+    for (intent_cn, intent_en) in test_intents {
+        println!("\n意图 / Intent: {} / {}", intent_cn, intent_en);
+
+        let context = GenerationContext {
+            variables: vec!["x".to_string(), "y".to_string()],
+            functions: vec!["add".to_string(), "multiply".to_string()],
+            recent_patterns: vec!["变量定义".to_string()],
+            intent: Some(intent_cn.to_string()),
+        };
+
+        let result = generator.generate_from_intent(intent_cn, &context);
+        println!("生成的代码 / Generated Code: {}", result.code);
+        println!("置信度 / Confidence: {:.2}", result.confidence);
+        if let Some(template) = &result.template {
+            println!("使用的模板 / Template Used: {}", template);
+        }
+        if !result.suggestions.is_empty() {
+            println!("建议 / Suggestions:");
+            for (i, suggestion) in result.suggestions.iter().take(3).enumerate() {
+                println!("  {}. {}", i + 1, suggestion);
+            }
+        }
+
+        // 优化代码 / Optimize code
+        let optimized = generator.optimize_code(&result.code);
+        if optimized != result.code {
+            println!("优化后的代码 / Optimized Code: {}", optimized);
+        }
+    }
+
+    // 测试代码补全 / Test code completion
+    println!("\n代码补全测试 / Code Completion Test:");
+    let completion_context = GenerationContext {
+        variables: vec!["counter".to_string(), "result".to_string()],
+        functions: vec!["calculate".to_string(), "process".to_string()],
+        recent_patterns: vec!["变量定义".to_string(), "函数调用".to_string()],
+        intent: None,
+    };
+
+    let completions = generator.suggest_completion("let", &completion_context);
+    println!("补全建议 / Completion Suggestions:");
+    for (i, completion) in completions.iter().take(5).enumerate() {
+        println!("  {}. {}", i + 1, completion);
+    }
+
+    println!(
+        "\n提示 / Note: 智能代码生成能够基于上下文、使用模式和学习结果生成更准确的代码，提供代码补全和优化建议"
+    );
+    println!("Intelligent code generation can generate more accurate code based on context, usage patterns, and learning results, providing code completion and optimization suggestions");
 }
