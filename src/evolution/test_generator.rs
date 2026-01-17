@@ -227,7 +227,7 @@ impl TestGenerator {
         let mut tests = Vec::new();
 
         // 根据函数名生成测试用例 / Generate test cases based on function name
-        match function_name.as_str() {
+        match function_name {
             "add" | "+" => {
                 tests.push(TestCase {
                     id: uuid::Uuid::new_v4().to_string(),
