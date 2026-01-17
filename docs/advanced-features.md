@@ -183,6 +183,16 @@ match nlu_parser.parse("定义一个函数add，参数是x和y，x加y") {
 
 未来版本将集成机器学习模型以提升理解能力。
 
+## 进化引擎自举 / Evolution Bootstrapping
+
+进化引擎开始使用 Aevolang 模块来生成语法规则变体，实现“语言用语言定义规则”的自举能力。
+
+```lisp
+; 进化规则模块（modules/evolution.aevo）
+(import "evolution")
+(evolution.bootstrap_rules)
+```
+
 ## 数据结构 / Data Structures
 
 ### 列表操作 ✅ 已实现

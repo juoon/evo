@@ -1,0 +1,56 @@
+; Evolution rules defined in Aevolang (bootstrapping)
+
+(def make_rule (name keywords production description)
+  (dict
+    "name" name
+    "keywords" keywords
+    "production" production
+    "description" description
+    "examples" (list)
+    "synonyms" (list)
+    "variadic" false))
+
+; Bootstrap rules used by evolution engine
+(def bootstrap_rules ()
+  (list
+    (make_rule
+      "变量声明"
+      (list "变量" "let")
+      "VariableDeclaration"
+      "从自然语言生成变量声明的规则")
+    (make_rule
+      "函数定义"
+      (list "函数" "def")
+      "FunctionDefinition"
+      "从自然语言生成函数定义的规则")
+    (make_rule
+      "操作表达式"
+      (list "加" "减" "乘" "除")
+      "BinaryOperation"
+      "从自然语言生成基础运算的规则")))
+
+; Generate variants based on intent
+(def generate_variants (intent)
+  (let action (dict-get intent "action")
+    (if (= action "define_function")
+      (list
+        (make_rule
+          "函数定义"
+          (list "函数" "def" "定义")
+          "FunctionDefinition"
+          "从意图生成函数定义规则"))
+      (if (= action "define_variable")
+        (list
+          (make_rule
+            "变量声明"
+            (list "变量" "let" "设置")
+            "VariableDeclaration"
+            "从意图生成变量声明规则"))
+        (if (= action "execute_operation")
+          (list
+            (make_rule
+              "操作表达式"
+              (list "加" "减" "乘" "除" "plus" "minus")
+              "BinaryOperation"
+              "从意图生成操作表达式规则"))
+          (list))))))

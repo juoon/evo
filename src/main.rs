@@ -289,6 +289,10 @@ fn demonstrate_evolution_engine() {
 
     println!("进化引擎已创建 / Evolution Engine Created");
     println!("历史记录数 / History Count: {}", engine.get_history().len());
+    println!(
+        "自举规则数 / Bootstrap Rule Count: {}",
+        engine.get_syntax_rules().len()
+    );
 
     // 演示从自然语言进化（这里只是示例，实际实现需要NLU支持）
     // Demonstrate evolution from natural language (this is just an example, actual implementation requires NLU support)
