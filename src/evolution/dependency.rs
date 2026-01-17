@@ -145,7 +145,8 @@ impl DependencyAnalyzer {
         let statistics = self.calculate_statistics(&dependencies, &circular_dependencies);
 
         // 生成建议 / Generate suggestions
-        let suggestions = self.generate_suggestions(&dependencies, &circular_dependencies, statistics.max_depth);
+        let suggestions =
+            self.generate_suggestions(&dependencies, &circular_dependencies, statistics.max_depth);
 
         let result = DependencyAnalysis {
             dependencies: dependencies.clone(),
@@ -314,13 +315,16 @@ impl DependencyAnalyzer {
         dependencies: &[Dependency],
         circular: &[CircularDependency],
     ) -> DependencyStatistics {
-        let function_deps = dependencies.iter()
+        let function_deps = dependencies
+            .iter()
             .filter(|d| matches!(d.dependency_type, DependencyType::FunctionCall))
             .count();
-        let variable_deps = dependencies.iter()
+        let variable_deps = dependencies
+            .iter()
             .filter(|d| matches!(d.dependency_type, DependencyType::VariableReference))
             .count();
-        let module_deps = dependencies.iter()
+        let module_deps = dependencies
+            .iter()
             .filter(|d| matches!(d.dependency_type, DependencyType::ModuleImport))
             .count();
 
@@ -350,7 +354,12 @@ impl DependencyAnalyzer {
     }
 
     /// 深度优先搜索计算深度 / DFS to calculate depth
-    fn dfs_depth(&self, node: &String, visited: &mut HashSet<String>, current_depth: usize) -> usize {
+    fn dfs_depth(
+        &self,
+        node: &String,
+        visited: &mut HashSet<String>,
+        current_depth: usize,
+    ) -> usize {
         if visited.contains(node) {
             return current_depth;
         }
@@ -425,10 +434,14 @@ impl DependencyAnalyzer {
         }
 
         let total = self.analysis_history.len();
-        let total_deps: usize = self.analysis_history.iter()
+        let total_deps: usize = self
+            .analysis_history
+            .iter()
             .map(|r| r.dependencies.len())
             .sum();
-        let total_circular: usize = self.analysis_history.iter()
+        let total_circular: usize = self
+            .analysis_history
+            .iter()
             .map(|r| r.circular_dependencies.len())
             .sum();
 

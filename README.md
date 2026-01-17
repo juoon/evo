@@ -220,6 +220,27 @@ match parser.parse(code) {
 (+ (list 1 2) (list 3 4))  ; 返回 [1, 2, 3, 4]
 ```
 
+### 高阶函数 / Higher-order Functions ✅ 已实现
+
+```lisp
+; 导入标准库 / Import standard library
+(import "std")
+
+; map - 对列表每个元素应用函数 / Apply function to each element
+(std.map (lambda (x) (* x 2)) (list 1 2 3 4))  ; 返回 [2, 4, 6, 8]
+
+; filter - 过滤满足条件的元素 / Filter elements matching condition
+(std.filter (lambda (x) (> x 2)) (list 1 2 3 4 5))  ; 返回 [3, 4, 5]
+
+; reduce - 将列表归约为单个值 / Reduce list to single value
+(std.reduce (lambda (acc x) (+ acc x)) 0 (list 1 2 3 4))  ; 返回 10
+```
+
+**注意**：这些高阶函数既可以通过内置函数调用（`map`、`filter`、`reduce`），也可以通过标准库调用（`std.map`、`std.filter`、`std.reduce`）。
+
+**Note**: These higher-order functions can be called both as built-in functions (`map`, `filter`, `reduce`) and through the standard library (`std.map`, `std.filter`, `std.reduce`).
+```
+
 ### 字典操作 / Dictionary Operations
 
 ```lisp
@@ -388,7 +409,7 @@ match parser.parse(code) {
     - 数学函数：abs、max、min、factorial
     - 逻辑函数：and、or、not
     - 工具函数：identity
-    - 为未来高级函数（map、filter、reduce）预留接口
+    - 高阶函数：map、filter、reduce（已实现）
 15. ✅ ~~从诗歌理解到代码生成 - 完整的情感到代码映射~~ - 已完成
     - 实现generate_code_from_poetry()方法
     - 基于情感生成代码结构（思乡、宁静、孤独等）

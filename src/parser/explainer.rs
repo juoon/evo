@@ -85,7 +85,11 @@ impl CodeExplainer {
 
         match self.language {
             Language::Chinese => format!("调用 {}，参数：{}", parts[0], parts[1..].join("、")),
-            Language::English => format!("call {} with arguments: {}", parts[0], parts[1..].join(", ")),
+            Language::English => format!(
+                "call {} with arguments: {}",
+                parts[0],
+                parts[1..].join(", ")
+            ),
         }
     }
 
@@ -104,14 +108,13 @@ impl CodeExplainer {
         };
 
         let params = match &list[2] {
-            GrammarElement::List(params) => {
-                params.iter()
-                    .filter_map(|p| match p {
-                        GrammarElement::Atom(name) => Some(name.clone()),
-                        _ => None,
-                    })
-                    .collect::<Vec<_>>()
-            }
+            GrammarElement::List(params) => params
+                .iter()
+                .filter_map(|p| match p {
+                    GrammarElement::Atom(name) => Some(name.clone()),
+                    _ => None,
+                })
+                .collect::<Vec<_>>(),
             _ => vec![],
         };
 
@@ -129,14 +132,24 @@ impl CodeExplainer {
                 if params.is_empty() {
                     format!("定义函数 {}，函数体：{}", name, body)
                 } else {
-                    format!("定义函数 {}，参数：{}，函数体：{}", name, params.join("、"), body)
+                    format!(
+                        "定义函数 {}，参数：{}，函数体：{}",
+                        name,
+                        params.join("、"),
+                        body
+                    )
                 }
             }
             Language::English => {
                 if params.is_empty() {
                     format!("define function {} with body: {}", name, body)
                 } else {
-                    format!("define function {} with parameters {} and body: {}", name, params.join(", "), body)
+                    format!(
+                        "define function {} with parameters {} and body: {}",
+                        name,
+                        params.join(", "),
+                        body
+                    )
                 }
             }
         }
@@ -185,7 +198,9 @@ impl CodeExplainer {
         };
 
         match self.language {
-            Language::Chinese => format!("如果 {}，则 {}，否则 {}", condition, then_part, else_part),
+            Language::Chinese => {
+                format!("如果 {}，则 {}，否则 {}", condition, then_part, else_part)
+            }
             Language::English => format!("if {} then {} else {}", condition, then_part, else_part),
         }
     }
@@ -216,12 +231,22 @@ impl CodeExplainer {
             Literal::Int(n) => n.to_string(),
             Literal::Float(f) => f.to_string(),
             Literal::String(s) => format!("\"{}\"", s),
-            Literal::Bool(b) => {
-                match self.language {
-                    Language::Chinese => if *b { "真".to_string() } else { "假".to_string() },
-                    Language::English => if *b { "true".to_string() } else { "false".to_string() },
+            Literal::Bool(b) => match self.language {
+                Language::Chinese => {
+                    if *b {
+                        "真".to_string()
+                    } else {
+                        "假".to_string()
+                    }
                 }
-            }
+                Language::English => {
+                    if *b {
+                        "true".to_string()
+                    } else {
+                        "false".to_string()
+                    }
+                }
+            },
             Literal::Null => match self.language {
                 Language::Chinese => "空值".to_string(),
                 Language::English => "null".to_string(),
@@ -234,9 +259,10 @@ impl CodeExplainer {
                 }
             }
             Literal::Dict(pairs) => {
-                let pairs_str: Vec<String> = pairs.iter().map(|(k, v)| {
-                    format!("{}: {}", k, self.explain_expr(v))
-                }).collect();
+                let pairs_str: Vec<String> = pairs
+                    .iter()
+                    .map(|(k, v)| format!("{}: {}", k, self.explain_expr(v)))
+                    .collect();
                 match self.language {
                     Language::Chinese => format!("字典{{{}}}", pairs_str.join("、")),
                     Language::English => format!("dict{{{}}}", pairs_str.join(", ")),
@@ -268,7 +294,11 @@ impl CodeExplainer {
                 if args.is_empty() {
                     format!("call function {}", name)
                 } else {
-                    format!("call function {} with arguments: {}", name, args_str.join(", "))
+                    format!(
+                        "call function {} with arguments: {}",
+                        name,
+                        args_str.join(", ")
+                    )
                 }
             }
         }

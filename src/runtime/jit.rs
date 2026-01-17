@@ -3,7 +3,7 @@
 // Implements hot spot code optimization and just-in-time compilation
 
 use crate::grammar::core::{Expr, GrammarElement};
-use crate::runtime::interpreter::{Interpreter, Value, InterpreterError};
+use crate::runtime::interpreter::{Interpreter, InterpreterError, Value};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
@@ -77,7 +77,7 @@ impl JITCompiler {
         if !self.enabled {
             return false;
         }
-        
+
         self.execution_counts
             .get(code_key)
             .map(|stats| stats.count >= self.compilation_threshold)
@@ -90,14 +90,15 @@ impl JITCompiler {
             return;
         }
 
-        let stats = self.execution_counts.entry(code_key.to_string()).or_insert_with(|| {
-            ExecutionStats {
+        let stats = self
+            .execution_counts
+            .entry(code_key.to_string())
+            .or_insert_with(|| ExecutionStats {
                 count: 0,
                 total_time_micros: 0,
                 avg_time_micros: 0,
                 last_execution_timestamp: 0,
-            }
-        });
+            });
 
         stats.count += 1;
         stats.total_time_micros += execution_time.as_micros() as u64;
@@ -118,7 +119,11 @@ impl JITCompiler {
     }
 
     /// 编译热点代码 / Compile hot spot code
-    pub fn compile_hot_spot(&mut self, code_key: &str, ast: &[GrammarElement]) -> Result<(), InterpreterError> {
+    pub fn compile_hot_spot(
+        &mut self,
+        code_key: &str,
+        ast: &[GrammarElement],
+    ) -> Result<(), InterpreterError> {
         if !self.enabled {
             return Ok(());
         }
@@ -163,7 +168,9 @@ impl JITCompiler {
             Expr::Binary(op, left, right) => {
                 // 如果左右都是字面量，直接计算
                 // If both left and right are literals, calculate directly
-                if let (Expr::Literal(left_lit), Expr::Literal(right_lit)) = (left.as_ref(), right.as_ref()) {
+                if let (Expr::Literal(left_lit), Expr::Literal(right_lit)) =
+                    (left.as_ref(), right.as_ref())
+                {
                     let result = self.eval_binary_literal(op, left_lit, right_lit)?;
                     Ok(Expr::Literal(result))
                 } else {
@@ -175,10 +182,8 @@ impl JITCompiler {
             }
             // 其他表达式保持不变或递归优化 / Other expressions remain unchanged or recursively optimized
             Expr::Call(name, args) => {
-                let opt_args: Result<Vec<Expr>, InterpreterError> = args
-                    .iter()
-                    .map(|arg| self.optimize_expr(arg))
-                    .collect();
+                let opt_args: Result<Vec<Expr>, InterpreterError> =
+                    args.iter().map(|arg| self.optimize_expr(arg)).collect();
                 Ok(Expr::Call(name.clone(), opt_args?))
             }
             Expr::If(cond, then_expr, else_expr) => {
@@ -224,8 +229,9 @@ impl JITCompiler {
             // 比较运算 / Comparison operations
             (BinOp::Eq, left, right) => {
                 // 列表和字典不能进行常量折叠比较
-                if matches!(left, Literal::List(_) | Literal::Dict(_)) 
-                    || matches!(right, Literal::List(_) | Literal::Dict(_)) {
+                if matches!(left, Literal::List(_) | Literal::Dict(_))
+                    || matches!(right, Literal::List(_) | Literal::Dict(_))
+                {
                     return Err(InterpreterError::TypeError(
                         "Cannot fold comparison with list or dict literals".to_string(),
                     ));
@@ -234,8 +240,9 @@ impl JITCompiler {
             }
             (BinOp::Ne, left, right) => {
                 // 列表和字典不能进行常量折叠比较
-                if matches!(left, Literal::List(_) | Literal::Dict(_)) 
-                    || matches!(right, Literal::List(_) | Literal::Dict(_)) {
+                if matches!(left, Literal::List(_) | Literal::Dict(_))
+                    || matches!(right, Literal::List(_) | Literal::Dict(_))
+                {
                     return Err(InterpreterError::TypeError(
                         "Cannot fold comparison with list or dict literals".to_string(),
                     ));
@@ -251,12 +258,12 @@ impl JITCompiler {
             (BinOp::Ge, Literal::Int(a), Literal::Int(b)) => Ok(Literal::Bool(a >= b)),
             (BinOp::Ge, Literal::Float(a), Literal::Float(b)) => Ok(Literal::Bool(a >= b)),
             // 列表和字典不支持常量折叠的算术运算
-            (_, Literal::List(_), _) | (_, _, Literal::List(_)) 
-            | (_, Literal::Dict(_), _) | (_, _, Literal::Dict(_)) => {
-                Err(InterpreterError::TypeError(
-                    "Cannot fold binary operation with list or dict literals".to_string(),
-                ))
-            }
+            (_, Literal::List(_), _)
+            | (_, _, Literal::List(_))
+            | (_, Literal::Dict(_), _)
+            | (_, _, Literal::Dict(_)) => Err(InterpreterError::TypeError(
+                "Cannot fold binary operation with list or dict literals".to_string(),
+            )),
             _ => Err(InterpreterError::TypeError(
                 "Invalid types for binary operation".to_string(),
             )),
@@ -276,7 +283,7 @@ impl JITCompiler {
     ) -> Result<Value, InterpreterError> {
         if let Some(compiled) = self.hot_spots.get_mut(code_key) {
             compiled.execution_count += 1;
-            
+
             // 如果有优化后的表达式，使用它 / If optimized expression exists, use it
             if let Some(ref opt_expr) = compiled.optimized_expr {
                 interpreter.execute_expr(opt_expr)

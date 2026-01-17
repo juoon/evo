@@ -223,7 +223,11 @@ impl PerformanceAnalyzer {
     }
 
     /// 计算性能指标 / Calculate performance metrics
-    fn calculate_metrics(&self, ast: &[GrammarElement], analysis: &CodeAnalysis) -> PerformanceMetrics {
+    fn calculate_metrics(
+        &self,
+        ast: &[GrammarElement],
+        analysis: &CodeAnalysis,
+    ) -> PerformanceMetrics {
         // 分析时间复杂度 / Analyze time complexity
         let time_complexity = self.analyze_time_complexity(ast, analysis);
 
@@ -327,7 +331,10 @@ impl PerformanceAnalyzer {
             bottlenecks.push(Bottleneck {
                 bottleneck_type: BottleneckType::DeepNesting,
                 location: "代码整体".to_string(),
-                description: format!("嵌套深度达到 {} 层，可能影响性能", analysis.statistics.max_nesting_depth),
+                description: format!(
+                    "嵌套深度达到 {} 层，可能影响性能",
+                    analysis.statistics.max_nesting_depth
+                ),
                 impact: (analysis.statistics.max_nesting_depth - 5) as f64 * 10.0,
             });
         }
@@ -337,7 +344,10 @@ impl PerformanceAnalyzer {
             bottlenecks.push(Bottleneck {
                 bottleneck_type: BottleneckType::InefficientAlgorithm,
                 location: "代码整体".to_string(),
-                description: format!("代码复杂度较高 ({:.2})，可能存在低效算法", analysis.complexity),
+                description: format!(
+                    "代码复杂度较高 ({:.2})，可能存在低效算法",
+                    analysis.complexity
+                ),
                 impact: (analysis.complexity - 200.0) / 10.0,
             });
         }
@@ -347,7 +357,10 @@ impl PerformanceAnalyzer {
             bottlenecks.push(Bottleneck {
                 bottleneck_type: BottleneckType::MemoryLeak,
                 location: "内存使用".to_string(),
-                description: format!("预估内存使用较高 ({:.2} KB)", metrics.estimated_memory_usage),
+                description: format!(
+                    "预估内存使用较高 ({:.2} KB)",
+                    metrics.estimated_memory_usage
+                ),
                 impact: (metrics.estimated_memory_usage - 100.0) / 10.0,
             });
         }
@@ -412,7 +425,11 @@ impl PerformanceAnalyzer {
     }
 
     /// 计算性能评分 / Calculate performance score
-    fn calculate_performance_score(&self, metrics: &PerformanceMetrics, bottlenecks: &[Bottleneck]) -> f64 {
+    fn calculate_performance_score(
+        &self,
+        metrics: &PerformanceMetrics,
+        bottlenecks: &[Bottleneck],
+    ) -> f64 {
         let mut score = 100.0;
 
         // 基于时间复杂度扣分 / Deduct based on time complexity
@@ -467,9 +484,12 @@ impl PerformanceAnalyzer {
         }
 
         let total = self.performance_history.len();
-        let avg_score = self.performance_history.iter()
+        let avg_score = self
+            .performance_history
+            .iter()
             .map(|r| r.analysis.performance_score)
-            .sum::<f64>() / total as f64;
+            .sum::<f64>()
+            / total as f64;
 
         serde_json::json!({
             "total_analyses": total,

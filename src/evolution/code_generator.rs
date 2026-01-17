@@ -3,7 +3,6 @@
 // Generate code based on context, usage patterns, and learning results
 
 use crate::evolution::learning::UsagePatternLearner;
-use crate::grammar::core::GrammarElement;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 

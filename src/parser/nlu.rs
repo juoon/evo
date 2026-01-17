@@ -76,15 +76,35 @@ impl RuleDatabase {
 
         Self {
             function_keywords: vec![
-                "定义函数", "创建一个函数", "写一个函数", "函数", "def", "define", "function",
-                "create function", "make function", "定义一个函数", "写函数",
+                "定义函数",
+                "创建一个函数",
+                "写一个函数",
+                "函数",
+                "def",
+                "define",
+                "function",
+                "create function",
+                "make function",
+                "定义一个函数",
+                "写函数",
             ],
             variable_keywords: vec![
-                "定义变量", "创建一个变量", "变量", "let", "variable", "var", "set",
-                "create variable", "定义一个变量", "设置变量", "赋值",
+                "定义变量",
+                "创建一个变量",
+                "变量",
+                "let",
+                "variable",
+                "var",
+                "set",
+                "create variable",
+                "定义一个变量",
+                "设置变量",
+                "赋值",
             ],
             operation_keywords,
-            number_patterns: vec!["零", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十"],
+            number_patterns: vec![
+                "零", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十",
+            ],
         }
     }
 }
@@ -155,7 +175,7 @@ impl NLUParser {
     pub fn extract_intent(&self, input: &str) -> Result<ProgrammingIntent, NLUError> {
         let input_lower = input.trim().to_lowercase();
         let intent_type = self.detect_intent_type(&input_lower)?;
-        
+
         let (action, entities, parameters) = match intent_type {
             IntentType::DefineFunction => {
                 let func_name = self.extract_function_name(input)?;
@@ -163,7 +183,10 @@ impl NLUParser {
                 (
                     "define_function".to_string(),
                     vec![func_name.clone()],
-                    params.iter().map(|p| ("param".to_string(), p.clone())).collect(),
+                    params
+                        .iter()
+                        .map(|p| ("param".to_string(), p.clone()))
+                        .collect(),
                 )
             }
             IntentType::DefineVariable => {
@@ -174,27 +197,11 @@ impl NLUParser {
                     vec![],
                 )
             }
-            IntentType::ExecuteOperation => {
-                (
-                    "execute_operation".to_string(),
-                    vec![],
-                    vec![],
-                )
-            }
-            IntentType::Conditional => {
-                (
-                    "conditional_expression".to_string(),
-                    vec![],
-                    vec![],
-                )
-            }
-            _ => (
-                "unknown".to_string(),
-                vec![],
-                vec![],
-            ),
+            IntentType::ExecuteOperation => ("execute_operation".to_string(), vec![], vec![]),
+            IntentType::Conditional => ("conditional_expression".to_string(), vec![], vec![]),
+            _ => ("unknown".to_string(), vec![], vec![]),
         };
-        
+
         Ok(ProgrammingIntent {
             action,
             entities,
@@ -218,21 +225,21 @@ impl NLUParser {
                 return Ok(IntentType::DefineFunction);
             }
         }
-        
+
         // 检查是否是变量定义
         for keyword in &self.rules.variable_keywords {
             if input.contains(keyword) {
                 return Ok(IntentType::DefineVariable);
             }
         }
-        
+
         // 检查是否是操作
         for keyword in self.rules.operation_keywords.keys() {
             if input.contains(keyword) {
                 return Ok(IntentType::ExecuteOperation);
             }
         }
-        
+
         // 默认返回执行操作
         Ok(IntentType::ExecuteOperation)
     }
@@ -257,23 +264,23 @@ impl NLUParser {
         let func_name = self.extract_function_name(input)?;
         let params = self.extract_function_params(input)?;
         let body = self.extract_function_body(input)?;
-        
+
         // 构建函数定义: (def func_name (param1 param2 ...) body)
         let mut elements = vec![
             GrammarElement::Atom("def".to_string()),
             GrammarElement::Atom(func_name),
         ];
-        
+
         // 参数列表
         let param_list: Vec<GrammarElement> = params
             .iter()
             .map(|p| GrammarElement::Atom(p.clone()))
             .collect();
         elements.push(GrammarElement::List(param_list));
-        
+
         // 函数体
         elements.push(body);
-        
+
         Ok(vec![GrammarElement::List(elements)])
     }
 
@@ -281,7 +288,7 @@ impl NLUParser {
     fn generate_variable_definition(&self, input: &str) -> Result<Vec<GrammarElement>, NLUError> {
         let var_name = self.extract_variable_name(input)?;
         let value = self.extract_variable_value(input)?;
-        
+
         // 构建变量定义: (let var_name value var_name)
         let elements = vec![
             GrammarElement::Atom("let".to_string()),
@@ -289,7 +296,7 @@ impl NLUParser {
             value,
             GrammarElement::Expr(Box::new(Expr::Var(var_name))),
         ];
-        
+
         Ok(vec![GrammarElement::List(elements)])
     }
 
@@ -327,7 +334,7 @@ impl NLUParser {
             ("def", "def"),
             ("define", "define"),
         ];
-        
+
         for (cn_pattern, en_pattern) in patterns {
             // 尝试中文模式
             if let Some(pos) = input.find(cn_pattern) {
@@ -347,35 +354,37 @@ impl NLUParser {
                 }
             }
         }
-        
+
         // 尝试从"定义一个函数add"这样的模式中提取
         for keyword in &self.rules.function_keywords {
             if let Some(pos) = input.find(keyword) {
                 let after = &input[pos + keyword.len()..];
                 // 跳过"一个"、"个"等词
-                let cleaned = after.trim_start_matches(|c: char| c == '一' || c == '个' || c == ' ' || c == 'a' || c == 'A');
+                let cleaned = after.trim_start_matches(|c: char| {
+                    c == '一' || c == '个' || c == ' ' || c == 'a' || c == 'A'
+                });
                 let name = self.extract_identifier(cleaned);
                 if !name.is_empty() && name != "func" {
                     return Ok(name);
                 }
             }
         }
-        
+
         // 默认函数名
         Ok("func".to_string())
     }
-    
+
     /// 提取标识符（函数名、变量名等）/ Extract identifier
     fn extract_identifier(&self, text: &str) -> String {
         let text = text.trim();
         if text.is_empty() {
             return String::new();
         }
-        
+
         // 尝试提取第一个有效的标识符
         let mut result = String::new();
         let mut started = false;
-        
+
         for ch in text.chars() {
             if ch.is_alphanumeric() || ch == '_' {
                 result.push(ch);
@@ -391,7 +400,7 @@ impl NLUParser {
                 break;
             }
         }
-        
+
         result
     }
 
@@ -424,7 +433,7 @@ impl NLUParser {
             ("输入", "input"),
             ("参数为", "params"),
         ];
-        
+
         for (cn_pattern, en_pattern) in patterns {
             if let Some(pos) = input.find(cn_pattern) {
                 let after = &input[pos + cn_pattern.len()..];
@@ -441,7 +450,7 @@ impl NLUParser {
                 }
             }
         }
-        
+
         // 尝试从"函数名(x, y)"这样的模式中提取
         if let Some(start) = input.find('(') {
             if let Some(end) = input.find(')') {
@@ -452,58 +461,65 @@ impl NLUParser {
                 }
             }
         }
-        
+
         // 尝试从"函数名 x y"这样的模式中提取（函数名后的单词）
         if let Some(func_name) = self.extract_function_name(input).ok() {
             if let Some(pos) = input.find(&func_name) {
                 let after = &input[pos + func_name.len()..];
                 // 跳过"叫"、"名为"等词
-                let cleaned = after.trim_start_matches(|c: char| 
-                    c == '叫' || c == '名' || c == '为' || c == ' ' || 
-                    c == 'c' || c == 'a' || c == 'l' || c == 'e' || c == 'd'
-                );
+                let cleaned = after.trim_start_matches(|c: char| {
+                    c == '叫'
+                        || c == '名'
+                        || c == '为'
+                        || c == ' '
+                        || c == 'c'
+                        || c == 'a'
+                        || c == 'l'
+                        || c == 'e'
+                        || c == 'd'
+                });
                 let params = self.parse_parameter_list(cleaned);
                 if !params.is_empty() {
                     return Ok(params);
                 }
             }
         }
-        
+
         Ok(vec![])
     }
-    
+
     /// 解析参数列表 / Parse parameter list
     fn parse_parameter_list(&self, text: &str) -> Vec<String> {
         let mut params = Vec::new();
-        
+
         // 分割参数：支持中文逗号、英文逗号、空格、"和"、"and"等
         let parts: Vec<&str> = text
             .split(|c: char| c == '，' || c == ',' || c == ' ' || c == '(' || c == ')')
             .collect();
-        
+
         for part in parts {
             let trimmed = part.trim();
             if trimmed.is_empty() {
                 continue;
             }
-            
+
             // 跳过"和"、"and"等连接词
             if trimmed == "和" || trimmed == "and" || trimmed == "与" {
                 continue;
             }
-            
+
             // 提取标识符
             let param = self.extract_identifier(trimmed);
             if !param.is_empty() && !params.contains(&param) {
                 params.push(param);
             }
-            
+
             // 最多5个参数
             if params.len() >= 5 {
                 break;
             }
         }
-        
+
         params
     }
 
@@ -519,7 +535,7 @@ impl NLUParser {
             ("等于", "equals"),
             ("是", "is"),
         ];
-        
+
         // 尝试提取函数体表达式
         for (cn_pattern, en_pattern) in body_patterns {
             // 中文模式
@@ -537,7 +553,7 @@ impl NLUParser {
                 }
             }
         }
-        
+
         // 如果没有找到明确的函数体，尝试从整个输入中提取操作
         // 例如："定义一个函数add，参数是x和y，x加y"
         if let Ok((op, left, right)) = self.extract_operation(input) {
@@ -546,22 +562,22 @@ impl NLUParser {
             let expr = Expr::Binary(op, Box::new(left_expr), Box::new(right_expr));
             return Ok(GrammarElement::Expr(Box::new(expr)));
         }
-        
+
         // 默认返回一个简单的表达式（使用第一个参数）
         Ok(GrammarElement::Expr(Box::new(Expr::Literal(Literal::Null))))
     }
-    
+
     /// 从文本中解析表达式 / Parse expression from text
     fn parse_expression_from_text(&self, text: &str) -> Result<Expr, NLUError> {
         let text = text.trim();
-        
+
         // 尝试提取操作（支持嵌套表达式）
         if let Ok((op, left, right)) = self.extract_operation(text) {
             let left_expr = self.parse_expression_from_text(&left)?;
             let right_expr = self.parse_expression_from_text(&right)?;
             return Ok(Expr::Binary(op, Box::new(left_expr), Box::new(right_expr)));
         }
-        
+
         // 尝试解析为单个值
         self.parse_value_to_expr(text)
     }
@@ -569,14 +585,7 @@ impl NLUParser {
     /// 拆分多条语句 / Split multiple statements
     fn split_into_statements(&self, input: &str) -> Vec<String> {
         let connectors = [
-            "然后",
-            "并且",
-            "同时",
-            "接着",
-            "再",
-            "then",
-            "and then",
-            "and",
+            "然后", "并且", "同时", "接着", "再", "then", "and then", "and",
         ];
 
         let mut parts = vec![input.to_string()];
@@ -642,10 +651,12 @@ impl NLUParser {
             if let Some(else_pos) = after_if.to_lowercase().find("else") {
                 let cond_then = &after_if[..else_pos];
                 let else_part = &after_if[else_pos + 4..];
-                let then_part = cond_then
-                    .trim_start_matches("then")
-                    .trim();
-                return Ok((cond_then.trim().to_string(), then_part.to_string(), else_part.trim().to_string()));
+                let then_part = cond_then.trim_start_matches("then").trim();
+                return Ok((
+                    cond_then.trim().to_string(),
+                    then_part.to_string(),
+                    else_part.trim().to_string(),
+                ));
             }
         }
 
@@ -667,7 +678,7 @@ impl NLUParser {
             ("等于", "equals"),
             ("=", "="),
         ];
-        
+
         for (cn_pattern, en_pattern) in patterns {
             if let Some(pos) = input.find(cn_pattern) {
                 let after = &input[pos + cn_pattern.len()..];
@@ -684,31 +695,29 @@ impl NLUParser {
                 }
             }
         }
-        
+
         // 尝试从"定义一个变量x等于10"这样的模式中提取
         for keyword in &self.rules.variable_keywords {
             if let Some(pos) = input.find(keyword) {
                 let after = &input[pos + keyword.len()..];
-                let cleaned = after.trim_start_matches(|c: char| c == '一' || c == '个' || c == ' ' || c == 'a' || c == 'A');
+                let cleaned = after.trim_start_matches(|c: char| {
+                    c == '一' || c == '个' || c == ' ' || c == 'a' || c == 'A'
+                });
                 let name = self.extract_identifier_before_value(cleaned);
                 if !name.is_empty() && name != "x" {
                     return Ok(name);
                 }
             }
         }
-        
+
         Ok("x".to_string())
     }
 
     /// 提取变量值 / Extract variable value
     fn extract_variable_value(&self, input: &str) -> Result<GrammarElement, NLUError> {
         // 查找"等于"、"="等关键词后的值
-        let value_patterns = vec![
-            ("等于", "equals"),
-            ("=", "="),
-            ("是", "is"),
-        ];
-        
+        let value_patterns = vec![("等于", "equals"), ("=", "="), ("是", "is")];
+
         for (cn_pattern, en_pattern) in value_patterns {
             if let Some(pos) = input.find(cn_pattern) {
                 let after = &input[pos + cn_pattern.len()..].trim();
@@ -723,44 +732,52 @@ impl NLUParser {
                 }
             }
         }
-        
+
         // 尝试提取数字
         if let Ok(num) = self.extract_number(input) {
-            return Ok(GrammarElement::Expr(Box::new(Expr::Literal(Literal::Int(num)))));
+            return Ok(GrammarElement::Expr(Box::new(Expr::Literal(Literal::Int(
+                num,
+            )))));
         }
-        
+
         // 尝试提取字符串（如果输入包含引号）
         if let Some(start) = input.find('"') {
             if let Some(end) = input[start + 1..].find('"') {
                 let str_value = &input[start + 1..start + 1 + end];
-                return Ok(GrammarElement::Expr(Box::new(Expr::Literal(Literal::String(str_value.to_string())))));
+                return Ok(GrammarElement::Expr(Box::new(Expr::Literal(
+                    Literal::String(str_value.to_string()),
+                ))));
             }
         }
         if let Some(start) = input.find('\'') {
             if let Some(end) = input[start + 1..].find('\'') {
                 let str_value = &input[start + 1..start + 1 + end];
-                return Ok(GrammarElement::Expr(Box::new(Expr::Literal(Literal::String(str_value.to_string())))));
+                return Ok(GrammarElement::Expr(Box::new(Expr::Literal(
+                    Literal::String(str_value.to_string()),
+                ))));
             }
         }
-        
+
         // 默认返回0
-        Ok(GrammarElement::Expr(Box::new(Expr::Literal(Literal::Int(0)))))
+        Ok(GrammarElement::Expr(Box::new(Expr::Literal(Literal::Int(
+            0,
+        )))))
     }
 
     /// 提取操作 / Extract operation
     fn extract_operation(&self, input: &str) -> Result<(BinOp, String, String), NLUError> {
         // 按优先级查找操作关键词（先查找更长的关键词）
         let mut found_ops: Vec<(usize, BinOp, &str)> = Vec::new();
-        
+
         for (keyword, op) in &self.rules.operation_keywords {
             if let Some(pos) = input.find(keyword) {
                 found_ops.push((pos, *op, keyword));
             }
         }
-        
+
         // 按位置排序，找到第一个操作符
         found_ops.sort_by_key(|(pos, _, _)| *pos);
-        
+
         if let Some((_pos, op, keyword)) = found_ops.first() {
             // 提取左右操作数
             let parts: Vec<&str> = input.split(keyword).collect();
@@ -770,39 +787,55 @@ impl NLUParser {
                 let right_joined = parts[1..].join(keyword);
                 let right_parts: Vec<&str> = right_joined.split_whitespace().collect();
                 let right = right_parts.join(" ").trim().to_string();
-                
+
                 if !left.is_empty() && !right.is_empty() {
                     return Ok((*op, left, right));
                 }
             }
         }
-        
+
         // 尝试从"x + y"这样的模式中提取（如果输入包含操作符）
         if input.contains('+') {
             let parts: Vec<&str> = input.split('+').collect();
             if parts.len() >= 2 {
-                return Ok((BinOp::Add, parts[0].trim().to_string(), parts[1].trim().to_string()));
+                return Ok((
+                    BinOp::Add,
+                    parts[0].trim().to_string(),
+                    parts[1].trim().to_string(),
+                ));
             }
         }
         if input.contains('-') && !input.starts_with('-') {
             let parts: Vec<&str> = input.split('-').collect();
             if parts.len() >= 2 {
-                return Ok((BinOp::Sub, parts[0].trim().to_string(), parts[1].trim().to_string()));
+                return Ok((
+                    BinOp::Sub,
+                    parts[0].trim().to_string(),
+                    parts[1].trim().to_string(),
+                ));
             }
         }
         if input.contains('*') {
             let parts: Vec<&str> = input.split('*').collect();
             if parts.len() >= 2 {
-                return Ok((BinOp::Mul, parts[0].trim().to_string(), parts[1].trim().to_string()));
+                return Ok((
+                    BinOp::Mul,
+                    parts[0].trim().to_string(),
+                    parts[1].trim().to_string(),
+                ));
             }
         }
         if input.contains('/') {
             let parts: Vec<&str> = input.split('/').collect();
             if parts.len() >= 2 {
-                return Ok((BinOp::Div, parts[0].trim().to_string(), parts[1].trim().to_string()));
+                return Ok((
+                    BinOp::Div,
+                    parts[0].trim().to_string(),
+                    parts[1].trim().to_string(),
+                ));
             }
         }
-        
+
         Err(NLUError::UnsupportedOperation(input.to_string()))
     }
 
@@ -816,43 +849,49 @@ impl NLUParser {
                 return Ok(num);
             }
         }
-        
+
         // 尝试解析中文数字（支持简单组合）
         if let Ok(num) = self.parse_chinese_number(input) {
             return Ok(num);
         }
-        
+
         Ok(0)
     }
-    
+
     /// 解析中文数字 / Parse Chinese number
     fn parse_chinese_number(&self, input: &str) -> Result<i64, NLUError> {
         let cn_digits: HashMap<&str, i64> = [
-            ("零", 0), ("一", 1), ("二", 2), ("三", 3), ("四", 4),
-            ("五", 5), ("六", 6), ("七", 7), ("八", 8), ("九", 9),
+            ("零", 0),
+            ("一", 1),
+            ("二", 2),
+            ("三", 3),
+            ("四", 4),
+            ("五", 5),
+            ("六", 6),
+            ("七", 7),
+            ("八", 8),
+            ("九", 9),
         ]
         .iter()
         .cloned()
         .collect();
-        
-        let cn_units: HashMap<&str, i64> = [
-            ("十", 10), ("百", 100), ("千", 1000), ("万", 10000),
-        ]
-        .iter()
-        .cloned()
-        .collect();
-        
+
+        let cn_units: HashMap<&str, i64> = [("十", 10), ("百", 100), ("千", 1000), ("万", 10000)]
+            .iter()
+            .cloned()
+            .collect();
+
         let mut result = 0i64;
         let mut temp = 0i64;
         let mut found_digit = false;
-        
+
         let chars: Vec<char> = input.chars().collect();
         let mut i = 0;
-        
+
         while i < chars.len() {
             let ch = chars[i];
             let ch_str = &ch.to_string();
-            
+
             // 检查是否是数字
             if let Some(&digit) = cn_digits.get(ch_str.as_str()) {
                 temp = digit;
@@ -860,7 +899,7 @@ impl NLUParser {
                 i += 1;
                 continue;
             }
-            
+
             // 检查是否是单位
             if let Some(&unit) = cn_units.get(ch_str.as_str()) {
                 if found_digit {
@@ -874,25 +913,27 @@ impl NLUParser {
                 i += 1;
                 continue;
             }
-            
+
             // 如果遇到非数字字符，且已经找到数字，返回结果
             if found_digit && temp > 0 {
                 result += temp;
                 break;
             }
-            
+
             i += 1;
         }
-        
+
         // 处理末尾的数字
         if found_digit && temp > 0 {
             result += temp;
         }
-        
+
         if result > 0 {
             Ok(result)
         } else {
-            Err(NLUError::UnsupportedOperation("无法解析中文数字".to_string()))
+            Err(NLUError::UnsupportedOperation(
+                "无法解析中文数字".to_string(),
+            ))
         }
     }
 
@@ -902,12 +943,12 @@ impl NLUParser {
         if let Ok(num) = value.parse::<i64>() {
             return Ok(Expr::Literal(Literal::Int(num)));
         }
-        
+
         // 尝试解析为浮点数
         if let Ok(num) = value.parse::<f64>() {
             return Ok(Expr::Literal(Literal::Float(num)));
         }
-        
+
         // 尝试解析为布尔值
         if value == "true" || value == "真" {
             return Ok(Expr::Literal(Literal::Bool(true)));
@@ -932,12 +973,12 @@ impl NLUParser {
                 value[1..value.len() - 1].to_string(),
             )));
         }
-        
+
         // 尝试作为变量
         if value.chars().all(|c| c.is_alphanumeric() || c == '_') {
             return Ok(Expr::Var(value.to_string()));
         }
-        
+
         // 默认返回0
         Ok(Expr::Literal(Literal::Int(0)))
     }
@@ -945,7 +986,7 @@ impl NLUParser {
     /// 计算置信度 / Calculate confidence
     fn calculate_confidence(&self, input: &str, intent_type: &IntentType) -> f64 {
         let mut score: f64 = 0.5; // 基础分数
-        
+
         // 根据关键词匹配提高置信度
         match intent_type {
             IntentType::DefineFunction => {
@@ -971,7 +1012,7 @@ impl NLUParser {
             }
             _ => {}
         }
-        
+
         score.min(1.0)
     }
 }
@@ -1031,4 +1072,3 @@ pub enum NLUError {
     /// 不支持的操作 / Unsupported operation
     UnsupportedOperation(String),
 }
-

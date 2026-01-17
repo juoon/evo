@@ -17,6 +17,10 @@ pub struct Interpreter {
     functions: HashMap<String, Function>,
     /// 模块缓存 / Module cache
     modules: HashMap<String, Module>,
+    /// Lambda注册表 / Lambda registry (用于存储Lambda函数体)
+    lambda_registry: HashMap<String, (Vec<String>, GrammarElement)>,
+    /// Lambda计数器 / Lambda counter (用于生成唯一ID)
+    lambda_counter: u64,
 }
 
 /// 函数定义 / Function definition
@@ -26,6 +30,8 @@ struct Function {
     params: Vec<String>,
     /// 函数体 / Function body
     body: GrammarElement,
+    /// 捕获的环境 / Captured environment (for closures)
+    captured_env: Option<std::collections::HashMap<String, Value>>,
 }
 
 /// 模块 / Module
@@ -46,6 +52,8 @@ impl Interpreter {
             environment: HashMap::new(),
             functions: HashMap::new(),
             modules: HashMap::new(),
+            lambda_registry: HashMap::new(),
+            lambda_counter: 0,
         };
         // 注册内置函数 / Register built-in functions
         interpreter.register_builtins();
@@ -132,6 +140,7 @@ impl Interpreter {
                 "def" | "function" => self.eval_def(&list[1..]),
                 "let" => self.eval_let(&list[1..]),
                 "if" => self.eval_if_special(&list[1..]),
+                "lambda" => self.eval_lambda(&list[1..]),
                 _ => {
                     // 尝试作为函数调用
                     let func_name = keyword.to_string();
@@ -225,8 +234,14 @@ impl Interpreter {
         let body = rest[2].clone();
 
         // 注册函数
-        self.functions
-            .insert(name.clone(), Function { params, body });
+        self.functions.insert(
+            name.clone(),
+            Function {
+                params,
+                body,
+                captured_env: None,
+            },
+        );
 
         Ok(Value::Null)
     }
@@ -300,6 +315,62 @@ impl Interpreter {
                 Ok(Value::Null)
             }
         }
+    }
+
+    /// 评估Lambda表达式 / Evaluate lambda expression
+    /// 语法: (lambda (params...) body)
+    fn eval_lambda(&mut self, rest: &[GrammarElement]) -> Result<Value, InterpreterError> {
+        if rest.len() < 2 {
+            return Err(InterpreterError::RuntimeError(
+                "Lambda requires: params and body".to_string(),
+            ));
+        }
+
+        // 解析参数列表
+        let params_elem = &rest[0];
+        let params = match params_elem {
+            GrammarElement::List(params_list) => params_list
+                .iter()
+                .filter_map(|e| {
+                    if let GrammarElement::Atom(s) = e {
+                        Some(s.clone())
+                    } else {
+                        None
+                    }
+                })
+                .collect(),
+            GrammarElement::Atom(single_param) => vec![single_param.clone()],
+            _ => {
+                return Err(InterpreterError::RuntimeError(
+                    "Lambda params must be a list of atoms".to_string(),
+                ))
+            }
+        };
+
+        // 获取函数体（剩余的所有元素作为body）
+        let body = if rest.len() == 2 {
+            rest[1].clone()
+        } else {
+            // 多个body元素，创建一个列表
+            GrammarElement::List(rest[1..].to_vec())
+        };
+
+        // 捕获当前环境（用于闭包）- 暂时不使用，但保留接口
+        let _captured_env = Some(self.environment.clone());
+
+        // 生成唯一的Lambda ID
+        self.lambda_counter += 1;
+        let lambda_id = format!("__lambda_{}", self.lambda_counter);
+
+        // 注册Lambda函数体
+        self.lambda_registry
+            .insert(lambda_id.clone(), (params.clone(), body));
+
+        // 返回Lambda值
+        Ok(Value::Lambda {
+            id: lambda_id,
+            params,
+        })
     }
 
     /// 评估表达式 / Evaluate expression
@@ -445,11 +516,17 @@ impl Interpreter {
             Value::Null => false,
             Value::List(list) => !list.is_empty(),
             Value::Dict(dict) => !dict.is_empty(),
+            Value::Lambda { .. } => true, // Lambda总是为真
         }
     }
 
     /// 评估函数调用 / Evaluate function call
     fn eval_call(&mut self, name: &str, args: &[Expr]) -> Result<Value, InterpreterError> {
+        // 首先检查是否是Lambda值的调用
+        // First check if it's a call to a Lambda value
+        if let Some(Value::Lambda { id, params }) = self.environment.get(name).cloned() {
+            return self.call_lambda(&id, &params, args);
+        }
         // 检查是否是内置操作符
         if name.starts_with("op:") {
             return self.eval_builtin_operator(name, args);
@@ -501,6 +578,62 @@ impl Interpreter {
         };
 
         self.eval_binary_op(op, &left, &right)
+    }
+
+    /// 调用Lambda函数 / Call Lambda function
+    fn call_lambda(
+        &mut self,
+        lambda_id: &str,
+        params: &[String],
+        args: &[Expr],
+    ) -> Result<Value, InterpreterError> {
+        if args.len() != params.len() {
+            return Err(InterpreterError::RuntimeError(format!(
+                "Lambda expects {} arguments, got {}",
+                params.len(),
+                args.len()
+            )));
+        }
+
+        // 从注册表中获取Lambda函数体
+        let (_, body) = self
+            .lambda_registry
+            .get(lambda_id)
+            .ok_or_else(|| {
+                InterpreterError::RuntimeError(format!(
+                    "Lambda {} not found in registry",
+                    lambda_id
+                ))
+            })?
+            .clone();
+
+        // 评估参数
+        let arg_values: Vec<Value> = args
+            .iter()
+            .map(|e| self.eval_expr(e))
+            .collect::<Result<Vec<_>, _>>()?;
+
+        // 保存当前环境
+        let mut saved_env = HashMap::new();
+        for (param, value) in params.iter().zip(arg_values.iter()) {
+            if let Some(old) = self.environment.insert(param.clone(), value.clone()) {
+                saved_env.insert(param.clone(), old);
+            }
+        }
+
+        // 执行Lambda函数体
+        let result = self.eval_element(&body)?;
+
+        // 恢复环境
+        for param in params {
+            if let Some(old) = saved_env.remove(param) {
+                self.environment.insert(param.clone(), old);
+            } else {
+                self.environment.remove(param);
+            }
+        }
+
+        Ok(result)
     }
 
     /// 调用用户定义函数 / Call user-defined function
@@ -590,7 +723,8 @@ impl Interpreter {
                         if i < 0 || i as usize >= l.len() {
                             Err(InterpreterError::RuntimeError(format!(
                                 "Index {} out of bounds for list of length {}",
-                                i, l.len()
+                                i,
+                                l.len()
                             )))
                         } else {
                             Ok(l[i as usize].clone())
@@ -615,7 +749,8 @@ impl Interpreter {
                         if i < 0 || i as usize >= l.len() {
                             Err(InterpreterError::RuntimeError(format!(
                                 "Index {} out of bounds for list of length {}",
-                                i, l.len()
+                                i,
+                                l.len()
                             )))
                         } else {
                             l[i as usize] = value;
@@ -745,6 +880,158 @@ impl Interpreter {
                     )),
                 }
             }
+            // 函数式编程操作 / Functional programming operations
+            "map" => {
+                if args.len() != 2 {
+                    return Err(InterpreterError::RuntimeError(
+                        "map requires 2 arguments: function and list".to_string(),
+                    ));
+                }
+                let func_value = self.eval_expr(&args[0])?;
+                let list = self.eval_expr(&args[1])?;
+                match (func_value, list) {
+                    (Value::Lambda { id, params }, Value::List(l)) => {
+                        if params.len() != 1 {
+                            return Err(InterpreterError::RuntimeError(
+                                "map function must accept exactly 1 argument".to_string(),
+                            ));
+                        }
+                        let mut result = Vec::new();
+                        for item in l {
+                            // 直接调用Lambda函数
+                            let item_expr = Expr::Literal(match item {
+                                Value::Int(i) => Literal::Int(i),
+                                Value::Float(f) => Literal::Float(f),
+                                Value::String(s) => Literal::String(s),
+                                Value::Bool(b) => Literal::Bool(b),
+                                Value::Null => Literal::Null,
+                                Value::List(_) | Value::Dict(_) | Value::Lambda { .. } => {
+                                    // 对于复杂值，需要先求值
+                                    return Err(InterpreterError::RuntimeError(
+                                        "map: complex values need to be evaluated first"
+                                            .to_string(),
+                                    ));
+                                }
+                            });
+                            let result_value = self.call_lambda(&id, &params, &[item_expr])?;
+                            result.push(result_value);
+                        }
+                        Ok(Value::List(result))
+                    }
+                    (Value::Lambda { .. }, _) => Err(InterpreterError::TypeError(
+                        "map requires a list as second argument".to_string(),
+                    )),
+                    _ => Err(InterpreterError::TypeError(
+                        "map requires a function (lambda) as first argument".to_string(),
+                    )),
+                }
+            }
+            "filter" => {
+                if args.len() != 2 {
+                    return Err(InterpreterError::RuntimeError(
+                        "filter requires 2 arguments: predicate and list".to_string(),
+                    ));
+                }
+                let func_value = self.eval_expr(&args[0])?;
+                let list = self.eval_expr(&args[1])?;
+                match (func_value, list) {
+                    (Value::Lambda { id, params }, Value::List(l)) => {
+                        if params.len() != 1 {
+                            return Err(InterpreterError::RuntimeError(
+                                "filter predicate must accept exactly 1 argument".to_string(),
+                            ));
+                        }
+                        let mut result = Vec::new();
+                        for item in l {
+                            // 先克隆item以便后续使用
+                            let item_clone = item.clone();
+                            // 直接调用Lambda函数
+                            let item_expr = Expr::Literal(match item_clone {
+                                Value::Int(i) => Literal::Int(i),
+                                Value::Float(f) => Literal::Float(f),
+                                Value::String(s) => Literal::String(s),
+                                Value::Bool(b) => Literal::Bool(b),
+                                Value::Null => Literal::Null,
+                                Value::List(_) | Value::Dict(_) | Value::Lambda { .. } => {
+                                    return Err(InterpreterError::RuntimeError(
+                                        "filter: complex values need to be evaluated first"
+                                            .to_string(),
+                                    ));
+                                }
+                            });
+                            let predicate_result = self.call_lambda(&id, &params, &[item_expr])?;
+                            // 如果predicate返回true，保留该元素
+                            if self.is_truthy(&predicate_result) {
+                                result.push(item);
+                            }
+                        }
+                        Ok(Value::List(result))
+                    }
+                    (Value::Lambda { .. }, _) => Err(InterpreterError::TypeError(
+                        "filter requires a list as second argument".to_string(),
+                    )),
+                    _ => Err(InterpreterError::TypeError(
+                        "filter requires a function (lambda) as first argument".to_string(),
+                    )),
+                }
+            }
+            "reduce" => {
+                if args.len() != 3 {
+                    return Err(InterpreterError::RuntimeError(
+                        "reduce requires 3 arguments: function, initial value, and list"
+                            .to_string(),
+                    ));
+                }
+                let func_value = self.eval_expr(&args[0])?;
+                let initial = self.eval_expr(&args[1])?;
+                let list = self.eval_expr(&args[2])?;
+                match (func_value, list) {
+                    (Value::Lambda { id, params }, Value::List(l)) => {
+                        if params.len() != 2 {
+                            return Err(InterpreterError::RuntimeError(
+                                "reduce function must accept exactly 2 arguments".to_string(),
+                            ));
+                        }
+                        let mut accumulator = initial;
+                        for item in l {
+                            // 直接调用Lambda函数: func(accumulator, item)
+                            let acc_expr = Expr::Literal(match accumulator {
+                                Value::Int(i) => Literal::Int(i),
+                                Value::Float(f) => Literal::Float(f),
+                                Value::String(s) => Literal::String(s),
+                                Value::Bool(b) => Literal::Bool(b),
+                                Value::Null => Literal::Null,
+                                Value::List(_) | Value::Dict(_) | Value::Lambda { .. } => {
+                                    return Err(InterpreterError::RuntimeError(
+                                        "reduce: complex accumulator values need to be evaluated first".to_string(),
+                                    ));
+                                }
+                            });
+                            let item_expr = Expr::Literal(match item {
+                                Value::Int(i) => Literal::Int(i),
+                                Value::Float(f) => Literal::Float(f),
+                                Value::String(s) => Literal::String(s),
+                                Value::Bool(b) => Literal::Bool(b),
+                                Value::Null => Literal::Null,
+                                Value::List(_) | Value::Dict(_) | Value::Lambda { .. } => {
+                                    return Err(InterpreterError::RuntimeError(
+                                        "reduce: complex item values need to be evaluated first"
+                                            .to_string(),
+                                    ));
+                                }
+                            });
+                            accumulator = self.call_lambda(&id, &params, &[acc_expr, item_expr])?;
+                        }
+                        Ok(accumulator)
+                    }
+                    (Value::Lambda { .. }, _) => Err(InterpreterError::TypeError(
+                        "reduce requires a list as third argument".to_string(),
+                    )),
+                    _ => Err(InterpreterError::TypeError(
+                        "reduce requires a function (lambda) as first argument".to_string(),
+                    )),
+                }
+            }
             _ => Err(InterpreterError::RuntimeError(format!(
                 "Unknown function: {}",
                 name
@@ -776,13 +1063,11 @@ impl Interpreter {
         // 将模块内容导入到当前环境（带命名空间前缀）
         for (name, value) in &module.environment {
             let qualified_name = format!("{}.{}", alias, name);
-            self.environment
-                .insert(qualified_name, value.clone());
+            self.environment.insert(qualified_name, value.clone());
         }
         for (name, function) in &module.functions {
             let qualified_name = format!("{}.{}", alias, name);
-            self.functions
-                .insert(qualified_name, function.clone());
+            self.functions.insert(qualified_name, function.clone());
         }
 
         Ok(())
@@ -897,6 +1182,7 @@ impl Interpreter {
             Value::Null => "Null",
             Value::List(_) => "List",
             Value::Dict(_) => "Dict",
+            Value::Lambda { .. } => "Lambda",
         }
     }
 }
@@ -924,6 +1210,15 @@ pub enum Value {
     List(Vec<Value>),
     /// 字典 / Dictionary
     Dict(std::collections::HashMap<String, Value>),
+    /// Lambda函数 / Lambda function (closure)
+    /// 注意：Lambda使用ID来标识，实际函数体在解释器的lambda_registry中存储
+    /// Note: Lambda uses ID to identify, actual body is stored in interpreter's lambda_registry
+    Lambda {
+        /// Lambda标识符 / Lambda identifier (用于查找函数体)
+        id: String,
+        /// 参数列表 / Parameter names
+        params: Vec<String>,
+    },
 }
 
 impl std::fmt::Display for Value {
@@ -955,6 +1250,9 @@ impl std::fmt::Display for Value {
                     write!(f, "{}: {}", key, value)?;
                 }
                 write!(f, "}}")
+            }
+            Value::Lambda { params, .. } => {
+                write!(f, "<lambda({})>", params.join(", "))
             }
         }
     }

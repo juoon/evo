@@ -5,7 +5,6 @@
 use crate::evolution::analyzer::CodeAnalysis;
 use crate::evolution::learning::UsagePatternLearner;
 use crate::evolution::quality_assessor::QualityAssessment;
-use crate::grammar::core::GrammarElement;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -271,9 +270,11 @@ impl OptimizationAdvisor {
 
         // 排序建议 / Sort suggestions
         suggestions.sort_by(|a, b| {
-            b.priority
-                .cmp(&a.priority)
-                .then_with(|| b.expected_improvement.partial_cmp(&a.expected_improvement).unwrap_or(std::cmp::Ordering::Equal))
+            b.priority.cmp(&a.priority).then_with(|| {
+                b.expected_improvement
+                    .partial_cmp(&a.expected_improvement)
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            })
         });
 
         // 计算总体预期改进 / Calculate overall expected improvement
@@ -322,12 +323,7 @@ impl OptimizationAdvisor {
     }
 
     /// 记录优化结果 / Record optimization result
-    pub fn record_optimization(
-        &mut self,
-        strategy: &str,
-        before_score: f64,
-        after_score: f64,
-    ) {
+    pub fn record_optimization(&mut self, strategy: &str, before_score: f64, after_score: f64) {
         let improvement = after_score - before_score;
         let record = OptimizationRecord {
             timestamp: chrono::Utc::now(),
@@ -360,11 +356,7 @@ impl OptimizationAdvisor {
     }
 
     /// 预测优化效果 / Predict optimization effect
-    pub fn predict_optimization_effect(
-        &self,
-        strategy: &str,
-        current_score: f64,
-    ) -> f64 {
+    pub fn predict_optimization_effect(&self, strategy: &str, current_score: f64) -> f64 {
         if let Some(strategy_obj) = self.strategies.get(strategy) {
             let potential_improvement = (100.0 - current_score).min(strategy_obj.avg_improvement);
             current_score + potential_improvement * strategy_obj.success_rate

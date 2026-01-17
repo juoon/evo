@@ -183,7 +183,7 @@ impl EvolutionEngine {
     pub fn refactor_code(&self, ast: &[GrammarElement]) -> Vec<GrammarElement> {
         // 先分析代码 / First analyze code
         let analysis = self.analyze_code(ast);
-        
+
         // 根据分析结果重构 / Refactor based on analysis
         let refactorer = crate::evolution::analyzer::CodeRefactorer::new();
         refactorer.refactor(ast, &analysis)
@@ -200,7 +200,7 @@ impl EvolutionEngine {
             // 将规则转换为AST进行分析 / Convert rule to AST for analysis
             let rule_ast = vec![GrammarElement::Atom(rule.name.clone())];
             let analysis = self.analyze_code(&rule_ast);
-            
+
             // 如果有优化建议，记录 / If optimization suggestions exist, record
             if !analysis.suggestions.is_empty() {
                 improvement_count += 1;
@@ -247,7 +247,7 @@ impl EvolutionEngine {
                     modified_rules: Vec::new(),
                 },
             };
-            
+
             self.tracker.record(event);
             self.rebuild_knowledge();
         }
@@ -294,7 +294,10 @@ impl EvolutionEngine {
         // 先获取洞察和统计，避免借用冲突 / Get insights and statistics first to avoid borrow conflicts
         let insights = self.learner.get_insights();
         let stats = self.learner.analyze_usage();
-        let high_priority_count = insights.iter().filter(|insight| insight.priority > 5).count();
+        let high_priority_count = insights
+            .iter()
+            .filter(|insight| insight.priority > 5)
+            .count();
 
         // 如果有高优先级的洞察，触发进化 / If high-priority insights exist, trigger evolution
         if high_priority_count > 0 {
@@ -302,7 +305,7 @@ impl EvolutionEngine {
             let rules_snapshot = self.syntax_mutations.clone();
             let error_rate = stats.error_rate;
             let success_rate = stats.success_rate;
-            
+
             // 记录学习驱动的进化事件 / Record learning-driven evolution event
             let event = EvolutionEvent {
                 id: uuid::Uuid::new_v4(),
@@ -330,7 +333,10 @@ impl EvolutionEngine {
                     }),
                 },
                 delta: crate::evolution::tracker::EvolutionDelta {
-                    description: format!("从使用模式中学习，发现 {} 个改进机会", high_priority_count),
+                    description: format!(
+                        "从使用模式中学习，发现 {} 个改进机会",
+                        high_priority_count
+                    ),
                     added_rules: Vec::new(),
                     removed_rules: Vec::new(),
                     modified_rules: Vec::new(),
@@ -338,17 +344,23 @@ impl EvolutionEngine {
                 author: None,
                 success_metrics: None,
             };
-            
+
             self.tracker.record(event);
             self.rebuild_knowledge();
         }
 
         // 准备返回数据 / Prepare return data
-        let insights_json: Vec<_> = insights.iter().take(5).map(|i| serde_json::json!({
-            "type": format!("{:?}", i.insight_type),
-            "description": i.description.clone(),
-            "priority": i.priority,
-        })).collect();
+        let insights_json: Vec<_> = insights
+            .iter()
+            .take(5)
+            .map(|i| {
+                serde_json::json!({
+                    "type": format!("{:?}", i.insight_type),
+                    "description": i.description.clone(),
+                    "priority": i.priority,
+                })
+            })
+            .collect();
 
         Ok(serde_json::json!({
             "learning_performed": high_priority_count > 0,
@@ -373,7 +385,8 @@ impl EvolutionEngine {
 
         // 统计进化频率 / Statistics on evolution frequency
         let evolution_count = history.len();
-        let recent_evolutions = history.iter()
+        let recent_evolutions = history
+            .iter()
             .filter(|e| {
                 let days_ago = (chrono::Utc::now() - e.timestamp).num_days();
                 days_ago <= 7
@@ -386,7 +399,9 @@ impl EvolutionEngine {
         for event in history {
             match event.event_type {
                 crate::evolution::tracker::EvolutionType::SyntaxEvolution => syntax_evolutions += 1,
-                crate::evolution::tracker::EvolutionType::SemanticEvolution => semantic_evolutions += 1,
+                crate::evolution::tracker::EvolutionType::SemanticEvolution => {
+                    semantic_evolutions += 1
+                }
                 _ => {}
             }
         }
@@ -431,22 +446,24 @@ impl EvolutionEngine {
     /// 回滚到指定事件 / Rollback to specified event
     pub fn rollback_to_event(&mut self, event_id: uuid::Uuid) -> Result<(), EvolutionError> {
         // 回滚到指定事件之前的状态 / Rollback to state before specified event
-        let rollback_state = self.tracker.rollback_to(event_id)
+        let rollback_state = self
+            .tracker
+            .rollback_to(event_id)
             .map_err(|e| EvolutionError::IntegrationFailed(e))?;
-        
+
         // 恢复语法规则 / Restore grammar rules
         self.syntax_mutations = rollback_state.grammar_rules.clone();
-        
+
         // 重建知识图谱 / Rebuild knowledge graph
         self.rebuild_knowledge();
-        
+
         Ok(())
     }
 
     /// 获取进化谱系树 / Get evolution genealogy tree
     pub fn get_genealogy_tree(&self, root_id: Option<uuid::Uuid>) -> serde_json::Value {
         let genealogy = self.tracker.get_genealogy();
-        
+
         if let Some(root) = root_id {
             genealogy.get_tree_structure(root)
         } else {
@@ -488,7 +505,7 @@ impl EvolutionEngine {
         for theme in &analysis.themes {
             let theme_entity = format!("theme:{}", theme.name);
             new_entities.push(theme_entity.clone());
-            
+
             // 情感与主题的关系 / Relation between emotion and theme
             new_relations.push(crate::evolution::knowledge::Relation {
                 from: emotion_entity.clone(),
@@ -502,7 +519,7 @@ impl EvolutionEngine {
         for img in &analysis.imagery {
             let imagery_entity = format!("imagery:{}", img.element);
             new_entities.push(imagery_entity.clone());
-            
+
             // 意象与主题的关系 / Relation between imagery and themes
             for theme in &analysis.themes {
                 if theme.confidence > 0.5 {
@@ -517,7 +534,8 @@ impl EvolutionEngine {
         }
 
         // 将新知识添加到知识图谱 / Add new knowledge to knowledge graph
-        self.knowledge_graph.add_entities_and_relations(&new_entities, &new_relations);
+        self.knowledge_graph
+            .add_entities_and_relations(&new_entities, &new_relations);
 
         // 基于诗歌理解生成可能的语法规则 / Generate possible grammar rules based on poetry understanding
         let generated_rules = self.generate_rules_from_poetry(&analysis)?;
@@ -554,7 +572,12 @@ impl EvolutionEngine {
                     description: format!(
                         "Evolution from poetry understanding: emotion {:?}, themes: {}",
                         analysis.emotion_analysis.primary_emotion,
-                        analysis.themes.iter().map(|t| t.name.as_str()).collect::<Vec<_>>().join(", ")
+                        analysis
+                            .themes
+                            .iter()
+                            .map(|t| t.name.as_str())
+                            .collect::<Vec<_>>()
+                            .join(", ")
                     ),
                 },
                 trigger: crate::evolution::tracker::TriggerContext {
@@ -571,7 +594,7 @@ impl EvolutionEngine {
 
             self.tracker.record(event.clone());
             self.knowledge_graph.build_from_history(&[event]);
-            
+
             // 集成生成的规则 / Integrate generated rules
             for rule in &generated_rules {
                 self.syntax_mutations.push(rule.clone());
@@ -582,12 +605,16 @@ impl EvolutionEngine {
     }
 
     /// 从诗歌分析生成规则 / Generate rules from poetry analysis
-    fn generate_rules_from_poetry(&self, analysis: &crate::poetry::PoemAnalysis) -> Result<Vec<GrammarRule>, EvolutionError> {
+    fn generate_rules_from_poetry(
+        &self,
+        analysis: &crate::poetry::PoemAnalysis,
+    ) -> Result<Vec<GrammarRule>, EvolutionError> {
         let mut rules = Vec::new();
 
         // 基于情感生成规则 / Generate rules based on emotion
-        let emotion_name = format!("{:?}", analysis.emotion_analysis.primary_emotion).to_lowercase();
-        
+        let emotion_name =
+            format!("{:?}", analysis.emotion_analysis.primary_emotion).to_lowercase();
+
         // 为每种情感生成对应的语法规则 / Generate corresponding syntax rules for each emotion
         match analysis.emotion_analysis.primary_emotion {
             crate::poetry::emotion::Emotion::Nostalgia => {
@@ -604,7 +631,7 @@ impl EvolutionEngine {
                             GrammarElement::Atom("nostalgia".to_string()),
                             GrammarElement::List(vec![]),
                             GrammarElement::Expr(Box::new(crate::grammar::core::Expr::Literal(
-                                crate::grammar::core::Literal::String("思念故乡".to_string())
+                                crate::grammar::core::Literal::String("思念故乡".to_string()),
                             ))),
                         ]),
                         transform: Vec::new(),
@@ -614,9 +641,16 @@ impl EvolutionEngine {
                         version: "0.1.0".to_string(),
                         defined_by: DefinitionMethod::Evolutionary,
                         stability: Stability::Experimental,
-                        description: format!("Generated from poetry understanding: {}", emotion_name),
+                        description: format!(
+                            "Generated from poetry understanding: {}",
+                            emotion_name
+                        ),
                         examples: vec!["思乡".to_string()],
-                        natural_lang_synonyms: vec!["思乡".to_string(), "怀念".to_string(), "思念".to_string()],
+                        natural_lang_synonyms: vec![
+                            "思乡".to_string(),
+                            "怀念".to_string(),
+                            "思念".to_string(),
+                        ],
                     },
                 );
                 rules.push(rule);
@@ -635,7 +669,7 @@ impl EvolutionEngine {
                             GrammarElement::Atom("tranquility".to_string()),
                             GrammarElement::List(vec![]),
                             GrammarElement::Expr(Box::new(crate::grammar::core::Expr::Literal(
-                                crate::grammar::core::Literal::String("内心平静".to_string())
+                                crate::grammar::core::Literal::String("内心平静".to_string()),
                             ))),
                         ]),
                         transform: Vec::new(),
@@ -645,9 +679,16 @@ impl EvolutionEngine {
                         version: "0.1.0".to_string(),
                         defined_by: DefinitionMethod::Evolutionary,
                         stability: Stability::Experimental,
-                        description: format!("Generated from poetry understanding: {}", emotion_name),
+                        description: format!(
+                            "Generated from poetry understanding: {}",
+                            emotion_name
+                        ),
                         examples: vec!["宁静".to_string()],
-                        natural_lang_synonyms: vec!["宁静".to_string(), "安静".to_string(), "平和".to_string()],
+                        natural_lang_synonyms: vec![
+                            "宁静".to_string(),
+                            "安静".to_string(),
+                            "平和".to_string(),
+                        ],
                     },
                 );
                 rules.push(rule);
@@ -670,7 +711,7 @@ impl EvolutionEngine {
                             GrammarElement::Atom(theme.name.to_lowercase()),
                             GrammarElement::List(vec![]),
                             GrammarElement::Expr(Box::new(crate::grammar::core::Expr::Literal(
-                                crate::grammar::core::Literal::String(theme.description.clone())
+                                crate::grammar::core::Literal::String(theme.description.clone()),
                             ))),
                         ]),
                         transform: Vec::new(),
@@ -704,11 +745,11 @@ impl EvolutionEngine {
                             GrammarElement::Atom("dict".to_string()),
                             GrammarElement::Atom("\"element\"".to_string()),
                             GrammarElement::Expr(Box::new(crate::grammar::core::Expr::Literal(
-                                crate::grammar::core::Literal::String(img.element.clone())
+                                crate::grammar::core::Literal::String(img.element.clone()),
                             ))),
                             GrammarElement::Atom("\"meaning\"".to_string()),
                             GrammarElement::Expr(Box::new(crate::grammar::core::Expr::Literal(
-                                crate::grammar::core::Literal::String(img.meaning.clone())
+                                crate::grammar::core::Literal::String(img.meaning.clone()),
                             ))),
                         ]),
                         transform: Vec::new(),

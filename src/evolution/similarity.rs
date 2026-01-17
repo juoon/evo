@@ -131,7 +131,8 @@ impl SimilarityDetector {
         let suggestions = self.generate_suggestions(&similar_pairs, &duplicates);
 
         // 计算相似度评分 / Calculate similarity score
-        let similarity_score = self.calculate_similarity_score(&similar_pairs, &duplicates, analysis);
+        let similarity_score =
+            self.calculate_similarity_score(&similar_pairs, &duplicates, analysis);
 
         let result = SimilarityAnalysis {
             similarity_score,
@@ -189,7 +190,8 @@ impl SimilarityDetector {
                 let similarity = self.calculate_similarity(&blocks[i], &blocks[j]);
 
                 if similarity >= self.similarity_threshold {
-                    let similarity_type = self.determine_similarity_type(&blocks[i], &blocks[j], similarity);
+                    let similarity_type =
+                        self.determine_similarity_type(&blocks[i], &blocks[j], similarity);
 
                     pairs.push(SimilarCodePair {
                         block1: blocks[i].clone(),
@@ -202,7 +204,11 @@ impl SimilarityDetector {
         }
 
         // 按相似度排序 / Sort by similarity
-        pairs.sort_by(|a, b| b.similarity.partial_cmp(&a.similarity).unwrap_or(std::cmp::Ordering::Equal));
+        pairs.sort_by(|a, b| {
+            b.similarity
+                .partial_cmp(&a.similarity)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
 
         pairs
     }
@@ -277,9 +283,7 @@ impl SimilarityDetector {
             return 0.0;
         }
 
-        let common_features = features1.iter()
-            .filter(|f| features2.contains(f))
-            .count();
+        let common_features = features1.iter().filter(|f| features2.contains(f)).count();
 
         (common_features as f64 * 2.0) / (features1.len() + features2.len()) as f64
     }
@@ -332,7 +336,10 @@ impl SimilarityDetector {
 
         // 按哈希值分组 / Group by hash
         for (i, block) in blocks.iter().enumerate() {
-            hash_map.entry(block.hash.clone()).or_insert_with(Vec::new).push(i);
+            hash_map
+                .entry(block.hash.clone())
+                .or_insert_with(Vec::new)
+                .push(i);
         }
 
         let mut duplicates = Vec::new();
@@ -341,7 +348,8 @@ impl SimilarityDetector {
         for (hash, indices) in hash_map {
             if indices.len() > 1 {
                 let block = blocks[indices[0]].clone();
-                let locations: Vec<String> = indices.iter()
+                let locations: Vec<String> = indices
+                    .iter()
                     .map(|&i| blocks[i].location.clone())
                     .collect();
 
@@ -380,13 +388,17 @@ impl SimilarityDetector {
         if similar_pairs.len() > 5 {
             suggestions.push(SimilaritySuggestion {
                 suggestion_type: "代码优化".to_string(),
-                content: format!("发现 {} 对相似代码，建议考虑使用模板或泛型", similar_pairs.len()),
+                content: format!(
+                    "发现 {} 对相似代码，建议考虑使用模板或泛型",
+                    similar_pairs.len()
+                ),
                 priority: 2,
             });
         }
 
         // 基于完全重复生成建议 / Generate suggestions based on exact duplicates
-        let exact_duplicates = similar_pairs.iter()
+        let exact_duplicates = similar_pairs
+            .iter()
             .filter(|p| matches!(p.similarity_type, SimilarityType::ExactDuplicate))
             .count();
 
@@ -444,10 +456,14 @@ impl SimilarityDetector {
         }
 
         let total = self.detection_history.len();
-        let total_similar_pairs: usize = self.detection_history.iter()
+        let total_similar_pairs: usize = self
+            .detection_history
+            .iter()
             .map(|r| r.similar_pairs.len())
             .sum();
-        let total_duplicates: usize = self.detection_history.iter()
+        let total_duplicates: usize = self
+            .detection_history
+            .iter()
             .map(|r| r.duplicates.len())
             .sum();
 

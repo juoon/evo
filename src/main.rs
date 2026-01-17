@@ -2546,24 +2546,53 @@ fn demonstrate_dependency_analysis() {
             let dependency = dependency_analyzer.analyze_dependencies(&ast, &analysis);
 
             println!("\n依赖统计 / Dependency Statistics:");
-            println!("  总依赖数 / Total Dependencies: {}", dependency.statistics.total_dependencies);
-            println!("  函数依赖数 / Function Dependencies: {}", dependency.statistics.function_dependencies);
-            println!("  变量依赖数 / Variable Dependencies: {}", dependency.statistics.variable_dependencies);
-            println!("  模块依赖数 / Module Dependencies: {}", dependency.statistics.module_dependencies);
-            println!("  最大依赖深度 / Max Depth: {}", dependency.statistics.max_depth);
-            println!("  循环依赖数 / Circular Dependencies: {}", dependency.statistics.circular_count);
+            println!(
+                "  总依赖数 / Total Dependencies: {}",
+                dependency.statistics.total_dependencies
+            );
+            println!(
+                "  函数依赖数 / Function Dependencies: {}",
+                dependency.statistics.function_dependencies
+            );
+            println!(
+                "  变量依赖数 / Variable Dependencies: {}",
+                dependency.statistics.variable_dependencies
+            );
+            println!(
+                "  模块依赖数 / Module Dependencies: {}",
+                dependency.statistics.module_dependencies
+            );
+            println!(
+                "  最大依赖深度 / Max Depth: {}",
+                dependency.statistics.max_depth
+            );
+            println!(
+                "  循环依赖数 / Circular Dependencies: {}",
+                dependency.statistics.circular_count
+            );
 
             if !dependency.dependencies.is_empty() {
                 println!("\n依赖关系 / Dependencies:");
                 for (i, dep) in dependency.dependencies.iter().take(10).enumerate() {
-                    println!("  {}. {} -> {} ({:?})", i + 1, dep.dependent, dep.dependency, dep.dependency_type);
+                    println!(
+                        "  {}. {} -> {} ({:?})",
+                        i + 1,
+                        dep.dependent,
+                        dep.dependency,
+                        dep.dependency_type
+                    );
                 }
             }
 
             if !dependency.circular_dependencies.is_empty() {
                 println!("\n循环依赖 / Circular Dependencies:");
                 for (i, circular) in dependency.circular_dependencies.iter().enumerate() {
-                    println!("  {}. {:?} - {}", i + 1, circular.severity, circular.description);
+                    println!(
+                        "  {}. {:?} - {}",
+                        i + 1,
+                        circular.severity,
+                        circular.description
+                    );
                     println!("     路径 / Path: {}", circular.path.join(" -> "));
                 }
             }
@@ -2571,7 +2600,12 @@ fn demonstrate_dependency_analysis() {
             if !dependency.suggestions.is_empty() {
                 println!("\n优化建议 / Optimization Suggestions:");
                 for (i, suggestion) in dependency.suggestions.iter().enumerate() {
-                    println!("  {}. [{}] {}", i + 1, suggestion.suggestion_type, suggestion.content);
+                    println!(
+                        "  {}. [{}] {}",
+                        i + 1,
+                        suggestion.suggestion_type,
+                        suggestion.content
+                    );
                     println!("     优先级 / Priority: {}", suggestion.priority);
                 }
             }
@@ -2591,18 +2625,25 @@ fn demonstrate_dependency_analysis() {
         if let Some(latest) = history.last() {
             println!("  最新分析 / Latest Analysis:");
             println!("    依赖数 / Dependencies: {}", latest.dependencies.len());
-            println!("    循环依赖数 / Circular: {}", latest.circular_dependencies.len());
-            println!("    时间 / Time: {}", latest.timestamp.format("%Y-%m-%d %H:%M:%S"));
+            println!(
+                "    循环依赖数 / Circular: {}",
+                latest.circular_dependencies.len()
+            );
+            println!(
+                "    时间 / Time: {}",
+                latest.timestamp.format("%Y-%m-%d %H:%M:%S")
+            );
         }
     }
 
     // 显示依赖统计 / Show dependency statistics
     println!("\n依赖统计 / Dependency Statistics:");
     let stats = dependency_analyzer.get_dependency_statistics();
-    println!("  {}", serde_json::to_string_pretty(&stats).unwrap_or_default());
-
     println!(
-        "\n提示 / Note: 代码依赖分析能够自动分析代码依赖关系，检测循环依赖，帮助优化代码结构"
+        "  {}",
+        serde_json::to_string_pretty(&stats).unwrap_or_default()
     );
+
+    println!("\n提示 / Note: 代码依赖分析能够自动分析代码依赖关系，检测循环依赖，帮助优化代码结构");
     println!("Code dependency analysis can automatically analyze code dependencies, detect circular dependencies, and help optimize code structure");
 }

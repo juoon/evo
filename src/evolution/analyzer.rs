@@ -4,7 +4,6 @@
 
 use crate::grammar::core::{BinOp, Expr, GrammarElement, Literal};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 /// 代码分析结果 / Code analysis result
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -112,7 +111,7 @@ impl CodeAnalyzer {
         let mut statistics = self.collect_statistics(ast);
         let patterns = self.detect_patterns(ast);
         let suggestions = self.generate_suggestions(ast, &patterns);
-        
+
         // 计算复杂度 / Calculate complexity
         let complexity = self.calculate_complexity(ast, &statistics);
 
@@ -132,8 +131,15 @@ impl CodeAnalyzer {
         let mut max_nesting = 0;
         let mut total_complexity = 0.0;
 
-        self.collect_statistics_recursive(ast, 0, &mut function_count, &mut variable_count, 
-                                         &mut total_function_length, &mut max_nesting, &mut total_complexity);
+        self.collect_statistics_recursive(
+            ast,
+            0,
+            &mut function_count,
+            &mut variable_count,
+            &mut total_function_length,
+            &mut max_nesting,
+            &mut total_complexity,
+        );
 
         CodeStatistics {
             function_count,
@@ -176,8 +182,15 @@ impl CodeAnalyzer {
                             _ => {}
                         }
                     }
-                    self.collect_statistics_recursive(list, depth + 1, function_count, variable_count,
-                                                     total_function_length, max_nesting, total_complexity);
+                    self.collect_statistics_recursive(
+                        list,
+                        depth + 1,
+                        function_count,
+                        variable_count,
+                        total_function_length,
+                        max_nesting,
+                        total_complexity,
+                    );
                 }
                 GrammarElement::Expr(expr) => {
                     *total_complexity += self.expr_complexity(expr);
@@ -195,11 +208,11 @@ impl CodeAnalyzer {
                 1.0 + self.expr_complexity(left) + self.expr_complexity(right)
             }
             Expr::If(cond, then_expr, else_expr) => {
-                2.0 + self.expr_complexity(cond) + self.expr_complexity(then_expr) + self.expr_complexity(else_expr)
+                2.0 + self.expr_complexity(cond)
+                    + self.expr_complexity(then_expr)
+                    + self.expr_complexity(else_expr)
             }
-            Expr::Call(_, args) => {
-                1.0 + args.iter().map(|a| self.expr_complexity(a)).sum::<f64>()
-            }
+            Expr::Call(_, args) => 1.0 + args.iter().map(|a| self.expr_complexity(a)).sum::<f64>(),
             _ => 0.5,
         }
     }
@@ -210,10 +223,10 @@ impl CodeAnalyzer {
 
         // 检测长函数 / Detect long functions
         self.detect_long_functions(ast, &mut patterns);
-        
+
         // 检测复杂表达式 / Detect complex expressions
         self.detect_complex_expressions(ast, &mut patterns);
-        
+
         // 检测深度嵌套 / Detect deep nesting
         self.detect_deep_nesting(ast, &mut patterns);
 
@@ -283,7 +296,11 @@ impl CodeAnalyzer {
     }
 
     /// 生成优化建议 / Generate optimization suggestions
-    fn generate_suggestions(&self, ast: &[GrammarElement], patterns: &[CodePattern]) -> Vec<OptimizationSuggestion> {
+    fn generate_suggestions(
+        &self,
+        ast: &[GrammarElement],
+        patterns: &[CodePattern],
+    ) -> Vec<OptimizationSuggestion> {
         let mut suggestions = Vec::new();
 
         for pattern in patterns {
@@ -327,7 +344,7 @@ impl CodeAnalyzer {
         let base_complexity = stats.function_count as f64 * 2.0;
         let nesting_complexity = stats.max_nesting_depth as f64 * 3.0;
         let expression_complexity = stats.expression_complexity;
-        
+
         base_complexity + nesting_complexity + expression_complexity
     }
 }
@@ -350,7 +367,7 @@ impl CodeRefactorer {
     /// 根据分析结果重构代码 / Refactor code based on analysis results
     pub fn refactor(&self, ast: &[GrammarElement], analysis: &CodeAnalysis) -> Vec<GrammarElement> {
         let mut refactored = ast.to_vec();
-        
+
         // 根据建议重构 / Refactor based on suggestions
         for suggestion in &analysis.suggestions {
             match suggestion.suggestion_type {
@@ -378,9 +395,7 @@ impl CodeRefactorer {
     /// 简化元素 / Simplify element
     fn simplify_element(&self, element: &GrammarElement) -> GrammarElement {
         match element {
-            GrammarElement::Expr(expr) => {
-                GrammarElement::Expr(Box::new(self.simplify_expr(expr)))
-            }
+            GrammarElement::Expr(expr) => GrammarElement::Expr(Box::new(self.simplify_expr(expr))),
             GrammarElement::List(list) => {
                 GrammarElement::List(list.iter().map(|e| self.simplify_element(e)).collect())
             }
@@ -393,12 +408,20 @@ impl CodeRefactorer {
         match expr {
             Expr::Binary(op, left, right) => {
                 // 尝试常量折叠 / Try constant folding
-                if let (Expr::Literal(Literal::Int(a)), Expr::Literal(Literal::Int(b))) = (left.as_ref(), right.as_ref()) {
+                if let (Expr::Literal(Literal::Int(a)), Expr::Literal(Literal::Int(b))) =
+                    (left.as_ref(), right.as_ref())
+                {
                     let result = match op {
                         BinOp::Add => a + b,
                         BinOp::Sub => a - b,
                         BinOp::Mul => a * b,
-                        BinOp::Div => if *b != 0 { a / b } else { return expr.clone() },
+                        BinOp::Div => {
+                            if *b != 0 {
+                                a / b
+                            } else {
+                                return expr.clone();
+                            }
+                        }
                         _ => return expr.clone(),
                     };
                     return Expr::Literal(Literal::Int(result));
@@ -413,9 +436,10 @@ impl CodeRefactorer {
                     Box::new(self.simplify_expr(else_expr)),
                 )
             }
-            Expr::Call(name, args) => {
-                Expr::Call(name.clone(), args.iter().map(|a| self.simplify_expr(a)).collect())
-            }
+            Expr::Call(name, args) => Expr::Call(
+                name.clone(),
+                args.iter().map(|a| self.simplify_expr(a)).collect(),
+            ),
             _ => expr.clone(),
         }
     }

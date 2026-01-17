@@ -3,7 +3,7 @@
 // Interpreter integrated with JIT compiler
 
 use crate::grammar::core::GrammarElement;
-use crate::runtime::interpreter::{Interpreter, Value, InterpreterError};
+use crate::runtime::interpreter::{Interpreter, InterpreterError, Value};
 use crate::runtime::jit::{JITCompiler, JITStatistics};
 use std::time::{Duration, Instant};
 
@@ -58,12 +58,17 @@ impl JITInterpreter {
             // 检查是否已编译 / Check if already compiled
             if self.jit_compiler.get_compiled_code(&code_key).is_some() {
                 // 执行编译后的代码 / Execute compiled code
-                return self.jit_compiler.execute_compiled(&code_key, &mut self.interpreter);
+                return self
+                    .jit_compiler
+                    .execute_compiled(&code_key, &mut self.interpreter);
             } else {
                 // 编译热点代码 / Compile hot spot code
                 if let Err(e) = self.jit_compiler.compile_hot_spot(&code_key, ast) {
                     // 编译失败，回退到解释执行 / Compilation failed, fall back to interpretation
-                    eprintln!("JIT compilation failed: {:?}, falling back to interpretation", e);
+                    eprintln!(
+                        "JIT compilation failed: {:?}, falling back to interpretation",
+                        e
+                    );
                 }
             }
         }
@@ -74,7 +79,8 @@ impl JITInterpreter {
         let execution_time = start.elapsed();
 
         // 记录执行统计 / Record execution statistics
-        self.jit_compiler.record_execution(&code_key, execution_time);
+        self.jit_compiler
+            .record_execution(&code_key, execution_time);
 
         // 如果达到阈值，编译为热点代码 / If threshold reached, compile as hot spot
         if self.jit_compiler.is_hot_spot(&code_key) {
@@ -89,7 +95,10 @@ impl JITInterpreter {
     }
 
     /// 执行代码（不记录统计） / Execute code (without recording statistics)
-    pub fn execute_without_profiling(&mut self, ast: &[GrammarElement]) -> Result<Value, InterpreterError> {
+    pub fn execute_without_profiling(
+        &mut self,
+        ast: &[GrammarElement],
+    ) -> Result<Value, InterpreterError> {
         self.interpreter.execute(ast)
     }
 

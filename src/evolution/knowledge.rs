@@ -2,8 +2,8 @@
 // 构建和维护进化知识图谱，支持进化预测和学习
 // Builds and maintains evolution knowledge graph, supports evolution prediction and learning
 
-use serde::{Deserialize, Serialize};
 use crate::evolution::tracker::EvolutionEvent;
+use serde::{Deserialize, Serialize};
 
 /// 进化知识图谱 / Evolution knowledge graph
 pub struct EvolutionKnowledgeGraph {
@@ -31,20 +31,19 @@ impl EvolutionKnowledgeGraph {
 
             // 添加到知识图谱 / Add to knowledge graph
             for entity in &entities {
-                let node = self.graph.entry(entity.clone())
-                    .or_insert_with(|| {
-                        let mut n = KnowledgeNode::new(entity.clone());
-                        // 根据实体类型设置节点类型 / Set node type based on entity type
-                        if entity.starts_with("rule:") {
-                            n.node_type = NodeType::GrammarRule;
-                        } else if entity.starts_with("trigger:") {
-                            n.node_type = NodeType::Context;
-                        }
-                        n
-                    });
+                let node = self.graph.entry(entity.clone()).or_insert_with(|| {
+                    let mut n = KnowledgeNode::new(entity.clone());
+                    // 根据实体类型设置节点类型 / Set node type based on entity type
+                    if entity.starts_with("rule:") {
+                        n.node_type = NodeType::GrammarRule;
+                    } else if entity.starts_with("trigger:") {
+                        n.node_type = NodeType::Context;
+                    }
+                    n
+                });
                 node.update_from_event(event);
             }
-            
+
             // 存储关系（简化：只记录在节点属性中） / Store relations (simplified: only in node attributes)
             for rel in &relations {
                 if let Some(node) = self.graph.get_mut(&rel.from) {
@@ -53,7 +52,9 @@ impl EvolutionKnowledgeGraph {
                         "type": format!("{:?}", rel.relation_type),
                         "weight": rel.weight
                     });
-                    let rels = node.attributes.entry("relations".to_string())
+                    let rels = node
+                        .attributes
+                        .entry("relations".to_string())
                         .or_insert_with(|| serde_json::json!([]));
                     if let Some(rels_array) = rels.as_array_mut() {
                         rels_array.push(rel_json);
@@ -61,23 +62,25 @@ impl EvolutionKnowledgeGraph {
                 }
             }
         }
-        
-            // 挖掘模式 / Mine patterns after building graph
+
+        // 挖掘模式 / Mine patterns after building graph
         let _ = self.pattern_miner.mine_from_graph(&self.graph);
     }
 
     /// 提取实体 / Extract entities
     fn extract_entities(&self, event: &EvolutionEvent) -> Vec<String> {
         let mut entities = vec![event.id.to_string()];
-        
+
         // 从语法规则中提取实体 / Extract entities from grammar rules
         for rule in &event.delta.added_rules {
             entities.push(format!("rule:{}", rule.name));
             entities.push(format!("pattern:{}", rule.pattern.elements.len()));
-            entities.push(format!("production:{}", 
-                serde_json::to_string(&rule.production.target).unwrap_or_default()));
+            entities.push(format!(
+                "production:{}",
+                serde_json::to_string(&rule.production.target).unwrap_or_default()
+            ));
         }
-        
+
         // 从触发源提取实体 / Extract entities from trigger source
         match &event.trigger.source {
             crate::evolution::tracker::TriggerSource::NaturalLanguageInstruction => {
@@ -91,14 +94,14 @@ impl EvolutionKnowledgeGraph {
             }
             _ => {}
         }
-        
+
         entities
     }
 
     /// 提取关系 / Extract relations
     fn extract_relations(&self, event: &EvolutionEvent) -> Vec<Relation> {
         let mut relations = Vec::new();
-        
+
         // 新规则与旧规则的关系 / Relations between new and old rules
         for new_rule in &event.delta.added_rules {
             for old_rule in &event.before_state.grammar_rules {
@@ -114,7 +117,7 @@ impl EvolutionKnowledgeGraph {
                 }
             }
         }
-        
+
         // 事件之间的时间关系 / Temporal relations between events
         if let Some(prev_event_id) = self.graph.values().flat_map(|n| n.events.last()).next() {
             relations.push(Relation {
@@ -124,17 +127,17 @@ impl EvolutionKnowledgeGraph {
                 weight: 0.5,
             });
         }
-        
+
         relations
     }
 
     /// 预测可能的进化 / Predict possible evolutions
     pub fn predict_evolutions(&self, context: &EvolutionContext) -> Vec<EvolutionPrediction> {
         let mut predictions = Vec::new();
-        
+
         // 基于历史模式进行预测 / Predict based on historical patterns
         let patterns = self.pattern_miner.mine_from_graph_static(&self.graph);
-        
+
         // 根据目标和约束匹配模式 / Match patterns based on goals and constraints
         for goal in &context.goals {
             for pattern in &patterns {
@@ -147,7 +150,7 @@ impl EvolutionKnowledgeGraph {
                 }
             }
         }
-        
+
         // 基于相似实体的预测 / Predict based on similar entities
         for (entity_id, node) in &self.graph {
             if node.events.len() > 1 {
@@ -158,16 +161,24 @@ impl EvolutionKnowledgeGraph {
                 });
             }
         }
-        
+
         // 按置信度排序 / Sort by confidence
-        predictions.sort_by(|a, b| b.confidence.partial_cmp(&a.confidence).unwrap_or(std::cmp::Ordering::Equal));
+        predictions.sort_by(|a, b| {
+            b.confidence
+                .partial_cmp(&a.confidence)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
         predictions.truncate(5); // 返回前5个预测 / Return top 5 predictions
-        
+
         predictions
     }
 
     /// 计算规则相似度 / Calculate rule similarity
-    fn calculate_rule_similarity(&self, rule1: &crate::grammar::rule::GrammarRule, rule2: &crate::grammar::rule::GrammarRule) -> f64 {
+    fn calculate_rule_similarity(
+        &self,
+        rule1: &crate::grammar::rule::GrammarRule,
+        rule2: &crate::grammar::rule::GrammarRule,
+    ) -> f64 {
         let mut similarity = 0.0;
         let mut factors = 0;
 
@@ -186,7 +197,12 @@ impl EvolutionKnowledgeGraph {
         // 模式相似度 / Pattern similarity
         if rule1.pattern.elements.len() == rule2.pattern.elements.len() {
             let mut pattern_match = 0;
-            for (e1, e2) in rule1.pattern.elements.iter().zip(rule2.pattern.elements.iter()) {
+            for (e1, e2) in rule1
+                .pattern
+                .elements
+                .iter()
+                .zip(rule2.pattern.elements.iter())
+            {
                 if self.pattern_elements_similar(e1, e2) {
                     pattern_match += 1;
                 }
@@ -218,11 +234,9 @@ impl EvolutionKnowledgeGraph {
         if s1.is_empty() || s2.is_empty() {
             return 0.0;
         }
-        
+
         // 简单的共同字符比例 / Simple common character ratio
-        let common_chars: usize = s1.chars()
-            .filter(|c| s2.contains(*c))
-            .count();
+        let common_chars: usize = s1.chars().filter(|c| s2.contains(*c)).count();
         let max_len = s1.len().max(s2.len());
         if max_len > 0 {
             (common_chars as f64 / max_len as f64).min(1.0)
@@ -232,7 +246,11 @@ impl EvolutionKnowledgeGraph {
     }
 
     /// 模式元素相似度 / Pattern element similarity
-    fn pattern_elements_similar(&self, e1: &crate::grammar::rule::PatternElement, e2: &crate::grammar::rule::PatternElement) -> bool {
+    fn pattern_elements_similar(
+        &self,
+        e1: &crate::grammar::rule::PatternElement,
+        e2: &crate::grammar::rule::PatternElement,
+    ) -> bool {
         match (e1, e2) {
             (
                 crate::grammar::rule::PatternElement::Keyword(k1),
@@ -251,7 +269,11 @@ impl EvolutionKnowledgeGraph {
     }
 
     /// 产生式相似度 / Production similarity
-    fn production_similarity(&self, p1: &crate::grammar::rule::Production, p2: &crate::grammar::rule::Production) -> f64 {
+    fn production_similarity(
+        &self,
+        p1: &crate::grammar::rule::Production,
+        p2: &crate::grammar::rule::Production,
+    ) -> f64 {
         // 简化：比较目标结构 / Simplified: compare target structure
         let t1 = serde_json::to_string(&p1.target).unwrap_or_default();
         let t2 = serde_json::to_string(&p2.target).unwrap_or_default();
@@ -265,7 +287,7 @@ impl EvolutionKnowledgeGraph {
     /// 查找相似实体 / Find similar entities
     pub fn find_similar_entities(&self, entity_id: &str, threshold: f64) -> Vec<(String, f64)> {
         let mut similar = Vec::new();
-        
+
         if let Some(node) = self.graph.get(entity_id) {
             for (other_id, other_node) in &self.graph {
                 if other_id != entity_id {
@@ -276,7 +298,7 @@ impl EvolutionKnowledgeGraph {
                 }
             }
         }
-        
+
         similar.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
         similar
     }
@@ -299,7 +321,9 @@ impl EvolutionKnowledgeGraph {
 
         // 事件重叠度 / Event overlap
         if !node1.events.is_empty() && !node2.events.is_empty() {
-            let common_events: usize = node1.events.iter()
+            let common_events: usize = node1
+                .events
+                .iter()
                 .filter(|e| node2.events.contains(e))
                 .count();
             let max_events = node1.events.len().max(node2.events.len());
@@ -322,32 +346,31 @@ impl EvolutionKnowledgeGraph {
     pub fn get_node_count(&self) -> usize {
         self.graph.len()
     }
-    
+
     /// 获取模式数量 / Get patterns count
     pub fn get_patterns_count(&self) -> usize {
         self.pattern_miner.patterns.len()
     }
-    
+
     /// 添加实体和关系 / Add entities and relations
     pub fn add_entities_and_relations(&mut self, entities: &[String], relations: &[Relation]) {
         // 添加实体节点 / Add entity nodes
         for entity in entities {
-            let node = self.graph.entry(entity.clone())
-                .or_insert_with(|| {
-                    let mut n = KnowledgeNode::new(entity.clone());
-                    // 根据实体类型设置节点类型 / Set node type based on entity type
-                    if entity.starts_with("emotion:") {
-                        n.node_type = NodeType::Concept;
-                    } else if entity.starts_with("theme:") {
-                        n.node_type = NodeType::Concept;
-                    } else if entity.starts_with("imagery:") {
-                        n.node_type = NodeType::Concept;
-                    }
-                    n
-                });
+            let node = self.graph.entry(entity.clone()).or_insert_with(|| {
+                let mut n = KnowledgeNode::new(entity.clone());
+                // 根据实体类型设置节点类型 / Set node type based on entity type
+                if entity.starts_with("emotion:") {
+                    n.node_type = NodeType::Concept;
+                } else if entity.starts_with("theme:") {
+                    n.node_type = NodeType::Concept;
+                } else if entity.starts_with("imagery:") {
+                    n.node_type = NodeType::Concept;
+                }
+                n
+            });
             // 可以在这里更新节点属性 / Can update node attributes here
         }
-        
+
         // 存储关系 / Store relations
         for rel in relations {
             if let Some(node) = self.graph.get_mut(&rel.from) {
@@ -356,7 +379,9 @@ impl EvolutionKnowledgeGraph {
                     "type": format!("{:?}", rel.relation_type),
                     "weight": rel.weight
                 });
-                let rels = node.attributes.entry("relations".to_string())
+                let rels = node
+                    .attributes
+                    .entry("relations".to_string())
                     .or_insert_with(|| serde_json::json!([]));
                 if let Some(rels_array) = rels.as_array_mut() {
                     rels_array.push(rel_json);
@@ -458,17 +483,19 @@ impl PatternMiner {
     /// 挖掘模式 / Mine patterns
     pub fn mine(&mut self, events: &[EvolutionEvent]) -> Vec<EvolutionPattern> {
         let mut patterns = Vec::new();
-        
+
         // 简单模式：频繁出现的语法规则进化 / Simple pattern: frequent grammar rule evolution
-        let mut rule_counts: std::collections::HashMap<String, Vec<uuid::Uuid>> = std::collections::HashMap::new();
+        let mut rule_counts: std::collections::HashMap<String, Vec<uuid::Uuid>> =
+            std::collections::HashMap::new();
         for event in events {
             for rule in &event.delta.added_rules {
-                rule_counts.entry(rule.name.clone())
+                rule_counts
+                    .entry(rule.name.clone())
                     .or_insert_with(Vec::new)
                     .push(event.id);
             }
         }
-        
+
         for (rule_name, event_ids) in rule_counts {
             if event_ids.len() > 1 {
                 patterns.push(EvolutionPattern {
@@ -479,15 +506,18 @@ impl PatternMiner {
                 });
             }
         }
-        
+
         self.patterns = patterns.clone();
         patterns
     }
-    
+
     /// 从知识图谱挖掘模式（非可变版本） / Mine patterns from knowledge graph (immutable version)
-    pub fn mine_from_graph_static(&self, graph: &std::collections::HashMap<String, KnowledgeNode>) -> Vec<EvolutionPattern> {
+    pub fn mine_from_graph_static(
+        &self,
+        graph: &std::collections::HashMap<String, KnowledgeNode>,
+    ) -> Vec<EvolutionPattern> {
         let mut patterns = Vec::new();
-        
+
         // 查找频繁演变的实体 / Find frequently evolving entities
         for (entity_id, node) in graph {
             if node.events.len() > 2 {
@@ -499,12 +529,15 @@ impl PatternMiner {
                 });
             }
         }
-        
+
         patterns
     }
-    
+
     /// 从知识图谱挖掘模式 / Mine patterns from knowledge graph
-    pub fn mine_from_graph(&mut self, graph: &std::collections::HashMap<String, KnowledgeNode>) -> Vec<EvolutionPattern> {
+    pub fn mine_from_graph(
+        &mut self,
+        graph: &std::collections::HashMap<String, KnowledgeNode>,
+    ) -> Vec<EvolutionPattern> {
         let patterns = self.mine_from_graph_static(graph);
         self.patterns = patterns.clone();
         patterns
@@ -545,4 +578,3 @@ pub struct EvolutionPrediction {
     /// 理由 / Reasoning
     pub reasoning: String,
 }
-

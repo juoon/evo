@@ -16,8 +16,8 @@ pub use python::*;
 pub use runtime::*;
 
 // PyO3 Python模块导出 / PyO3 Python module exports
-use pyo3::prelude::*;
 use pyo3::exceptions::PyValueError;
+use pyo3::prelude::*;
 
 /// Python模块：Aevolang解析器和解释器
 /// Python module: Aevolang parser and interpreter
@@ -52,12 +52,10 @@ impl AevoInterpreter {
     fn execute(&mut self, code: &str) -> PyResult<String> {
         let parser = parser::AdaptiveParser::new(true);
         match parser.parse(code) {
-            Ok(ast) => {
-                match self.interpreter.execute(&ast) {
-                    Ok(value) => Ok(value.to_string()),
-                    Err(e) => Err(PyValueError::new_err(format!("Execution error: {:?}", e))),
-                }
-            }
+            Ok(ast) => match self.interpreter.execute(&ast) {
+                Ok(value) => Ok(value.to_string()),
+                Err(e) => Err(PyValueError::new_err(format!("Execution error: {:?}", e))),
+            },
             Err(e) => Err(PyValueError::new_err(format!("Parse error: {:?}", e))),
         }
     }
@@ -66,16 +64,10 @@ impl AevoInterpreter {
     fn eval(&mut self, code: &str) -> PyResult<PyObject> {
         let parser = parser::AdaptiveParser::new(true);
         match parser.parse(code) {
-            Ok(ast) => {
-                match self.interpreter.execute(&ast) {
-                    Ok(value) => {
-                        Python::with_gil(|py| {
-                            Ok(value_to_pyobject(py, &value))
-                        })
-                    }
-                    Err(e) => Err(PyValueError::new_err(format!("Execution error: {:?}", e))),
-                }
-            }
+            Ok(ast) => match self.interpreter.execute(&ast) {
+                Ok(value) => Python::with_gil(|py| Ok(value_to_pyobject(py, &value))),
+                Err(e) => Err(PyValueError::new_err(format!("Execution error: {:?}", e))),
+            },
             Err(e) => Err(PyValueError::new_err(format!("Parse error: {:?}", e))),
         }
     }
@@ -101,11 +93,7 @@ impl AevoParser {
     /// 解析Aevolang代码 / Parse Aevolang code
     fn parse(&self, code: &str) -> PyResult<PyObject> {
         match self.parser.parse(code) {
-            Ok(ast) => {
-                Python::with_gil(|py| {
-                    Ok(ast_to_pyobject(py, &ast))
-                })
-            }
+            Ok(ast) => Python::with_gil(|py| Ok(ast_to_pyobject(py, &ast))),
             Err(e) => Err(PyValueError::new_err(format!("Parse error: {:?}", e))),
         }
     }
@@ -117,11 +105,7 @@ impl AevoParser {
 fn parse(code: &str) -> PyResult<PyObject> {
     let parser = parser::AdaptiveParser::new(true);
     match parser.parse(code) {
-        Ok(ast) => {
-            Python::with_gil(|py| {
-                Ok(ast_to_pyobject(py, &ast))
-            })
-        }
+        Ok(ast) => Python::with_gil(|py| Ok(ast_to_pyobject(py, &ast))),
         Err(e) => Err(PyValueError::new_err(format!("Parse error: {:?}", e))),
     }
 }
@@ -133,12 +117,10 @@ fn execute(code: &str) -> PyResult<String> {
     let parser = parser::AdaptiveParser::new(true);
     let mut interpreter = runtime::Interpreter::new();
     match parser.parse(code) {
-        Ok(ast) => {
-            match interpreter.execute(&ast) {
-                Ok(value) => Ok(value.to_string()),
-                Err(e) => Err(PyValueError::new_err(format!("Execution error: {:?}", e))),
-            }
-        }
+        Ok(ast) => match interpreter.execute(&ast) {
+            Ok(value) => Ok(value.to_string()),
+            Err(e) => Err(PyValueError::new_err(format!("Execution error: {:?}", e))),
+        },
         Err(e) => Err(PyValueError::new_err(format!("Parse error: {:?}", e))),
     }
 }
@@ -150,16 +132,10 @@ fn eval(code: &str) -> PyResult<PyObject> {
     let parser = parser::AdaptiveParser::new(true);
     let mut interpreter = runtime::Interpreter::new();
     match parser.parse(code) {
-        Ok(ast) => {
-            match interpreter.execute(&ast) {
-                Ok(value) => {
-                    Python::with_gil(|py| {
-                        Ok(value_to_pyobject(py, &value))
-                    })
-                }
-                Err(e) => Err(PyValueError::new_err(format!("Execution error: {:?}", e))),
-            }
-        }
+        Ok(ast) => match interpreter.execute(&ast) {
+            Ok(value) => Python::with_gil(|py| Ok(value_to_pyobject(py, &value))),
+            Err(e) => Err(PyValueError::new_err(format!("Execution error: {:?}", e))),
+        },
         Err(e) => Err(PyValueError::new_err(format!("Parse error: {:?}", e))),
     }
 }
@@ -173,6 +149,9 @@ fn value_to_pyobject(py: Python, value: &runtime::interpreter::Value) -> PyObjec
         runtime::interpreter::Value::String(s) => s.to_object(py),
         runtime::interpreter::Value::Bool(b) => b.to_object(py),
         runtime::interpreter::Value::Null => py.None(),
+        runtime::interpreter::Value::Lambda { params, .. } => {
+            format!("<lambda({})>", params.join(", ")).to_object(py)
+        }
         runtime::interpreter::Value::List(list) => {
             let py_list = pyo3::types::PyList::empty_bound(py);
             for item in list {
@@ -201,4 +180,3 @@ fn ast_to_pyobject(py: Python, ast: &[grammar::core::GrammarElement]) -> PyObjec
     }
     result.to_object(py)
 }
-

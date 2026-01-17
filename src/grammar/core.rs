@@ -87,4 +87,3 @@ pub mod constants {
     pub const FUNCTION: &str = "function";
     pub const RETURN: &str = "return";
 }
-

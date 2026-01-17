@@ -2,8 +2,8 @@
 // 解析诗歌文本，提取情感和意境
 // Parses poetry text, extracts emotions and artistic conception
 
-use serde::{Deserialize, Serialize};
 use crate::poetry::emotion::{Emotion, EmotionAnalysis};
+use serde::{Deserialize, Serialize};
 
 /// 诗歌解析器 / Poetry parser
 pub struct PoetryParser {
@@ -23,13 +23,13 @@ impl PoetryParser {
     pub fn parse(&self, poem: &str) -> Result<PoemAnalysis, PoetryError> {
         // 提取诗句 / Extract verses
         let verses = self.extract_verses(poem);
-        
+
         // 分析情感 / Analyze emotions
         let emotion_analysis = self.emotion_analyzer.analyze(poem)?;
-        
+
         // 提取主题 / Extract themes
         let themes = self.extract_themes(&verses);
-        
+
         // 提取意象 / Extract imagery
         let imagery = self.extract_imagery(&verses);
 
@@ -56,22 +56,28 @@ impl PoetryParser {
     /// 提取主题 / Extract themes
     fn extract_themes(&self, verses: &[Verse]) -> Vec<Theme> {
         let mut themes = Vec::new();
-        let text: String = verses.iter().map(|v| v.text.clone()).collect::<Vec<_>>().join("");
-        
+        let text: String = verses
+            .iter()
+            .map(|v| v.text.clone())
+            .collect::<Vec<_>>()
+            .join("");
+
         // 主题关键词映射 / Theme keyword mapping
         let theme_patterns: Vec<(&str, Vec<&str>, &str)> = vec![
-            ("思乡", vec!["思", "故乡"], "思念故乡的情感，表达对家乡的深切怀念"),
+            (
+                "思乡",
+                vec!["思", "故乡"],
+                "思念故乡的情感，表达对家乡的深切怀念",
+            ),
             ("孤独", vec!["孤独", "寂寞"], "孤独感，缺少陪伴和归属感"),
             ("宁静", vec!["静", "月", "夜"], "夜晚的宁静，内心的平和"),
             ("思念", vec!["思", "望"], "对远方或过去的人和事的思念"),
             ("离别", vec!["离", "别"], "与亲人朋友的分离"),
         ];
-        
+
         for (theme_name, keywords, description) in theme_patterns.iter() {
-            let matches: usize = keywords.iter()
-                .map(|kw| text.matches(kw).count())
-                .sum();
-            
+            let matches: usize = keywords.iter().map(|kw| text.matches(kw).count()).sum();
+
             if matches > 0 {
                 let confidence = (matches as f64 / verses.len() as f64).min(1.0);
                 themes.push(Theme {
@@ -81,7 +87,7 @@ impl PoetryParser {
                 });
             }
         }
-        
+
         // 如果没找到主题，基于情感分析推断 / If no theme found, infer from emotion analysis
         if themes.is_empty() {
             // 从诗句中提取情感关键词 / Extract emotion keywords from verses
@@ -93,14 +99,18 @@ impl PoetryParser {
                 });
             }
         }
-        
+
         themes
     }
 
     /// 提取意象 / Extract imagery
     fn extract_imagery(&self, verses: &[Verse]) -> Vec<Imagery> {
-        let text: String = verses.iter().map(|v| v.text.clone()).collect::<Vec<_>>().join("");
-        
+        let text: String = verses
+            .iter()
+            .map(|v| v.text.clone())
+            .collect::<Vec<_>>()
+            .join("");
+
         // 意象元素词典 / Imagery element dictionary
         let imagery_dict: std::collections::HashMap<&str, &str> = [
             ("明月", "明亮的月光，象征思乡和团圆"),
@@ -115,9 +125,10 @@ impl PoetryParser {
         .iter()
         .cloned()
         .collect();
-        
-        let mut imagery_map: std::collections::HashMap<String, (String, usize)> = std::collections::HashMap::new();
-        
+
+        let mut imagery_map: std::collections::HashMap<String, (String, usize)> =
+            std::collections::HashMap::new();
+
         // 统计意象出现频率 / Count imagery frequency
         for (element, meaning) in imagery_dict.iter() {
             let count = text.matches(element).count();
@@ -130,7 +141,7 @@ impl PoetryParser {
                 imagery_map.insert(element.to_string(), (meaning.to_string(), count));
             }
         }
-        
+
         // 转换为Imagery列表 / Convert to Imagery list
         let mut imagery: Vec<Imagery> = imagery_map
             .into_iter()
@@ -140,10 +151,10 @@ impl PoetryParser {
                 frequency,
             })
             .collect();
-        
+
         // 按频率排序 / Sort by frequency
         imagery.sort_by(|a, b| b.frequency.cmp(&a.frequency));
-        
+
         imagery
     }
 }
@@ -216,4 +227,3 @@ impl From<crate::poetry::emotion::EmotionError> for PoetryError {
         }
     }
 }
-

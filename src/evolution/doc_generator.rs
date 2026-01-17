@@ -247,12 +247,21 @@ impl DocumentationGenerator {
     fn generate_markdown_doc(&self, ast: &[GrammarElement], analysis: &CodeAnalysis) -> String {
         let mut doc = String::from("# 代码文档 / Code Documentation\n\n");
         doc.push_str(&format!("## 概览 / Overview\n\n"));
-        doc.push_str(&format!("- 函数数量 / Function Count: {}\n", analysis.statistics.function_count));
-        doc.push_str(&format!("- 变量数量 / Variable Count: {}\n", analysis.statistics.variable_count));
-        doc.push_str(&format!("- 复杂度 / Complexity: {:.2}\n\n", analysis.complexity));
+        doc.push_str(&format!(
+            "- 函数数量 / Function Count: {}\n",
+            analysis.statistics.function_count
+        ));
+        doc.push_str(&format!(
+            "- 变量数量 / Variable Count: {}\n",
+            analysis.statistics.variable_count
+        ));
+        doc.push_str(&format!(
+            "- 复杂度 / Complexity: {:.2}\n\n",
+            analysis.complexity
+        ));
 
         doc.push_str("## 函数文档 / Function Documentation\n\n");
-        
+
         // 遍历AST生成函数文档 / Traverse AST to generate function documentation
         for element in ast {
             if let GrammarElement::List(list) = element {
@@ -262,7 +271,7 @@ impl DocumentationGenerator {
                             if let GrammarElement::Atom(name) = &list[1] {
                                 doc.push_str(&format!("### {}\n\n", name));
                                 doc.push_str(&format!("**描述 / Description**: 函数定义\n\n"));
-                                
+
                                 // 提取参数 / Extract parameters
                                 if let GrammarElement::List(params) = &list[2] {
                                     doc.push_str("**参数 / Parameters**:\n");
@@ -273,7 +282,7 @@ impl DocumentationGenerator {
                                     }
                                     doc.push_str("\n");
                                 }
-                                
+
                                 doc.push_str("**示例 / Example**:\n");
                                 doc.push_str("```aevo\n");
                                 doc.push_str(&format!("({} ...)\n", name));
@@ -287,7 +296,10 @@ impl DocumentationGenerator {
 
         doc.push_str("## 代码模式 / Code Patterns\n\n");
         for pattern in &analysis.patterns {
-            doc.push_str(&format!("- **{:?}**: {}\n", pattern.pattern_type, pattern.description));
+            doc.push_str(&format!(
+                "- **{:?}**: {}\n",
+                pattern.pattern_type, pattern.description
+            ));
         }
 
         doc
@@ -296,7 +308,7 @@ impl DocumentationGenerator {
     /// 生成API文档 / Generate API documentation
     fn generate_api_doc(&self, ast: &[GrammarElement], analysis: &CodeAnalysis) -> String {
         let mut doc = String::from("# API 文档 / API Documentation\n\n");
-        
+
         doc.push_str("## 函数 / Functions\n\n");
         for element in ast {
             if let GrammarElement::List(list) = element {
@@ -319,7 +331,7 @@ impl DocumentationGenerator {
     /// 生成纯文本文档 / Generate plain text documentation
     fn generate_plain_doc(&self, ast: &[GrammarElement], analysis: &CodeAnalysis) -> String {
         let mut doc = String::new();
-        
+
         for element in ast {
             if let GrammarElement::List(list) = element {
                 if let Some(GrammarElement::Atom(first)) = list.first() {

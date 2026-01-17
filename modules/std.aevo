@@ -35,6 +35,13 @@
       (+ idx 1)
       (list-append result (list (list-get lst idx))))))
 
+(def map (func lst)
+  (if (= (list-length lst) 0)
+    (list)
+    (list-append
+      (list (func (list-get lst 0)))
+      (map func (list-slice lst 1)))))
+
 (def filter (pred lst)
   (if (= (list-length lst) 0)
     (list)

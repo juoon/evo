@@ -2,8 +2,6 @@
 // 自动修复常见错误，提供智能建议
 // Automatically fix common errors and provide intelligent suggestions
 
-use crate::grammar::core::GrammarElement;
-use crate::parser::AdaptiveParser;
 use crate::runtime::interpreter::InterpreterError;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -216,7 +214,10 @@ impl ErrorRecoverer {
     fn add_definition(&self, code: &str, def_type: &str) -> String {
         // 简化版本：在实际使用前添加定义 / Simplified version: add definition before actual use
         // 实际实现需要更复杂的AST分析 / Actual implementation needs more complex AST analysis
-        format!("; 自动添加的{}定义 / Auto-added {} definition\n{}", def_type, def_type, code)
+        format!(
+            "; 自动添加的{}定义 / Auto-added {} definition\n{}",
+            def_type, def_type, code
+        )
     }
 
     /// 获取常见错误的修复建议 / Get fix suggestions for common errors

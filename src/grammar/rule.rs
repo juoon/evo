@@ -2,10 +2,10 @@
 // 定义可扩展的语法规则系统
 // Defines extensible grammar rule system
 
+use crate::grammar::core::GrammarElement;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use chrono::{DateTime, Utc};
-use crate::grammar::core::GrammarElement;
 
 /// 语法规则 / Grammar rule
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -132,12 +132,7 @@ pub enum Stability {
 
 impl GrammarRule {
     /// 创建新规则 / Create new rule
-    pub fn new(
-        name: String,
-        pattern: Pattern,
-        production: Production,
-        meta: RuleMetadata,
-    ) -> Self {
+    pub fn new(name: String, pattern: Pattern, production: Production, meta: RuleMetadata) -> Self {
         let now = Utc::now();
         Self {
             id: Uuid::new_v4(),
@@ -164,4 +159,3 @@ impl GrammarRule {
         false
     }
 }
-

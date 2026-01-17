@@ -366,6 +366,9 @@ impl ParserState {
                 "if" => {
                     return self.parse_if();
                 }
+                "lambda" => {
+                    return self.parse_lambda();
+                }
                 "list" | "vec" => {
                     return self.parse_list_literal();
                 }
@@ -495,6 +498,34 @@ impl ParserState {
         ))))
     }
 
+    fn parse_lambda(&mut self) -> Result<GrammarElement, ParseError> {
+        // (lambda (params...) body)
+        // 解析参数列表
+        let args = if self.check(&Token::LeftParen) {
+            self.parse_list()?
+        } else {
+            GrammarElement::List(Vec::new())
+        };
+
+        let args_list = match args {
+            GrammarElement::List(l) => l,
+            _ => Vec::new(),
+        };
+
+        // 解析函数体
+        let body = self.parse_element()?;
+
+        // 消费结束括号
+        self.consume(&Token::RightParen, "Expected ')' after lambda expression")?;
+
+        // 转换为lambda列表格式，供解释器使用
+        Ok(GrammarElement::List(vec![
+            GrammarElement::Atom("lambda".to_string()),
+            GrammarElement::List(args_list),
+            body,
+        ]))
+    }
+
     fn parse_list_literal(&mut self) -> Result<GrammarElement, ParseError> {
         // (list item1 item2 ...) 或 (vec item1 item2 ...)
         let mut items = Vec::new();
@@ -502,14 +533,16 @@ impl ParserState {
             items.push(self.parse_element()?);
         }
         self.consume(&Token::RightParen, "Expected ')' after list literal")?;
-        
+
         // 转换为表达式列表
         let expr_items: Vec<Expr> = items
             .iter()
             .map(|e| self.element_to_expr(e))
             .collect::<Result<Vec<_>, _>>()?;
-        
-        Ok(GrammarElement::Expr(Box::new(Expr::Literal(Literal::List(expr_items)))))
+
+        Ok(GrammarElement::Expr(Box::new(Expr::Literal(
+            Literal::List(expr_items),
+        ))))
     }
 
     fn parse_dict_literal(&mut self) -> Result<GrammarElement, ParseError> {
@@ -524,7 +557,7 @@ impl ParserState {
                     "Dictionary requires key-value pairs".to_string(),
                 ));
             };
-            
+
             // 提取键（必须是字符串或标识符）
             let key = match &key_elem {
                 GrammarElement::Atom(s) => s.clone(),
@@ -545,13 +578,15 @@ impl ParserState {
                     ));
                 }
             };
-            
+
             let value_expr = self.element_to_expr(&value_elem)?;
             pairs.push((key, value_expr));
         }
         self.consume(&Token::RightParen, "Expected ')' after dict literal")?;
-        
-        Ok(GrammarElement::Expr(Box::new(Expr::Literal(Literal::Dict(pairs)))))
+
+        Ok(GrammarElement::Expr(Box::new(Expr::Literal(
+            Literal::Dict(pairs),
+        ))))
     }
 
     fn parse_quoted(&mut self) -> Result<GrammarElement, ParseError> {

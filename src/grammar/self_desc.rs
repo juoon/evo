@@ -2,8 +2,10 @@
 // 允许语言用自身描述自身的语法规则
 // Allows the language to describe its own grammar rules using itself
 
+use crate::grammar::rule::{
+    DefinitionMethod, GrammarRule, Pattern, Production, RuleMetadata, Stability,
+};
 use serde::{Deserialize, Serialize};
-use crate::grammar::rule::{GrammarRule, Pattern, Production, RuleMetadata, DefinitionMethod, Stability};
 
 /// 自描述语法规则 / Self-describing syntax rule
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -27,7 +29,11 @@ impl SelfDescribingRule {
     }
 
     /// 创建递归自描述规则 / Create recursive self-describing rule
-    pub fn recursive(rule: GrammarRule, self_describing_code: String, reference: SelfDescribingRule) -> Self {
+    pub fn recursive(
+        rule: GrammarRule,
+        self_describing_code: String,
+        reference: SelfDescribingRule,
+    ) -> Self {
         Self {
             rule,
             self_describing_code,
@@ -64,22 +70,16 @@ pub fn syntax_definition_rule() -> SelfDescribingRule {
         version: "1.0".to_string(),
         defined_by: DefinitionMethod::SelfDescribing,
         stability: Stability::Stable,
-        description: "允许定义语法规则的元规则 / Meta-rule that allows defining grammar rules".to_string(),
+        description: "允许定义语法规则的元规则 / Meta-rule that allows defining grammar rules"
+            .to_string(),
         examples: vec![
-            "语法 变量声明: \"让\" 标识符 \"=\" 表达式 => VariableDeclaration(标识符, 表达式)".to_string(),
+            "语法 变量声明: \"让\" 标识符 \"=\" 表达式 => VariableDeclaration(标识符, 表达式)"
+                .to_string(),
         ],
-        natural_lang_synonyms: vec![
-            "定义语法".to_string(),
-            "创建语法规则".to_string(),
-        ],
+        natural_lang_synonyms: vec!["定义语法".to_string(), "创建语法规则".to_string()],
     };
 
-    let rule = GrammarRule::new(
-        "语法定义".to_string(),
-        pattern,
-        production,
-        meta,
-    );
+    let rule = GrammarRule::new("语法定义".to_string(), pattern, production, meta);
 
     let self_describing_code = r#"
 语法 语法定义:
@@ -88,8 +88,8 @@ pub fn syntax_definition_rule() -> SelfDescribingRule {
     版本: "1.0"
     定义方式: "自描述"
     稳定性: "稳定"
-"#.to_string();
+"#
+    .to_string();
 
     SelfDescribingRule::new(rule, self_describing_code)
 }
-

@@ -326,10 +326,22 @@ impl CodeReviewer {
         }
 
         // 统计问题 / Count issues
-        let critical_count = issues.iter().filter(|i| i.severity == ReviewSeverity::Critical).count();
-        let error_count = issues.iter().filter(|i| i.severity == ReviewSeverity::Error).count();
-        let warning_count = issues.iter().filter(|i| i.severity == ReviewSeverity::Warning).count();
-        let info_count = issues.iter().filter(|i| i.severity == ReviewSeverity::Info).count();
+        let critical_count = issues
+            .iter()
+            .filter(|i| i.severity == ReviewSeverity::Critical)
+            .count();
+        let error_count = issues
+            .iter()
+            .filter(|i| i.severity == ReviewSeverity::Error)
+            .count();
+        let warning_count = issues
+            .iter()
+            .filter(|i| i.severity == ReviewSeverity::Warning)
+            .count();
+        let info_count = issues
+            .iter()
+            .filter(|i| i.severity == ReviewSeverity::Info)
+            .count();
         let total_issues = issues.len();
 
         // 计算通过率 / Calculate pass rate

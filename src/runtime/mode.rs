@@ -2,8 +2,8 @@
 // 根据代码特征选择合适的执行模式（解释型、编译型、JIT）
 // Selects appropriate execution mode (interpreted, compiled, JIT) based on code characteristics
 
-use serde::{Deserialize, Serialize};
 use crate::grammar::core::GrammarElement;
+use serde::{Deserialize, Serialize};
 
 /// 执行模式 / Execution mode
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -121,4 +121,3 @@ pub struct RuntimeMetrics {
     /// 执行时间 / Execution time
     pub execution_time: f64,
 }
-

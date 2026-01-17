@@ -59,7 +59,7 @@ impl ContextManager {
             timestamp: chrono::Utc::now(),
         };
         self.history.push(turn);
-        
+
         // 更新变量和函数上下文 / Update variable and function context
         if let Some(intent) = intent {
             match intent.intent_type {
@@ -85,7 +85,7 @@ impl ContextManager {
                 _ => {}
             }
         }
-        
+
         turn_id
     }
 
@@ -103,7 +103,7 @@ impl ContextManager {
     pub fn parse_with_context(&self, input: &str) -> Result<EnhancedIntent, ContextError> {
         // 检查是否有引用之前的对话 / Check if there are references to previous conversations
         let references = self.extract_references(input);
-        
+
         // 解析当前输入 / Parse current input
         // 这里应该调用NLUParser，但为了简化，我们创建一个基本的意图 / Should call NLUParser here, but simplified
         let base_intent = EnhancedIntent {
@@ -113,14 +113,14 @@ impl ContextManager {
             resolved_variables: self.resolve_variables(input),
             resolved_functions: self.resolve_functions(input),
         };
-        
+
         Ok(base_intent)
     }
 
     /// 提取引用 / Extract references
     fn extract_references(&self, input: &str) -> Vec<ContextReference> {
         let mut references = Vec::new();
-        
+
         // 检查"上面的"、"之前的"、"刚才的"等引用 / Check for "above", "previous", "just now" references
         let reference_keywords = vec!["上面", "之前", "刚才", "之前定义的", "上面的变量"];
         for keyword in reference_keywords {
@@ -135,35 +135,35 @@ impl ContextManager {
                 }
             }
         }
-        
+
         references
     }
 
     /// 解析变量引用 / Resolve variable references
     fn resolve_variables(&self, input: &str) -> HashMap<String, GrammarElement> {
         let mut resolved = HashMap::new();
-        
+
         // 检查输入中提到的变量名 / Check for variable names mentioned in input
         for (var_name, var_value) in &self.variables {
             if input.contains(var_name) {
                 resolved.insert(var_name.clone(), var_value.clone());
             }
         }
-        
+
         resolved
     }
 
     /// 解析函数引用 / Resolve function references
     fn resolve_functions(&self, input: &str) -> HashMap<String, ParsedIntent> {
         let mut resolved = HashMap::new();
-        
+
         // 检查输入中提到的函数名 / Check for function names mentioned in input
         for (func_name, func_intent) in &self.functions {
             if input.contains(func_name) {
                 resolved.insert(func_name.clone(), func_intent.clone());
             }
         }
-        
+
         resolved
     }
 

@@ -163,11 +163,7 @@ impl TestGenerator {
     }
 
     /// 生成测试套件 / Generate test suite
-    pub fn generate_tests(
-        &mut self,
-        ast: &[GrammarElement],
-        analysis: &CodeAnalysis,
-    ) -> TestSuite {
+    pub fn generate_tests(&mut self, ast: &[GrammarElement], analysis: &CodeAnalysis) -> TestSuite {
         let mut test_cases = Vec::new();
 
         // 为每个函数生成测试 / Generate tests for each function
@@ -192,9 +188,18 @@ impl TestGenerator {
         }
 
         // 统计测试 / Count tests
-        let unit_tests = test_cases.iter().filter(|t| matches!(t.test_type, TestStrategyType::UnitTest)).count();
-        let integration_tests = test_cases.iter().filter(|t| matches!(t.test_type, TestStrategyType::IntegrationTest)).count();
-        let boundary_tests = test_cases.iter().filter(|t| matches!(t.test_type, TestStrategyType::BoundaryTest)).count();
+        let unit_tests = test_cases
+            .iter()
+            .filter(|t| matches!(t.test_type, TestStrategyType::UnitTest))
+            .count();
+        let integration_tests = test_cases
+            .iter()
+            .filter(|t| matches!(t.test_type, TestStrategyType::IntegrationTest))
+            .count();
+        let boundary_tests = test_cases
+            .iter()
+            .filter(|t| matches!(t.test_type, TestStrategyType::BoundaryTest))
+            .count();
 
         let statistics = TestStatistics {
             total_tests: test_cases.len(),
@@ -223,7 +228,11 @@ impl TestGenerator {
     }
 
     /// 生成单元测试 / Generate unit tests
-    fn generate_unit_tests(&self, function_name: &str, function_def: &[GrammarElement]) -> Vec<TestCase> {
+    fn generate_unit_tests(
+        &self,
+        function_name: &str,
+        function_def: &[GrammarElement],
+    ) -> Vec<TestCase> {
         let mut tests = Vec::new();
 
         // 根据函数名生成测试用例 / Generate test cases based on function name
@@ -273,7 +282,11 @@ impl TestGenerator {
     }
 
     /// 生成边界测试 / Generate boundary tests
-    fn generate_boundary_tests(&self, function_name: &str, _function_def: &[GrammarElement]) -> Vec<TestCase> {
+    fn generate_boundary_tests(
+        &self,
+        function_name: &str,
+        _function_def: &[GrammarElement],
+    ) -> Vec<TestCase> {
         let mut tests = Vec::new();
 
         // 生成边界值测试 / Generate boundary value tests
@@ -317,13 +330,16 @@ impl TestGenerator {
 
         // 语句覆盖率：基于测试数量 / Statement coverage: based on test count
         let statement_coverage = if test_cases.len() > 0 {
-            (test_cases.len() as f64 / (analysis.statistics.function_count.max(1) as f64 * 3.0)).min(1.0) * 100.0
+            (test_cases.len() as f64 / (analysis.statistics.function_count.max(1) as f64 * 3.0))
+                .min(1.0)
+                * 100.0
         } else {
             0.0
         };
 
         // 总体覆盖率 / Overall coverage
-        let overall_coverage = (function_coverage * 0.4 + branch_coverage * 0.3 + statement_coverage * 0.3).min(100.0);
+        let overall_coverage =
+            (function_coverage * 0.4 + branch_coverage * 0.3 + statement_coverage * 0.3).min(100.0);
 
         TestCoverage {
             function_coverage,
