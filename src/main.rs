@@ -368,6 +368,34 @@ fn demonstrate_evolution_engine() {
             }
         }
     }
+
+    // 演示进化谱系和回滚 / Demonstrate evolution genealogy and rollback
+    println!("\n进化谱系和回滚 / Evolution Genealogy and Rollback:");
+    let history = engine.get_history();
+    if !history.is_empty() {
+        let first_event = &history[0];
+        println!("  第一个事件ID / First Event ID: {}", first_event.id);
+        
+        // 获取祖先链 / Get ancestor chain
+        let ancestors = engine.get_event_ancestors(first_event.id);
+        println!("  祖先事件数 / Ancestor Events: {}", ancestors.len());
+        
+        // 获取后代事件 / Get descendant events
+        let descendants = engine.get_event_descendants(first_event.id);
+        println!("  后代事件数 / Descendant Events: {}", descendants.len());
+        
+        // 获取谱系树 / Get genealogy tree
+        let tree = engine.get_genealogy_tree(Some(first_event.id));
+        if tree != serde_json::json!({}) {
+            println!("  谱系树结构 / Genealogy Tree Structure: 已生成 (包含{}个节点)", 
+                tree["children"].as_array().map(|c| c.len()).unwrap_or(0));
+        }
+        
+        println!("  提示 / Note: 使用 rollback_to_event() 可以回滚到指定事件之前的状态");
+        println!("  Use rollback_to_event() to rollback to state before specified event");
+    } else {
+        println!("  暂无进化历史 / No evolution history yet");
+    }
 }
 
 /// 演示NLU自然语言理解功能 / Demonstrate NLU natural language understanding

@@ -35,9 +35,112 @@ impl EvolutionTracker {
     }
 
     /// 查找父事件 / Find parent events
-    fn find_parent_events(&self, _event: &EvolutionEvent) -> Vec<Uuid> {
-        // TODO: 实现父事件查找逻辑 / Implement parent event finding logic
-        Vec::new()
+    fn find_parent_events(&self, event: &EvolutionEvent) -> Vec<Uuid> {
+        let mut parents = Vec::new();
+        
+        // 查找直接父事件：基于规则相似度和时间顺序 / Find direct parent events: based on rule similarity and temporal order
+        for prev_event in &self.event_log {
+            // 检查是否有规则被新规则继承 / Check if any rules are inherited by new rules
+            for new_rule in &event.delta.added_rules {
+                for old_rule in &prev_event.delta.added_rules {
+                    // 简单的相似度检查 / Simple similarity check
+                    if new_rule.name.contains(&old_rule.name) || 
+                       old_rule.name.contains(&new_rule.name) ||
+                       new_rule.name == old_rule.name {
+                        if !parents.contains(&prev_event.id) {
+                            parents.push(prev_event.id);
+                        }
+                    }
+                }
+            }
+            
+            // 检查是否有规则被修改（修改的规则对 -> from就是父事件）/ Check if rules are modified
+            for (_old_rule, new_rule) in &event.delta.modified_rules {
+                for prev_new_rule in &prev_event.delta.added_rules {
+                    if prev_new_rule.name == new_rule.name {
+                        if !parents.contains(&prev_event.id) {
+                            parents.push(prev_event.id);
+                        }
+                    }
+                }
+            }
+        }
+        
+        // 如果没有找到直接父事件，选择最近的同类型事件作为父事件 / If no direct parent found, choose recent same-type event
+        if parents.is_empty() && !self.event_log.is_empty() {
+            // 查找最近的同类型事件 / Find most recent same-type event
+            for prev_event in self.event_log.iter().rev() {
+                if prev_event.event_type == event.event_type {
+                    parents.push(prev_event.id);
+                    break;
+                }
+            }
+        }
+        
+        // 如果还是没有，选择最近的事件作为父事件 / If still none, choose most recent event
+        if parents.is_empty() && !self.event_log.is_empty() {
+            if let Some(last_event) = self.event_log.last() {
+                parents.push(last_event.id);
+            }
+        }
+        
+        parents
+    }
+
+    /// 回滚到指定事件之前的状态 / Rollback to state before specified event
+    pub fn rollback_to(&mut self, event_id: Uuid) -> Result<StateSnapshot, String> {
+        // 找到要回滚的事件 / Find event to rollback
+        let event_index = self.event_log.iter()
+            .position(|e| e.id == event_id)
+            .ok_or_else(|| format!("Event {} not found", event_id))?;
+        
+        // 获取回滚后的状态（事件之前的状态）/ Get state after rollback (state before event)
+        let rollback_state = self.event_log[event_index].before_state.clone();
+        
+        // 移除该事件及其后续事件 / Remove this event and subsequent events
+        self.event_log.truncate(event_index);
+        
+        // 更新谱系（移除相关关系）/ Update genealogy (remove related relationships)
+        self.genealogy.remove_event_and_descendants(event_id);
+        
+        Ok(rollback_state)
+    }
+
+    /// 获取事件的所有后代事件 / Get all descendant events of an event
+    pub fn get_descendants(&self, event_id: Uuid) -> Vec<Uuid> {
+        let mut descendants = Vec::new();
+        let mut to_process = vec![event_id];
+        
+        while let Some(current_id) = to_process.pop() {
+            let children = self.genealogy.get_children(current_id);
+            for child_id in children {
+                if !descendants.contains(&child_id) {
+                    descendants.push(child_id);
+                    to_process.push(child_id);
+                }
+            }
+        }
+        
+        descendants
+    }
+
+    /// 获取事件的祖先链 / Get ancestor chain of an event
+    pub fn get_ancestors(&self, event_id: Uuid) -> Vec<Uuid> {
+        let mut ancestors = Vec::new();
+        
+        // 在事件日志中查找父事件 / Find parent events in event log
+        if let Some(event) = self.event_log.iter().find(|e| e.id == event_id) {
+            let parents = self.find_parent_events(event);
+            for parent_id in parents {
+                if !ancestors.contains(&parent_id) {
+                    ancestors.push(parent_id);
+                    // 递归查找祖先 / Recursively find ancestors
+                    ancestors.extend(self.get_ancestors(parent_id));
+                }
+            }
+        }
+        
+        ancestors
     }
 
     /// 获取进化历史 / Get evolution history
@@ -188,6 +291,34 @@ impl EvolutionGenealogy {
     /// 获取子事件 / Get child events
     pub fn get_children(&self, event_id: Uuid) -> Vec<Uuid> {
         self.lineages.get(&event_id).cloned().unwrap_or_default()
+    }
+
+    /// 移除事件及其后代关系 / Remove event and its descendant relationships
+    pub fn remove_event_and_descendants(&mut self, event_id: Uuid) {
+        // 移除该事件作为父的所有关系 / Remove all relationships where this event is parent
+        self.lineages.remove(&event_id);
+        
+        // 移除该事件作为子节点的关系 / Remove relationships where this event is a child
+        for (_parent, children) in self.lineages.iter_mut() {
+            children.retain(|&child_id| child_id != event_id);
+        }
+    }
+
+    /// 获取谱系树结构 / Get genealogy tree structure
+    pub fn get_tree_structure(&self, root_id: Uuid) -> serde_json::Value {
+        let mut tree = serde_json::json!({
+            "event_id": root_id.to_string(),
+            "children": []
+        });
+        
+        let children = self.get_children(root_id);
+        let mut children_array = Vec::new();
+        for child_id in children {
+            children_array.push(self.get_tree_structure(child_id));
+        }
+        tree["children"] = serde_json::json!(children_array);
+        
+        tree
     }
 }
 

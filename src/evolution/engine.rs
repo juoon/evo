@@ -232,6 +232,47 @@ impl EvolutionEngine {
         self.knowledge_graph.find_similar_entities(&entity_id, 0.3)
     }
 
+    /// 回滚到指定事件 / Rollback to specified event
+    pub fn rollback_to_event(&mut self, event_id: uuid::Uuid) -> Result<(), EvolutionError> {
+        // 回滚到指定事件之前的状态 / Rollback to state before specified event
+        let rollback_state = self.tracker.rollback_to(event_id)
+            .map_err(|e| EvolutionError::IntegrationFailed(e))?;
+        
+        // 恢复语法规则 / Restore grammar rules
+        self.syntax_mutations = rollback_state.grammar_rules.clone();
+        
+        // 重建知识图谱 / Rebuild knowledge graph
+        self.rebuild_knowledge();
+        
+        Ok(())
+    }
+
+    /// 获取进化谱系树 / Get evolution genealogy tree
+    pub fn get_genealogy_tree(&self, root_id: Option<uuid::Uuid>) -> serde_json::Value {
+        let genealogy = self.tracker.get_genealogy();
+        
+        if let Some(root) = root_id {
+            genealogy.get_tree_structure(root)
+        } else {
+            // 如果没有指定根，使用第一个事件 / If no root specified, use first event
+            if let Some(first_event) = self.tracker.get_history().first() {
+                genealogy.get_tree_structure(first_event.id)
+            } else {
+                serde_json::json!({})
+            }
+        }
+    }
+
+    /// 获取事件的祖先链 / Get ancestor chain of an event
+    pub fn get_event_ancestors(&self, event_id: uuid::Uuid) -> Vec<uuid::Uuid> {
+        self.tracker.get_ancestors(event_id)
+    }
+
+    /// 获取事件的后代 / Get descendants of an event
+    pub fn get_event_descendants(&self, event_id: uuid::Uuid) -> Vec<uuid::Uuid> {
+        self.tracker.get_descendants(event_id)
+    }
+
     /// 从诗歌理解中学习并进化 / Learn and evolve from poetry understanding
     pub fn evolve_from_poetry(&mut self, poem: &str) -> Result<Vec<GrammarRule>, EvolutionError> {
         // 解析诗歌 / Parse poetry
