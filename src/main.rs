@@ -2439,7 +2439,12 @@ fn demonstrate_similarity_detection() {
             if !similarity.similar_pairs.is_empty() {
                 println!("\n相似代码对 / Similar Code Pairs:");
                 for (i, pair) in similarity.similar_pairs.iter().take(5).enumerate() {
-                    println!("  {}. 相似度 / Similarity: {:.2}% ({:?})", i + 1, pair.similarity * 100.0, pair.similarity_type);
+                    println!(
+                        "  {}. 相似度 / Similarity: {:.2}% ({:?})",
+                        i + 1,
+                        pair.similarity * 100.0,
+                        pair.similarity_type
+                    );
                     println!("     位置1 / Location 1: {}", pair.block1.location);
                     println!("     位置2 / Location 2: {}", pair.block2.location);
                 }
@@ -2456,7 +2461,12 @@ fn demonstrate_similarity_detection() {
             if !similarity.suggestions.is_empty() {
                 println!("\n重构建议 / Refactoring Suggestions:");
                 for (i, suggestion) in similarity.suggestions.iter().enumerate() {
-                    println!("  {}. [{}] {}", i + 1, suggestion.suggestion_type, suggestion.content);
+                    println!(
+                        "  {}. [{}] {}",
+                        i + 1,
+                        suggestion.suggestion_type,
+                        suggestion.content
+                    );
                     println!("     优先级 / Priority: {}", suggestion.priority);
                 }
             }
@@ -2475,16 +2485,25 @@ fn demonstrate_similarity_detection() {
         println!("  记录数 / Records: {}", history.len());
         if let Some(latest) = history.last() {
             println!("  最新检测 / Latest Detection:");
-            println!("    相似代码对 / Similar Pairs: {}", latest.similar_pairs.len());
+            println!(
+                "    相似代码对 / Similar Pairs: {}",
+                latest.similar_pairs.len()
+            );
             println!("    重复代码块 / Duplicates: {}", latest.duplicates.len());
-            println!("    时间 / Time: {}", latest.timestamp.format("%Y-%m-%d %H:%M:%S"));
+            println!(
+                "    时间 / Time: {}",
+                latest.timestamp.format("%Y-%m-%d %H:%M:%S")
+            );
         }
     }
 
     // 显示相似度统计 / Show similarity statistics
     println!("\n相似度统计 / Similarity Statistics:");
     let stats = similarity_detector.get_similarity_statistics();
-    println!("  {}", serde_json::to_string_pretty(&stats).unwrap_or_default());
+    println!(
+        "  {}",
+        serde_json::to_string_pretty(&stats).unwrap_or_default()
+    );
 
     println!(
         "\n提示 / Note: 代码相似度检测能够自动检测代码重复和相似模式，帮助识别重构机会，提高代码质量"
