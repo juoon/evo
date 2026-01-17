@@ -170,10 +170,11 @@ impl Tokenizer {
             }
             _ => {
                 let ch = self.advance();
-                Err(ParseError::SyntaxError(format!(
-                    "Unexpected character '{}' at line {}, column {}",
-                    ch, self.line, self.column
-                )))
+                let location = Location::new(self.line, self.column);
+                Err(ParseError::syntax_error(
+                    format!("Unexpected character '{}'", ch),
+                    Some(location),
+                ))
             }
         }
     }
@@ -187,10 +188,11 @@ impl Tokenizer {
             if self.peek() == '\\' {
                 self.advance(); // 跳过反斜杠
                 if self.is_at_end() {
-                    return Err(ParseError::SyntaxError(format!(
-                        "Unterminated escape sequence at line {}, column {}",
-                        self.line, self.column
-                    )));
+                    let location = Location::new(self.line, self.column);
+                    return Err(ParseError::syntax_error(
+                        "Unterminated escape sequence".to_string(),
+                        Some(location),
+                    ));
                 }
                 match self.advance() {
                     'n' => string.push('\n'),
@@ -211,10 +213,11 @@ impl Tokenizer {
         }
 
         if self.is_at_end() {
-            return Err(ParseError::SyntaxError(format!(
-                "Unterminated string starting at line {}, column {}",
-                start_line, start_column
-            )));
+            let location = Location::new(start_line, start_column);
+            return Err(ParseError::syntax_error(
+                "Unterminated string".to_string(),
+                Some(location),
+            ));
         }
 
         self.advance(); // 跳过结束引号
@@ -337,10 +340,10 @@ impl ParserState {
             Token::String(_) => self.parse_string(),
             Token::Number(_) => self.parse_number(),
             Token::Symbol(_) => self.parse_symbol(),
-            _ => Err(ParseError::SyntaxError(format!(
-                "Unexpected token: {:?}",
-                self.peek()
-            ))),
+            _ => Err(ParseError::syntax_error(
+                format!("Unexpected token: {:?}", self.peek()),
+                None, // ParserState没有位置信息，需要从Token中获取
+            )),
         }
     }
 
@@ -416,8 +419,9 @@ impl ParserState {
         let name_str = match name {
             GrammarElement::Atom(s) => s,
             _ => {
-                return Err(ParseError::SyntaxError(
+                return Err(ParseError::syntax_error(
                     "Function name must be an atom".to_string(),
+                    None,
                 ))
             }
         };
@@ -812,12 +816,10 @@ impl ParserState {
             self.advance_token();
             Ok(())
         } else {
-            Err(ParseError::SyntaxError(format!(
-                "{}: expected {:?}, got {:?}",
-                message,
-                token,
-                self.peek()
-            )))
+            Err(ParseError::syntax_error(
+                format!("{}: expected {:?}, got {:?}", message, token, self.peek()),
+                None,
+            ))
         }
     }
 
@@ -836,13 +838,108 @@ impl ParserState {
 
 /// 解析错误 / Parse error
 #[derive(Debug, Clone, PartialEq, Eq)]
+/// 源代码位置 / Source code location
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Location {
+    /// 行号（从1开始）/ Line number (1-based)
+    pub line: usize,
+    /// 列号（从1开始）/ Column number (1-based)
+    pub column: usize,
+}
+
+impl Location {
+    pub fn new(line: usize, column: usize) -> Self {
+        Self { line, column }
+    }
+
+    pub fn format(&self) -> String {
+        format!("line {}, column {}", self.line, self.column)
+    }
+}
+
 pub enum ParseError {
     /// 未实现 / Not implemented
     NotImplemented,
     /// 语法错误 / Syntax error
-    SyntaxError(String),
+    SyntaxError {
+        message: String,
+        location: Option<Location>,
+    },
     /// 未知语法 / Unknown syntax
-    UnknownSyntax(String),
+    UnknownSyntax {
+        message: String,
+        location: Option<Location>,
+    },
     /// 规则冲突 / Rule conflict
-    RuleConflict(String),
+    RuleConflict {
+        message: String,
+        location: Option<Location>,
+    },
+}
+
+impl ParseError {
+    /// 创建语法错误 / Create syntax error
+    pub fn syntax_error(message: String, location: Option<Location>) -> Self {
+        Self::SyntaxError { message, location }
+    }
+
+    /// 创建未知语法错误 / Create unknown syntax error
+    pub fn unknown_syntax(message: String, location: Option<Location>) -> Self {
+        Self::UnknownSyntax { message, location }
+    }
+
+    /// 获取错误消息 / Get error message
+    pub fn message(&self) -> &str {
+        match self {
+            Self::NotImplemented => "Not implemented",
+            Self::SyntaxError { message, .. } => message,
+            Self::UnknownSyntax { message, .. } => message,
+            Self::RuleConflict { message, .. } => message,
+        }
+    }
+
+    /// 获取位置信息 / Get location
+    pub fn location(&self) -> Option<Location> {
+        match self {
+            Self::SyntaxError { location, .. } => *location,
+            Self::UnknownSyntax { location, .. } => *location,
+            Self::RuleConflict { location, .. } => *location,
+            _ => None,
+        }
+    }
+}
+
+impl std::fmt::Display for ParseError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::NotImplemented => write!(f, "Not implemented"),
+            Self::SyntaxError { message, location } => {
+                if let Some(loc) = location {
+                    write!(f, "Syntax error at {}: {}", loc.format(), message)
+                } else {
+                    write!(f, "Syntax error: {}", message)
+                }
+            }
+            Self::UnknownSyntax { message, location } => {
+                if let Some(loc) = location {
+                    write!(f, "Unknown syntax at {}: {}", loc.format(), message)
+                } else {
+                    write!(f, "Unknown syntax: {}", message)
+                }
+            }
+            Self::RuleConflict { message, location } => {
+                if let Some(loc) = location {
+                    write!(f, "Rule conflict at {}: {}", loc.format(), message)
+                } else {
+                    write!(f, "Rule conflict: {}", message)
+                }
+            }
+        }
+    }
+}
+
+impl std::fmt::Debug for ParseError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Display::fmt(self, f)
+    }
 }

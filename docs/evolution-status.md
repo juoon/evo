@@ -1,7 +1,7 @@
 # Aevolang 进化状态总结 / Evolution Status Summary
 
 ## 当前版本
-**V1.0.45** - 模式匹配支持 - 实现match表达式，支持字面量、变量、通配符、列表和字典模式匹配
+**V1.0.46** - 错误处理增强 - 添加位置信息和更详细的错误消息，提升调试体验
 
 ## 已实现的核心能力
 
@@ -118,12 +118,29 @@
 - ✅ **V1.0.27-1.0.41**：代码分析与质量提升工具链
 - ✅ **V1.0.42-1.0.44**：函数式编程支持和Lambda闭包
 - ✅ **V1.0.45**：模式匹配支持
-- 🎯 **V1.0.46+**：性能优化和更多高级特性
+- ✅ **V1.0.46**：错误处理增强
+- 🎯 **V1.0.47+**：性能优化和更多高级特性
 
 ---
 
-*最后更新：V1.0.45*
+*最后更新：V1.0.46*
 *更新日期：2026-01-17*
+
+## V1.0.46 更新内容
+
+### 错误处理增强 ✅
+- **位置信息**：为ParseError和InterpreterError添加了Location结构体，包含行号和列号
+- **详细错误消息**：错误消息现在包含位置信息，格式为"Error at line X, column Y: message"
+- **错误类型改进**：
+  - ParseError现在支持位置信息（SyntaxError、UnknownSyntax、RuleConflict）
+  - InterpreterError现在支持位置信息（UndefinedVariable、TypeError、DivisionByZero、RuntimeError）
+- **辅助方法**：添加了便捷的错误创建方法（syntax_error、type_error、runtime_error等）
+- **Display实现**：为所有错误类型实现了Display trait，提供友好的错误消息格式
+
+### 代码改进 ✅
+- **错误格式化**：改进了错误消息的格式化，使其更易读
+- **向后兼容**：保持了向后兼容性，位置信息为可选
+- **代码清理**：更新了部分错误创建调用以使用新的错误格式
 
 ## V1.0.45 更新内容
 

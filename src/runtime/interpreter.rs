@@ -89,20 +89,22 @@ impl Interpreter {
             GrammarElement::Atom(atom) => {
                 // 检查是否是关键字或变量
                 match atom.as_str() {
-                    "def" | "function" | "let" | "if" => Err(InterpreterError::RuntimeError(
+                    "def" | "function" | "let" | "if" => Err(InterpreterError::runtime_error(
                         "Special forms must be in a list".to_string(),
+                        None,
                     )),
                     _ => {
                         // 尝试作为变量查找
                         self.environment
                             .get(atom)
                             .cloned()
-                            .ok_or_else(|| InterpreterError::UndefinedVariable(atom.clone()))
+                            .ok_or_else(|| InterpreterError::undefined_variable(atom.clone(), None))
                     }
                 }
             }
-            GrammarElement::NaturalLang(_) => Err(InterpreterError::RuntimeError(
+            GrammarElement::NaturalLang(_) => Err(InterpreterError::runtime_error(
                 "Natural language not supported in execution".to_string(),
+                None,
             )),
         }
     }
@@ -149,8 +151,9 @@ impl Interpreter {
                         .map(|e| self.element_to_expr(e))
                         .collect::<Result<Vec<_>, _>>()
                         .map_err(|_| {
-                            InterpreterError::RuntimeError(
+                            InterpreterError::runtime_error(
                                 "Failed to convert arguments to expressions".to_string(),
+                                None,
                             )
                         })?;
                     self.eval_call(&func_name, &args)
@@ -179,8 +182,9 @@ impl Interpreter {
     /// 评估函数定义 / Evaluate function definition
     fn eval_def(&mut self, rest: &[GrammarElement]) -> Result<Value, InterpreterError> {
         if rest.len() < 3 {
-            return Err(InterpreterError::RuntimeError(
+            return Err(InterpreterError::runtime_error(
                 "Function definition requires: name, params, body".to_string(),
+                None,
             ));
         }
 
@@ -191,8 +195,9 @@ impl Interpreter {
                 if let Expr::Var(s) = boxed_expr.as_ref() {
                     s.clone()
                 } else {
-                    return Err(InterpreterError::RuntimeError(
+                    return Err(InterpreterError::runtime_error(
                         "Function name must be an atom or variable".to_string(),
+                        None,
                     ));
                 }
             }
@@ -213,8 +218,9 @@ impl Interpreter {
                         if let Expr::Var(s) = boxed_expr.as_ref() {
                             Ok(s.clone())
                         } else {
-                            Err(InterpreterError::RuntimeError(
+                            Err(InterpreterError::runtime_error(
                                 "Parameter must be an atom or variable".to_string(),
+                                None,
                             ))
                         }
                     }
@@ -224,8 +230,9 @@ impl Interpreter {
                 })
                 .collect::<Result<Vec<_>, _>>()?,
             _ => {
-                return Err(InterpreterError::RuntimeError(
+                return Err(InterpreterError::runtime_error(
                     "Parameters must be a list".to_string(),
+                    None,
                 ))
             }
         };
@@ -387,7 +394,7 @@ impl Interpreter {
                 .environment
                 .get(name)
                 .cloned()
-                .ok_or(InterpreterError::UndefinedVariable(name.clone())),
+                .ok_or_else(|| InterpreterError::undefined_variable(name.clone(), None)),
             Expr::Call(name, args) => self.eval_call(name, args),
             Expr::Binary(op, left, right) => {
                 let left_val = self.eval_expr(left)?;
@@ -425,8 +432,9 @@ impl Interpreter {
                 return Ok(result);
             }
         }
-        Err(InterpreterError::RuntimeError(
+        Err(InterpreterError::runtime_error(
             "No pattern matched in match expression".to_string(),
+            None,
         ))
     }
 
@@ -607,20 +615,21 @@ impl Interpreter {
         match (left, right) {
             (Value::Int(a), Value::Int(b)) => {
                 if *b == 0 {
-                    Err(InterpreterError::DivisionByZero)
+                    Err(InterpreterError::division_by_zero(None))
                 } else {
                     Ok(Value::Int(a / b))
                 }
             }
             (Value::Float(a), Value::Float(b)) => {
                 if *b == 0.0 {
-                    Err(InterpreterError::DivisionByZero)
+                    Err(InterpreterError::division_by_zero(None))
                 } else {
                     Ok(Value::Float(a / b))
                 }
             }
-            _ => Err(InterpreterError::TypeError(
+            _ => Err(InterpreterError::type_error(
                 "Invalid types for division".to_string(),
+                None,
             )),
         }
     }
@@ -1396,17 +1405,105 @@ impl std::fmt::Display for Value {
     }
 }
 
+/// 源代码位置 / Source code location
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Location {
+    /// 行号（从1开始）/ Line number (1-based)
+    pub line: usize,
+    /// 列号（从1开始）/ Column number (1-based)
+    pub column: usize,
+}
+
+impl Location {
+    pub fn new(line: usize, column: usize) -> Self {
+        Self { line, column }
+    }
+
+    pub fn format(&self) -> String {
+        format!("line {}, column {}", self.line, self.column)
+    }
+}
+
 /// 解释器错误 / Interpreter error
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum InterpreterError {
     /// 未实现 / Not implemented
     NotImplemented,
     /// 未定义变量 / Undefined variable
-    UndefinedVariable(String),
+    UndefinedVariable {
+        name: String,
+        location: Option<Location>,
+    },
     /// 类型错误 / Type error
-    TypeError(String),
+    TypeError {
+        message: String,
+        location: Option<Location>,
+    },
     /// 除以零 / Division by zero
-    DivisionByZero,
+    DivisionByZero { location: Option<Location> },
     /// 运行时错误 / Runtime error
-    RuntimeError(String),
+    RuntimeError {
+        message: String,
+        location: Option<Location>,
+    },
 }
+
+impl InterpreterError {
+    /// 创建未定义变量错误 / Create undefined variable error
+    pub fn undefined_variable(name: String, location: Option<Location>) -> Self {
+        Self::UndefinedVariable { name, location }
+    }
+
+    /// 创建类型错误 / Create type error
+    pub fn type_error(message: String, location: Option<Location>) -> Self {
+        Self::TypeError { message, location }
+    }
+
+    /// 创建运行时错误 / Create runtime error
+    pub fn runtime_error(message: String, location: Option<Location>) -> Self {
+        Self::RuntimeError { message, location }
+    }
+
+    /// 创建除以零错误 / Create division by zero error
+    pub fn division_by_zero(location: Option<Location>) -> Self {
+        Self::DivisionByZero { location }
+    }
+}
+
+impl std::fmt::Display for InterpreterError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::NotImplemented => write!(f, "Not implemented"),
+            Self::UndefinedVariable { name, location } => {
+                if let Some(loc) = location {
+                    write!(f, "Undefined variable '{}' at {}", name, loc.format())
+                } else {
+                    write!(f, "Undefined variable '{}'", name)
+                }
+            }
+            Self::TypeError { message, location } => {
+                if let Some(loc) = location {
+                    write!(f, "Type error at {}: {}", loc.format(), message)
+                } else {
+                    write!(f, "Type error: {}", message)
+                }
+            }
+            Self::DivisionByZero { location } => {
+                if let Some(loc) = location {
+                    write!(f, "Division by zero at {}", loc.format())
+                } else {
+                    write!(f, "Division by zero")
+                }
+            }
+            Self::RuntimeError { message, location } => {
+                if let Some(loc) = location {
+                    write!(f, "Runtime error at {}: {}", loc.format(), message)
+                } else {
+                    write!(f, "Runtime error: {}", message)
+                }
+            }
+        }
+    }
+}
+
+impl std::error::Error for InterpreterError {}
