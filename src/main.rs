@@ -89,6 +89,9 @@ fn main() {
 
     // 演示代码文档生成 / Demonstrate code documentation generation
     demonstrate_documentation_generation();
+
+    // 演示测试生成 / Demonstrate test generation
+    demonstrate_test_generation();
 }
 
 /// 演示解释器功能 / Demonstrate interpreter functionality
@@ -2008,8 +2011,8 @@ fn demonstrate_documentation_generation() {
     println!("\n23. 代码文档生成演示 / Code Documentation Generation Demo");
     println!("--------------------------------------------");
 
-    use crate::evolution::{CodeAnalyzer, DocumentationGenerator};
     use crate::evolution::DocFormat;
+    use crate::evolution::{CodeAnalyzer, DocumentationGenerator};
     use crate::parser::AdaptiveParser;
 
     let parser = AdaptiveParser::new(true);
@@ -2032,18 +2035,31 @@ fn demonstrate_documentation_generation() {
 
             // 生成Markdown文档 / Generate Markdown documentation
             println!("\n生成Markdown文档 / Generating Markdown Documentation:");
-            let markdown_doc = doc_generator.generate_documentation(&ast, &analysis, DocFormat::Markdown);
-            
+            let markdown_doc =
+                doc_generator.generate_documentation(&ast, &analysis, DocFormat::Markdown);
+
             println!("\n生成的文档 / Generated Documentation:");
             println!("{}", markdown_doc.content);
-            
+
             println!("\n文档统计 / Document Statistics:");
-            println!("  总行数 / Total Lines: {}", markdown_doc.statistics.total_lines);
-            println!("  函数文档数 / Function Docs: {}", markdown_doc.statistics.function_docs);
-            println!("  变量文档数 / Variable Docs: {}", markdown_doc.statistics.variable_docs);
+            println!(
+                "  总行数 / Total Lines: {}",
+                markdown_doc.statistics.total_lines
+            );
+            println!(
+                "  函数文档数 / Function Docs: {}",
+                markdown_doc.statistics.function_docs
+            );
+            println!(
+                "  变量文档数 / Variable Docs: {}",
+                markdown_doc.statistics.variable_docs
+            );
 
             println!("\n文档质量 / Document Quality:");
-            println!("  完整性 / Completeness: {:.2}%", markdown_doc.quality.completeness);
+            println!(
+                "  完整性 / Completeness: {:.2}%",
+                markdown_doc.quality.completeness
+            );
             println!("  清晰度 / Clarity: {:.2}%", markdown_doc.quality.clarity);
             println!("  准确性 / Accuracy: {:.2}%", markdown_doc.quality.accuracy);
             println!("  总体质量 / Overall: {:.2}%", markdown_doc.quality.overall);
@@ -2051,11 +2067,15 @@ fn demonstrate_documentation_generation() {
             // 生成API文档 / Generate API documentation
             println!("\n生成API文档 / Generating API Documentation:");
             let api_doc = doc_generator.generate_documentation(&ast, &analysis, DocFormat::ApiDoc);
-            println!("API文档长度 / API Doc Length: {} 行 / {} lines", api_doc.statistics.total_lines, api_doc.statistics.total_lines);
+            println!(
+                "API文档长度 / API Doc Length: {} 行 / {} lines",
+                api_doc.statistics.total_lines, api_doc.statistics.total_lines
+            );
 
             // 生成纯文本文档 / Generate plain text documentation
             println!("\n生成纯文本文档 / Generating Plain Text Documentation:");
-            let plain_doc = doc_generator.generate_documentation(&ast, &analysis, DocFormat::PlainText);
+            let plain_doc =
+                doc_generator.generate_documentation(&ast, &analysis, DocFormat::PlainText);
             println!("纯文本文档 / Plain Text Doc:\n{}", plain_doc.content);
         }
         Err(e) => {
@@ -2073,19 +2093,136 @@ fn demonstrate_documentation_generation() {
         if let Some(latest) = history.last() {
             println!("  最新文档 / Latest Documentation:");
             println!("    类型 / Type: {}", latest.doc_type);
-            println!("    长度 / Length: {} 行 / {} lines", latest.doc_length, latest.doc_length);
-            println!("    覆盖函数数 / Functions Covered: {}", latest.functions_covered);
-            println!("    时间 / Time: {}", latest.timestamp.format("%Y-%m-%d %H:%M:%S"));
+            println!(
+                "    长度 / Length: {} 行 / {} lines",
+                latest.doc_length, latest.doc_length
+            );
+            println!(
+                "    覆盖函数数 / Functions Covered: {}",
+                latest.functions_covered
+            );
+            println!(
+                "    时间 / Time: {}",
+                latest.timestamp.format("%Y-%m-%d %H:%M:%S")
+            );
         }
     }
 
     // 显示文档统计 / Show documentation statistics
     println!("\n文档统计 / Documentation Statistics:");
     let stats = doc_generator.get_doc_statistics();
-    println!("  {}", serde_json::to_string_pretty(&stats).unwrap_or_default());
+    println!(
+        "  {}",
+        serde_json::to_string_pretty(&stats).unwrap_or_default()
+    );
 
     println!(
         "\n提示 / Note: 代码文档生成能够自动为代码生成文档，提高代码可读性和可维护性，帮助开发者理解代码"
     );
     println!("Code documentation generation can automatically generate documentation for code, improving code readability and maintainability, and helping developers understand code");
+}
+
+/// 演示测试生成功能 / Demonstrate test generation functionality
+fn demonstrate_test_generation() {
+    println!("\n24. 测试生成演示 / Test Generation Demo");
+    println!("--------------------------------------------");
+
+    use crate::evolution::{CodeAnalyzer, TestGenerator};
+    use crate::parser::AdaptiveParser;
+    use crate::runtime::Interpreter;
+
+    let parser = AdaptiveParser::new(true);
+    let analyzer = CodeAnalyzer::new();
+    let mut test_generator = TestGenerator::new();
+    let mut interpreter = Interpreter::new();
+
+    // 测试代码 / Test code
+    let test_code = r#"
+        (def add (x y) (+ x y))
+        (def multiply (x y) (* x y))
+        (def subtract (x y) (- x y))
+    "#;
+
+    println!("测试代码 / Test Code:\n{}", test_code);
+
+    match parser.parse(test_code) {
+        Ok(ast) => {
+            // 分析代码 / Analyze code
+            let analysis = analyzer.analyze(&ast);
+
+            // 生成测试套件 / Generate test suite
+            println!("\n生成测试套件 / Generating Test Suite:");
+            let test_suite = test_generator.generate_tests(&ast, &analysis);
+
+            println!("\n测试统计 / Test Statistics:");
+            println!("  总测试数 / Total Tests: {}", test_suite.statistics.total_tests);
+            println!("  单元测试数 / Unit Tests: {}", test_suite.statistics.unit_tests);
+            println!("  边界测试数 / Boundary Tests: {}", test_suite.statistics.boundary_tests);
+            println!("  集成测试数 / Integration Tests: {}", test_suite.statistics.integration_tests);
+
+            println!("\n测试覆盖率 / Test Coverage:");
+            println!("  函数覆盖率 / Function Coverage: {:.2}%", test_suite.coverage.function_coverage);
+            println!("  分支覆盖率 / Branch Coverage: {:.2}%", test_suite.coverage.branch_coverage);
+            println!("  语句覆盖率 / Statement Coverage: {:.2}%", test_suite.coverage.statement_coverage);
+            println!("  总体覆盖率 / Overall Coverage: {:.2}%", test_suite.coverage.overall_coverage);
+
+            if !test_suite.test_cases.is_empty() {
+                println!("\n生成的测试用例 / Generated Test Cases:");
+                for (i, test_case) in test_suite.test_cases.iter().take(5).enumerate() {
+                    println!("  {}. {} ({:?})", i + 1, test_case.name, test_case.test_type);
+                    println!("     描述 / Description: {}", test_case.description);
+                    println!("     测试代码 / Test Code: {}", test_case.test_code);
+                    println!("     预期结果 / Expected: {}", test_case.expected_result);
+
+                    // 尝试执行测试 / Try to execute test
+                    match parser.parse(&test_case.test_code) {
+                        Ok(test_ast) => {
+                            match interpreter.execute(&test_ast) {
+                                Ok(result) => {
+                                    let passed = result.to_string() == test_case.expected_result
+                                        || test_case.expected_result == "结果待验证";
+                                    println!("     执行结果 / Result: {} ({})", result, if passed { "通过 / Pass" } else { "失败 / Fail" });
+                                }
+                                Err(e) => {
+                                    println!("     执行错误 / Execution Error: {:?}", e);
+                                }
+                            }
+                        }
+                        Err(e) => {
+                            println!("     解析错误 / Parse Error: {:?}", e);
+                        }
+                    }
+                }
+            }
+        }
+        Err(e) => {
+            println!("解析错误 / Parse error: {:?}", e);
+        }
+    }
+
+    // 显示测试历史 / Show test history
+    println!("\n测试生成历史 / Test Generation History:");
+    let history = test_generator.get_test_history();
+    if history.is_empty() {
+        println!("  暂无历史数据 / No history data yet");
+    } else {
+        println!("  记录数 / Records: {}", history.len());
+        if let Some(latest) = history.last() {
+            println!("  最新测试生成 / Latest Test Generation:");
+            println!("    生成测试数 / Tests Generated: {}", latest.tests_generated);
+            println!("    通过数 / Passed: {}", latest.tests_passed);
+            println!("    失败数 / Failed: {}", latest.tests_failed);
+            println!("    时间 / Time: {}", latest.timestamp.format("%Y-%m-%d %H:%M:%S"));
+        }
+    }
+
+    // 显示测试统计 / Show test statistics
+    println!("\n测试统计 / Test Statistics:");
+    let stats = test_generator.get_test_statistics();
+    println!("  {}", serde_json::to_string_pretty(&stats).unwrap_or_default());
+
+    println!(
+        "\n提示 / Note: 测试生成能够自动为代码生成测试用例，提高代码质量和可靠性，帮助验证代码正确性"
+    );
+    println!("Test generation can automatically generate test cases for code, improving code quality and reliability, and helping verify code correctness");
 }

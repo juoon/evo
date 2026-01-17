@@ -12,6 +12,7 @@ pub mod knowledge;
 pub mod learning;
 pub mod optimizer;
 pub mod quality_assessor;
+pub mod test_generator;
 pub mod tracker;
 
 pub use analyzer::*;
@@ -24,5 +25,6 @@ pub use knowledge::*;
 pub use learning::*;
 pub use optimizer::*;
 pub use quality_assessor::*;
+pub use test_generator::*;
 pub use tracker::*;
 
