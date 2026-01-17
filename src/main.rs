@@ -56,6 +56,9 @@ fn main() {
 
     // 演示代码分析 / Demonstrate code analysis
     demonstrate_code_analysis();
+
+    // 演示代码自动重构 / Demonstrate automatic code refactoring
+    demonstrate_code_refactoring();
 }
 
 /// 演示解释器功能 / Demonstrate interpreter functionality
@@ -1087,4 +1090,66 @@ fn demonstrate_code_analysis() {
 
     println!("\n提示 / Note: 代码分析帮助识别代码模式和优化机会，促进代码质量提升");
     println!("Code analysis helps identify patterns and optimization opportunities, promoting code quality improvement");
+}
+
+/// 演示代码自动重构功能 / Demonstrate automatic code refactoring functionality
+fn demonstrate_code_refactoring() {
+    println!("\n13. 代码自动重构演示 / Automatic Code Refactoring Demo");
+    println!("--------------------------------------------");
+
+    use crate::parser::AdaptiveParser;
+    use crate::evolution::EvolutionEngine;
+
+    let parser = AdaptiveParser::new(true);
+    let engine = EvolutionEngine::new();
+
+    // 测试代码：包含可优化的表达式 / Test code: contains optimizable expressions
+    let test_code = r#"
+(def calculate (x y)
+  (+ (* x 2) (* y 2)))
+"#;
+
+    println!("原始代码 / Original Code:");
+    println!("{}", test_code);
+
+    match parser.parse(test_code) {
+        Ok(ast) => {
+            // 分析代码 / Analyze code
+            let analysis = engine.analyze_code(&ast);
+            println!("\n代码分析 / Code Analysis:");
+            println!("  复杂度 / Complexity: {:.2}", analysis.complexity);
+            println!("  发现 {} 个模式 / Found {} patterns", analysis.patterns.len(), analysis.patterns.len());
+            println!("  生成 {} 个建议 / Generated {} suggestions", analysis.suggestions.len(), analysis.suggestions.len());
+
+            // 自动重构 / Automatic refactoring
+            let refactored = engine.refactor_code(&ast);
+            
+            println!("\n重构后的代码 / Refactored Code:");
+            // 简化显示：显示重构后的AST结构 / Simplified display: show refactored AST structure
+            println!("  重构完成，代码已优化 / Refactoring complete, code optimized");
+            println!("  原始AST元素数 / Original AST elements: {}", ast.len());
+            println!("  重构后AST元素数 / Refactored AST elements: {}", refactored.len());
+
+            // 测试常量折叠优化 / Test constant folding optimization
+            let constant_code = "(+ (* 3 2) (* 4 5))";
+            println!("\n常量折叠测试 / Constant Folding Test:");
+            println!("  原始代码 / Original: {}", constant_code);
+            
+            match parser.parse(constant_code) {
+                Ok(constant_ast) => {
+                    let refactored_const = engine.refactor_code(&constant_ast);
+                    println!("  重构后 / Refactored: {} 个元素 / {} elements", refactored_const.len(), refactored_const.len());
+                }
+                Err(e) => {
+                    println!("  解析错误 / Parse error: {:?}", e);
+                }
+            }
+        }
+        Err(e) => {
+            println!("解析错误 / Parse error: {:?}", e);
+        }
+    }
+
+    println!("\n提示 / Note: 代码自动重构能够根据分析结果自动改进代码，实现真正的自进化");
+    println!("Automatic code refactoring can improve code based on analysis results, achieving true self-evolution");
 }

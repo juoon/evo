@@ -176,6 +176,16 @@ impl EvolutionEngine {
         analyzer.analyze(ast)
     }
 
+    /// 自动重构代码 / Automatically refactor code
+    pub fn refactor_code(&self, ast: &[GrammarElement]) -> Vec<GrammarElement> {
+        // 先分析代码 / First analyze code
+        let analysis = self.analyze_code(ast);
+        
+        // 根据分析结果重构 / Refactor based on analysis
+        let refactorer = crate::evolution::analyzer::CodeRefactorer::new();
+        refactorer.refactor(ast, &analysis)
+    }
+
     /// 自我反思：评估进化效果 / Self-reflection: evaluate evolution effectiveness
     pub fn self_reflect(&self) -> serde_json::Value {
         let history = self.tracker.get_history();

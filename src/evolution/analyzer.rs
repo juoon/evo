@@ -337,3 +337,106 @@ impl Default for CodeAnalyzer {
         Self::new()
     }
 }
+
+/// 代码重构器 / Code refactorer
+pub struct CodeRefactorer;
+
+impl CodeRefactorer {
+    /// 创建新代码重构器 / Create new code refactorer
+    pub fn new() -> Self {
+        Self
+    }
+
+    /// 根据分析结果重构代码 / Refactor code based on analysis results
+    pub fn refactor(&self, ast: &[GrammarElement], analysis: &CodeAnalysis) -> Vec<GrammarElement> {
+        let mut refactored = ast.to_vec();
+        
+        // 根据建议重构 / Refactor based on suggestions
+        for suggestion in &analysis.suggestions {
+            match suggestion.suggestion_type {
+                SuggestionType::Simplify => {
+                    refactored = self.simplify_expressions(&refactored);
+                }
+                SuggestionType::Refactor => {
+                    refactored = self.reduce_nesting(&refactored);
+                }
+                SuggestionType::ExtractFunction => {
+                    refactored = self.extract_functions(&refactored);
+                }
+                _ => {}
+            }
+        }
+
+        refactored
+    }
+
+    /// 简化表达式 / Simplify expressions
+    fn simplify_expressions(&self, ast: &[GrammarElement]) -> Vec<GrammarElement> {
+        ast.iter().map(|elem| self.simplify_element(elem)).collect()
+    }
+
+    /// 简化元素 / Simplify element
+    fn simplify_element(&self, element: &GrammarElement) -> GrammarElement {
+        match element {
+            GrammarElement::Expr(expr) => {
+                GrammarElement::Expr(Box::new(self.simplify_expr(expr)))
+            }
+            GrammarElement::List(list) => {
+                GrammarElement::List(list.iter().map(|e| self.simplify_element(e)).collect())
+            }
+            _ => element.clone(),
+        }
+    }
+
+    /// 简化表达式 / Simplify expression
+    fn simplify_expr(&self, expr: &Expr) -> Expr {
+        match expr {
+            Expr::Binary(op, left, right) => {
+                // 尝试常量折叠 / Try constant folding
+                if let (Expr::Literal(Literal::Int(a)), Expr::Literal(Literal::Int(b))) = (left.as_ref(), right.as_ref()) {
+                    let result = match op {
+                        BinOp::Add => a + b,
+                        BinOp::Sub => a - b,
+                        BinOp::Mul => a * b,
+                        BinOp::Div => if *b != 0 { a / b } else { return expr.clone() },
+                        _ => return expr.clone(),
+                    };
+                    return Expr::Literal(Literal::Int(result));
+                }
+                expr.clone()
+            }
+            Expr::If(cond, then_expr, else_expr) => {
+                // 简化条件表达式 / Simplify conditional expression
+                Expr::If(
+                    Box::new(self.simplify_expr(cond)),
+                    Box::new(self.simplify_expr(then_expr)),
+                    Box::new(self.simplify_expr(else_expr)),
+                )
+            }
+            Expr::Call(name, args) => {
+                Expr::Call(name.clone(), args.iter().map(|a| self.simplify_expr(a)).collect())
+            }
+            _ => expr.clone(),
+        }
+    }
+
+    /// 减少嵌套 / Reduce nesting
+    fn reduce_nesting(&self, ast: &[GrammarElement]) -> Vec<GrammarElement> {
+        // 简化版本：返回原代码 / Simplified version: return original code
+        // 实际实现需要更复杂的逻辑 / Actual implementation needs more complex logic
+        ast.to_vec()
+    }
+
+    /// 提取函数 / Extract functions
+    fn extract_functions(&self, ast: &[GrammarElement]) -> Vec<GrammarElement> {
+        // 简化版本：返回原代码 / Simplified version: return original code
+        // 实际实现需要识别可提取的代码块 / Actual implementation needs to identify extractable code blocks
+        ast.to_vec()
+    }
+}
+
+impl Default for CodeRefactorer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
