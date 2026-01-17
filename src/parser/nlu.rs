@@ -111,17 +111,38 @@ impl NLUParser {
 
     /// 解析自然语言 / Parse natural language
     pub fn parse(&self, input: &str) -> Result<ParsedIntent, NLUError> {
-        let input_lower = input.trim().to_lowercase();
-        
+        let input_trimmed = input.trim();
+        let statements = self.split_into_statements(input_trimmed);
+
+        if statements.len() > 1 {
+            let mut all_elements = Vec::new();
+            let mut total_confidence = 0.0;
+            for statement in &statements {
+                let intent_type = self.detect_intent_type(&statement.to_lowercase())?;
+                let elements = self.generate_code_structure(statement, &intent_type)?;
+                total_confidence += self.calculate_confidence(statement, &intent_type);
+                all_elements.extend(elements);
+            }
+            let avg_confidence = total_confidence / statements.len() as f64;
+            return Ok(ParsedIntent {
+                intent_type: IntentType::Other("Sequence".to_string()),
+                code_structure: all_elements,
+                confidence: avg_confidence,
+                suggested_rules: vec![],
+            });
+        }
+
+        let input_lower = input_trimmed.to_lowercase();
+
         // 尝试识别意图类型
         let intent_type = self.detect_intent_type(&input_lower)?;
-        
+
         // 根据意图类型生成代码结构
-        let code_structure = self.generate_code_structure(input, &intent_type)?;
-        
+        let code_structure = self.generate_code_structure(input_trimmed, &intent_type)?;
+
         // 计算置信度
-        let confidence = self.calculate_confidence(input, &intent_type);
-        
+        let confidence = self.calculate_confidence(input_trimmed, &intent_type);
+
         Ok(ParsedIntent {
             intent_type,
             code_structure,
@@ -160,6 +181,13 @@ impl NLUParser {
                     vec![],
                 )
             }
+            IntentType::Conditional => {
+                (
+                    "conditional_expression".to_string(),
+                    vec![],
+                    vec![],
+                )
+            }
             _ => (
                 "unknown".to_string(),
                 vec![],
@@ -177,6 +205,13 @@ impl NLUParser {
 
     /// 检测意图类型 / Detect intent type
     fn detect_intent_type(&self, input: &str) -> Result<IntentType, NLUError> {
+        // 条件表达式检测
+        if (input.contains("如果") && (input.contains("否则") || input.contains("不然")))
+            || (input.contains("if") && input.contains("else"))
+        {
+            return Ok(IntentType::Conditional);
+        }
+
         // 检查是否是函数定义
         for keyword in &self.rules.function_keywords {
             if input.contains(keyword) {
@@ -212,6 +247,7 @@ impl NLUParser {
             IntentType::DefineFunction => self.generate_function_definition(input),
             IntentType::DefineVariable => self.generate_variable_definition(input),
             IntentType::ExecuteOperation => self.generate_operation(input),
+            IntentType::Conditional => self.generate_conditional(input),
             _ => Err(NLUError::UnsupportedOperation(format!("{:?}", intent_type))),
         }
     }
@@ -258,14 +294,23 @@ impl NLUParser {
 
     /// 生成操作表达式 / Generate operation expression
     fn generate_operation(&self, input: &str) -> Result<Vec<GrammarElement>, NLUError> {
-        // 尝试提取操作和操作数
-        let (op, left, right) = self.extract_operation(input)?;
-        
-        let left_expr = self.parse_value_to_expr(&left)?;
-        let right_expr = self.parse_value_to_expr(&right)?;
-        
-        let expr = Expr::Binary(op, Box::new(left_expr), Box::new(right_expr));
-        
+        // 尝试解析为复杂表达式
+        let expr = self.parse_expression_from_text(input)?;
+        Ok(vec![GrammarElement::Expr(Box::new(expr))])
+    }
+
+    /// 生成条件表达式 / Generate conditional expression
+    fn generate_conditional(&self, input: &str) -> Result<Vec<GrammarElement>, NLUError> {
+        let (cond_text, then_text, else_text) = self.extract_conditional_parts(input)?;
+        let cond_expr = self.parse_expression_from_text(&cond_text)?;
+        let then_expr = self.parse_expression_from_text(&then_text)?;
+        let else_expr = self.parse_expression_from_text(&else_text)?;
+
+        let expr = Expr::If(
+            Box::new(cond_expr),
+            Box::new(then_expr),
+            Box::new(else_expr),
+        );
         Ok(vec![GrammarElement::Expr(Box::new(expr))])
     }
 
@@ -490,15 +535,86 @@ impl NLUParser {
     fn parse_expression_from_text(&self, text: &str) -> Result<Expr, NLUError> {
         let text = text.trim();
         
-        // 尝试提取操作
+        // 尝试提取操作（支持嵌套表达式）
         if let Ok((op, left, right)) = self.extract_operation(text) {
-            let left_expr = self.parse_value_to_expr(&left)?;
-            let right_expr = self.parse_value_to_expr(&right)?;
+            let left_expr = self.parse_expression_from_text(&left)?;
+            let right_expr = self.parse_expression_from_text(&right)?;
             return Ok(Expr::Binary(op, Box::new(left_expr), Box::new(right_expr)));
         }
         
         // 尝试解析为单个值
         self.parse_value_to_expr(text)
+    }
+
+    /// 拆分多条语句 / Split multiple statements
+    fn split_into_statements(&self, input: &str) -> Vec<String> {
+        let connectors = [
+            "然后",
+            "并且",
+            "同时",
+            "接着",
+            "再",
+            "then",
+            "and then",
+            "and",
+        ];
+
+        let mut parts = vec![input.to_string()];
+        for connector in connectors.iter() {
+            let mut new_parts = Vec::new();
+            for part in parts {
+                if part.contains(connector) {
+                    let split: Vec<&str> = part.split(connector).collect();
+                    for item in split {
+                        let trimmed = item.trim();
+                        if !trimmed.is_empty() {
+                            new_parts.push(trimmed.to_string());
+                        }
+                    }
+                } else {
+                    new_parts.push(part);
+                }
+            }
+            parts = new_parts;
+        }
+
+        parts.into_iter().filter(|p| !p.is_empty()).collect()
+    }
+
+    /// 提取条件表达式 / Extract conditional parts
+    fn extract_conditional_parts(&self, input: &str) -> Result<(String, String, String), NLUError> {
+        let input_lower = input.to_lowercase();
+
+        // 中文模式：如果 ... [那么/则] ... 否则/不然 ...
+        if let Some(if_pos) = input.find("如果") {
+            let after_if = &input[if_pos + "如果".len()..];
+            if let Some(else_pos) = after_if.find("否则").or_else(|| after_if.find("不然")) {
+                let cond_then = &after_if[..else_pos];
+                let else_part = &after_if[else_pos + 2..];
+                let then_part = cond_then
+                    .trim_start_matches("那么")
+                    .trim_start_matches("则")
+                    .trim();
+                return Ok((cond_then.trim().to_string(), then_part.to_string(), else_part.trim().to_string()));
+            }
+        }
+
+        // 英文模式：if ... then ... else ...
+        if let Some(if_pos) = input_lower.find("if") {
+            let after_if = &input[if_pos + 2..];
+            if let Some(else_pos) = after_if.to_lowercase().find("else") {
+                let cond_then = &after_if[..else_pos];
+                let else_part = &after_if[else_pos + 4..];
+                let then_part = cond_then
+                    .trim_start_matches("then")
+                    .trim();
+                return Ok((cond_then.trim().to_string(), then_part.to_string(), else_part.trim().to_string()));
+            }
+        }
+
+        Err(NLUError::UnsupportedOperation(
+            "Conditional expression must include if/else or 如果/否则".to_string(),
+        ))
     }
 
     /// 提取变量名 / Extract variable name
@@ -762,6 +878,18 @@ impl NLUParser {
         if value == "false" || value == "假" {
             return Ok(Expr::Literal(Literal::Bool(false)));
         }
+
+        // 尝试解析为字符串字面量
+        if value.starts_with('"') && value.ends_with('"') && value.len() >= 2 {
+            return Ok(Expr::Literal(Literal::String(
+                value[1..value.len() - 1].to_string(),
+            )));
+        }
+        if value.starts_with('\'') && value.ends_with('\'') && value.len() >= 2 {
+            return Ok(Expr::Literal(Literal::String(
+                value[1..value.len() - 1].to_string(),
+            )));
+        }
         
         // 尝试作为变量
         if value.chars().all(|c| c.is_alphanumeric() || c == '_') {
@@ -828,6 +956,8 @@ pub enum IntentType {
     DefineVariable,
     /// 执行操作 / Execute operation
     ExecuteOperation,
+    /// 条件表达式 / Conditional expression
+    Conditional,
     /// 扩展语法 / Extend syntax
     ExtendSyntax,
     /// 其他 / Other

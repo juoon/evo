@@ -346,6 +346,14 @@ fn demonstrate_nlu() {
             "定义一个函数subtract，参数是x和y，x减去y",
             "中文函数定义（减法） / Chinese function definition (subtraction)",
         ),
+        (
+            "如果 5 大于 3 则 10 否则 20",
+            "中文条件表达式 / Chinese conditional expression",
+        ),
+        (
+            "3 加 5 然后 10 乘以 2",
+            "中文多步骤操作 / Chinese multi-step operation",
+        ),
     ];
 
     for (input, description) in test_cases {
