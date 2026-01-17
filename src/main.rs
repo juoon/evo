@@ -92,6 +92,9 @@ fn main() {
 
     // 演示测试生成 / Demonstrate test generation
     demonstrate_test_generation();
+
+    // 演示性能分析 / Demonstrate performance analysis
+    demonstrate_performance_analysis();
 }
 
 /// 演示解释器功能 / Demonstrate interpreter functionality
@@ -2269,4 +2272,97 @@ fn demonstrate_test_generation() {
         "\n提示 / Note: 测试生成能够自动为代码生成测试用例，提高代码质量和可靠性，帮助验证代码正确性"
     );
     println!("Test generation can automatically generate test cases for code, improving code quality and reliability, and helping verify code correctness");
+}
+
+/// 演示性能分析功能 / Demonstrate performance analysis functionality
+fn demonstrate_performance_analysis() {
+    println!("\n25. 性能分析演示 / Performance Analysis Demo");
+    println!("--------------------------------------------");
+
+    use crate::evolution::{CodeAnalyzer, PerformanceAnalyzer};
+    use crate::parser::AdaptiveParser;
+
+    let parser = AdaptiveParser::new(true);
+    let analyzer = CodeAnalyzer::new();
+    let mut performance_analyzer = PerformanceAnalyzer::new();
+
+    // 测试代码 / Test code
+    let test_code = r#"
+        (def factorial (n)
+            (if (= n 0)
+                1
+                (* n (factorial (- n 1)))))
+        (def add (x y) (+ x y))
+        (def multiply (x y) (* x y))
+    "#;
+
+    println!("测试代码 / Test Code:\n{}", test_code);
+
+    match parser.parse(test_code) {
+        Ok(ast) => {
+            // 分析代码 / Analyze code
+            let analysis = analyzer.analyze(&ast);
+
+            // 性能分析 / Performance analysis
+            println!("\n进行性能分析 / Performing Performance Analysis:");
+            let performance = performance_analyzer.analyze_performance(&ast, &analysis);
+
+            println!("\n性能指标 / Performance Metrics:");
+            if let Some(record) = performance_analyzer.get_performance_history().last() {
+                println!("  时间复杂度 / Time Complexity: {}", record.metrics.time_complexity);
+                println!("  空间复杂度 / Space Complexity: {}", record.metrics.space_complexity);
+                println!("  预估执行时间 / Estimated Execution Time: {:.2} ms", record.metrics.estimated_execution_time);
+                println!("  预估内存使用 / Estimated Memory Usage: {:.2} KB", record.metrics.estimated_memory_usage);
+            }
+
+            println!("\n性能评分 / Performance Score:");
+            println!("  评分 / Score: {:.2}/100", performance.performance_score);
+            println!("  等级 / Level: {:?}", performance.performance_level);
+
+            if !performance.bottlenecks.is_empty() {
+                println!("\n性能瓶颈 / Performance Bottlenecks:");
+                for (i, bottleneck) in performance.bottlenecks.iter().enumerate() {
+                    println!("  {}. {:?} - {}", i + 1, bottleneck.bottleneck_type, bottleneck.description);
+                    println!("     影响程度 / Impact: {:.2}", bottleneck.impact);
+                }
+            }
+
+            if !performance.suggestions.is_empty() {
+                println!("\n优化建议 / Optimization Suggestions:");
+                for (i, suggestion) in performance.suggestions.iter().enumerate() {
+                    println!("  {}. [{}] {}", i + 1, suggestion.suggestion_type, suggestion.content);
+                    println!("     预期改进 / Expected Improvement: {:.2}%", suggestion.expected_improvement);
+                    println!("     优先级 / Priority: {}", suggestion.priority);
+                }
+            }
+        }
+        Err(e) => {
+            println!("解析错误 / Parse error: {:?}", e);
+        }
+    }
+
+    // 显示性能历史 / Show performance history
+    println!("\n性能分析历史 / Performance Analysis History:");
+    let history = performance_analyzer.get_performance_history();
+    if history.is_empty() {
+        println!("  暂无历史数据 / No history data yet");
+    } else {
+        println!("  记录数 / Records: {}", history.len());
+        if let Some(latest) = history.last() {
+            println!("  最新分析 / Latest Analysis:");
+            println!("    评分 / Score: {:.2}", latest.analysis.performance_score);
+            println!("    等级 / Level: {:?}", latest.analysis.performance_level);
+            println!("    时间 / Time: {}", latest.timestamp.format("%Y-%m-%d %H:%M:%S"));
+        }
+    }
+
+    // 显示性能统计 / Show performance statistics
+    println!("\n性能统计 / Performance Statistics:");
+    let stats = performance_analyzer.get_performance_statistics();
+    println!("  {}", serde_json::to_string_pretty(&stats).unwrap_or_default());
+
+    println!(
+        "\n提示 / Note: 性能分析能够自动分析代码性能，识别性能瓶颈，提供优化建议，帮助提高代码执行效率"
+    );
+    println!("Performance analysis can automatically analyze code performance, identify bottlenecks, provide optimization suggestions, and help improve code execution efficiency");
 }
