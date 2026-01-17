@@ -104,3 +104,104 @@
   (if x
     false
     true))
+
+; 列表高级操作 / Advanced list operations
+(def sum (lst)
+  (if (= (list-length lst) 0)
+    0
+    (+ (list-get lst 0) (sum (list-slice lst 1)))))
+
+(def product (lst)
+  (if (= (list-length lst) 0)
+    1
+    (* (list-get lst 0) (product (list-slice lst 1)))))
+
+(def reverse (lst)
+  (reverse-helper lst (list)))
+
+(def reverse-helper (lst acc)
+  (if (= (list-length lst) 0)
+    acc
+    (reverse-helper
+      (list-slice lst 1)
+      (list-append (list (list-get lst 0)) acc))))
+
+(def contains (lst item)
+  (if (= (list-length lst) 0)
+    false
+    (if (= (list-get lst 0) item)
+      true
+      (contains (list-slice lst 1) item))))
+
+(def count (lst item)
+  (if (= (list-length lst) 0)
+    0
+    (if (= (list-get lst 0) item)
+      (+ 1 (count (list-slice lst 1) item))
+      (count (list-slice lst 1) item))))
+
+; 更多数学函数 / More math functions
+(def power (base exp)
+  (if (= exp 0)
+    1
+    (if (= exp 1)
+      base
+      (* base (power base (- exp 1))))))
+
+(def sqrt-approx (x)
+  (sqrt-helper x x 0.0001))
+
+(def sqrt-helper (x guess epsilon)
+  (let diff (- (* guess guess) x)
+    (if (< (abs diff) epsilon)
+      guess
+      (sqrt-helper x (/ (+ guess (/ x guess)) 2) epsilon))))
+
+; 范围生成 / Range generation
+(def range (start end)
+  (if (>= start end)
+    (list)
+    (list-append (list start) (range (+ start 1) end))))
+
+(def range-step (start end step)
+  (if (>= start end)
+    (list)
+    (list-append (list start) (range-step (+ start step) end step))))
+
+; 字典操作 / Dictionary operations
+(def dict-has-key (dict key)
+  (if (= (dict-get dict key) null)
+    false
+    true))
+
+(def dict-merge (dict1 dict2)
+  (dict-merge-helper dict1 (dict-keys dict2) dict2))
+
+(def dict-merge-helper (dict keys dict2)
+  (if (= (list-length keys) 0)
+    dict
+    (let key (list-get keys 0)
+      (dict-merge-helper
+        (dict-set dict key (dict-get dict2 key))
+        (list-slice keys 1)
+        dict2))))
+
+; 工具函数 / Utility functions
+(def repeat (n func)
+  (if (= n 0)
+    null
+    (if (> n 0)
+      (begin
+        func
+        (repeat (- n 1) func))
+      null)))
+
+(def when (condition action)
+  (if condition
+    action
+    null))
+
+(def unless (condition action)
+  (if condition
+    null
+    action))

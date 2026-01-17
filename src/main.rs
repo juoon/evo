@@ -65,6 +65,9 @@ fn main() {
 
     // 演示上下文理解 / Demonstrate context understanding
     demonstrate_context_understanding();
+
+    // 演示增强的标准库 / Demonstrate enhanced standard library
+    demonstrate_enhanced_std();
 }
 
 /// 演示解释器功能 / Demonstrate interpreter functionality
@@ -1254,4 +1257,57 @@ fn demonstrate_context_understanding() {
 
     println!("\n提示 / Note: 上下文理解功能让语言能够理解多轮对话，记住之前的上下文，实现更自然的交互");
     println!("Context understanding allows the language to understand multi-turn conversations and remember previous context for more natural interaction");
+}
+
+/// 演示增强的标准库 / Demonstrate enhanced standard library
+fn demonstrate_enhanced_std() {
+    println!("\n16. 增强标准库演示 / Enhanced Standard Library Demo");
+    println!("--------------------------------------------");
+
+    use crate::parser::AdaptiveParser;
+    use crate::runtime::Interpreter;
+
+    let parser = AdaptiveParser::new(true);
+    let mut interpreter = Interpreter::new();
+
+    // 导入标准库 / Import standard library
+    let import_code = "(import \"std\")";
+    match parser.parse(import_code) {
+        Ok(ast) => {
+            if let Err(e) = interpreter.execute(&ast) {
+                println!("导入标准库错误 / Import error: {:?}", e);
+                return;
+            }
+        }
+        Err(e) => {
+            println!("解析错误 / Parse error: {:?}", e);
+            return;
+        }
+    }
+
+    // 测试增强的标准库函数 / Test enhanced standard library functions
+    let test_cases = vec![
+        ("(std.sum (list 1 2 3 4 5))", "列表求和 / List sum"),
+        ("(std.product (list 2 3 4))", "列表乘积 / List product"),
+        ("(std.power 2 8)", "幂运算 / Power"),
+        ("(std.range 1 10)", "范围生成 / Range generation"),
+        ("(std.contains (list 1 2 3) 2)", "列表包含 / List contains"),
+    ];
+
+    for (code, description) in test_cases {
+        println!("\n测试 / Test: {}", description);
+        println!("代码 / Code: {}", code);
+        match parser.parse(code) {
+            Ok(ast) => {
+                match interpreter.execute(&ast) {
+                    Ok(value) => println!("结果 / Result: {}", value),
+                    Err(e) => println!("执行错误 / Execution error: {:?}", e),
+                }
+            }
+            Err(e) => println!("解析错误 / Parse error: {:?}", e),
+        }
+    }
+
+    println!("\n提示 / Note: 增强的标准库提供了更多实用函数，用Aevolang实现，增强自举能力");
+    println!("Enhanced standard library provides more utility functions, implemented in Aevolang, enhancing bootstrapping capability");
 }
