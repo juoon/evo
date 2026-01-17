@@ -68,6 +68,9 @@ fn main() {
 
     // 演示增强的标准库 / Demonstrate enhanced standard library
     demonstrate_enhanced_std();
+
+    // 演示使用模式学习 / Demonstrate usage pattern learning
+    demonstrate_usage_learning();
 }
 
 /// 演示解释器功能 / Demonstrate interpreter functionality
@@ -1310,4 +1313,73 @@ fn demonstrate_enhanced_std() {
 
     println!("\n提示 / Note: 增强的标准库提供了更多实用函数，用Aevolang实现，增强自举能力");
     println!("Enhanced standard library provides more utility functions, implemented in Aevolang, enhancing bootstrapping capability");
+}
+
+/// 演示使用模式学习功能 / Demonstrate usage pattern learning functionality
+fn demonstrate_usage_learning() {
+    println!("\n17. 使用模式学习演示 / Usage Pattern Learning Demo");
+    println!("--------------------------------------------");
+
+    use crate::evolution::EvolutionEngine;
+
+    let mut engine = EvolutionEngine::new();
+
+    // 模拟使用模式 / Simulate usage patterns
+    println!("模拟使用模式 / Simulating Usage Patterns:");
+    engine.record_usage("变量定义");
+    engine.record_usage("函数调用");
+    engine.record_usage("变量定义");
+    engine.record_usage("函数定义");
+    engine.record_usage("变量定义");
+    engine.record_usage("列表操作");
+    engine.record_usage("变量定义");
+    
+    // 模拟错误记录 / Simulate error recording
+    println!("\n记录错误 / Recording Errors:");
+    engine.record_error("UndefinedVariable", "变量x未定义", "(let y (+ x 1))");
+    engine.record_error("UndefinedVariable", "变量y未定义", "(let z (+ y 1))");
+    engine.record_error("TypeError", "类型不匹配", "(+ \"hello\" 5)");
+    engine.record_error("UndefinedVariable", "变量x未定义", "(let y (+ x 1))");
+    
+    // 模拟成功记录 / Simulate success recording
+    println!("\n记录成功 / Recording Successes:");
+    engine.record_success("变量定义", "(let x 5)");
+    engine.record_success("函数定义", "(def add (x y) (+ x y))");
+    engine.record_success("变量定义", "(let x 5)");
+    engine.record_success("列表求和", "(sum (list 1 2 3))");
+
+    // 获取学习洞察 / Get learning insights
+    println!("\n学习洞察 / Learning Insights:");
+    match engine.learn_from_usage() {
+        Ok(result) => {
+            println!("  {}", serde_json::to_string_pretty(&result).unwrap_or_default());
+        }
+        Err(e) => {
+            println!("  学习错误 / Learning error: {:?}", e);
+        }
+    }
+
+    // 获取使用统计 / Get usage statistics
+    println!("\n使用统计 / Usage Statistics:");
+    let stats = engine.get_usage_statistics();
+    println!("  总使用次数 / Total usage: {}", stats.total_usage);
+    println!("  唯一模式数 / Unique patterns: {}", stats.unique_patterns);
+    println!("  总错误数 / Total errors: {}", stats.total_errors);
+    println!("  总成功数 / Total successes: {}", stats.total_successes);
+    println!("  错误率 / Error rate: {:.2}%", stats.error_rate * 100.0);
+    println!("  成功率 / Success rate: {:.2}%", stats.success_rate * 100.0);
+
+    // 获取学习洞察详情 / Get detailed learning insights
+    println!("\n详细洞察 / Detailed Insights:");
+    let insights = engine.get_learning_insights();
+    for (i, insight) in insights.iter().take(5).enumerate() {
+        println!("  {}. {:?}: {}", i + 1, insight.insight_type, insight.description);
+        if let Some(suggestion) = &insight.suggestion {
+            println!("     建议 / Suggestion: {}", suggestion);
+        }
+        println!("     优先级 / Priority: {}", insight.priority);
+    }
+
+    println!("\n提示 / Note: 使用模式学习让语言能够从实际使用中学习，自动识别常见模式和错误，持续改进自身能力");
+    println!("Usage pattern learning allows the language to learn from actual usage, automatically identify common patterns and errors, and continuously improve its capabilities");
 }

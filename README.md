@@ -431,6 +431,13 @@ match parser.parse(code) {
     - 添加字典操作函数：dict-has-key、dict-merge
     - 添加工具函数：repeat、when、unless
     - 增强自举能力：更多功能用语言本身实现
+22. ✅ ~~使用模式学习 - 从实际使用中学习并改进~~ - 已完成
+    - 实现UsagePatternLearner：跟踪使用模式和错误
+    - 记录使用频率、错误模式和成功模式
+    - 从错误中学习：生成错误预防建议
+    - 从成功中学习：识别常用模式并建议加入标准库
+    - 获取学习洞察：错误预防、模式识别、性能优化
+    - 集成到进化引擎：learn_from_usage()方法
 
 ## 贡献 / Contributing
 

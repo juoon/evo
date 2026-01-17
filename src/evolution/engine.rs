@@ -27,6 +27,8 @@ pub struct EvolutionEngine {
     poetry_parser: PoetryParser,
     /// 知识图谱 / Knowledge graph
     knowledge_graph: crate::evolution::knowledge::EvolutionKnowledgeGraph,
+    /// 使用模式学习器 / Usage pattern learner
+    learner: crate::evolution::learning::UsagePatternLearner,
 }
 
 impl EvolutionEngine {
@@ -40,6 +42,7 @@ impl EvolutionEngine {
             nlu_parser: NLUParser::new(crate::parser::nlu::ModelType::LocalLightweight, true),
             poetry_parser: PoetryParser::new(),
             knowledge_graph: crate::evolution::knowledge::EvolutionKnowledgeGraph::new(),
+            learner: crate::evolution::learning::UsagePatternLearner::new(),
         };
 
         // 从历史构建知识图谱 / Build knowledge graph from history
@@ -258,6 +261,108 @@ impl EvolutionEngine {
             } else {
                 "当前实现已是最优".to_string()
             }
+        }))
+    }
+
+    /// 记录使用模式 / Record usage pattern
+    pub fn record_usage(&mut self, pattern: &str) {
+        self.learner.record_usage(pattern);
+    }
+
+    /// 记录错误 / Record error
+    pub fn record_error(&mut self, error_type: &str, message: &str, context: &str) {
+        self.learner.record_error(error_type, message, context);
+    }
+
+    /// 记录成功 / Record success
+    pub fn record_success(&mut self, description: &str, code: &str) {
+        self.learner.record_success(description, code);
+    }
+
+    /// 从学习中获取洞察 / Get insights from learning
+    pub fn get_learning_insights(&self) -> Vec<crate::evolution::learning::LearningInsight> {
+        self.learner.get_insights()
+    }
+
+    /// 获取使用统计 / Get usage statistics
+    pub fn get_usage_statistics(&self) -> crate::evolution::learning::UsageStatistics {
+        self.learner.analyze_usage()
+    }
+
+    /// 从使用模式中学习并改进 / Learn from usage patterns and improve
+    pub fn learn_from_usage(&mut self) -> Result<serde_json::Value, EvolutionError> {
+        // 先获取洞察和统计，避免借用冲突 / Get insights and statistics first to avoid borrow conflicts
+        let insights = self.learner.get_insights();
+        let stats = self.learner.analyze_usage();
+        let high_priority_count = insights.iter().filter(|insight| insight.priority > 5).count();
+
+        // 如果有高优先级的洞察，触发进化 / If high-priority insights exist, trigger evolution
+        if high_priority_count > 0 {
+            // 克隆必要的值，避免借用冲突 / Clone necessary values to avoid borrow conflicts
+            let rules_snapshot = self.syntax_mutations.clone();
+            let error_rate = stats.error_rate;
+            let success_rate = stats.success_rate;
+            
+            // 记录学习驱动的进化事件 / Record learning-driven evolution event
+            let event = EvolutionEvent {
+                id: uuid::Uuid::new_v4(),
+                timestamp: chrono::Utc::now(),
+                event_type: EvolutionType::SemanticEvolution,
+                before_state: crate::evolution::tracker::StateSnapshot {
+                    grammar_rules: rules_snapshot.clone(),
+                    version: "0.1.0".to_string(),
+                    metadata: serde_json::json!({}),
+                },
+                after_state: crate::evolution::tracker::StateSnapshot {
+                    grammar_rules: rules_snapshot,
+                    version: "0.1.0".to_string(),
+                    metadata: serde_json::json!({
+                        "learning_driven": true,
+                        "insights_count": high_priority_count,
+                    }),
+                },
+                trigger: crate::evolution::tracker::TriggerContext {
+                    source: TriggerSource::UsagePatternAnalysis,
+                    conditions: vec![format!("从使用模式中学习了 {} 个洞察", high_priority_count)],
+                    environment: serde_json::json!({
+                        "error_rate": error_rate,
+                        "success_rate": success_rate,
+                    }),
+                },
+                delta: crate::evolution::tracker::EvolutionDelta {
+                    description: format!("从使用模式中学习，发现 {} 个改进机会", high_priority_count),
+                    added_rules: Vec::new(),
+                    removed_rules: Vec::new(),
+                    modified_rules: Vec::new(),
+                },
+                author: None,
+                success_metrics: None,
+            };
+            
+            self.tracker.record(event);
+            self.rebuild_knowledge();
+        }
+
+        // 准备返回数据 / Prepare return data
+        let insights_json: Vec<_> = insights.iter().take(5).map(|i| serde_json::json!({
+            "type": format!("{:?}", i.insight_type),
+            "description": i.description.clone(),
+            "priority": i.priority,
+        })).collect();
+
+        Ok(serde_json::json!({
+            "learning_performed": high_priority_count > 0,
+            "insights_count": insights.len(),
+            "high_priority_insights": high_priority_count,
+            "statistics": serde_json::json!({
+                "total_usage": stats.total_usage,
+                "unique_patterns": stats.unique_patterns,
+                "total_errors": stats.total_errors,
+                "total_successes": stats.total_successes,
+                "error_rate": stats.error_rate,
+                "success_rate": stats.success_rate,
+            }),
+            "insights": insights_json,
         }))
     }
 

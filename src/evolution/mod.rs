@@ -5,10 +5,12 @@
 pub mod analyzer;
 pub mod engine;
 pub mod knowledge;
+pub mod learning;
 pub mod tracker;
 
 pub use analyzer::*;
 pub use engine::*;
 pub use knowledge::*;
+pub use learning::*;
 pub use tracker::*;
 
