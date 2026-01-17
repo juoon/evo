@@ -95,6 +95,9 @@ fn main() {
 
     // 演示性能分析 / Demonstrate performance analysis
     demonstrate_performance_analysis();
+
+    // 演示代码相似度检测 / Demonstrate code similarity detection
+    demonstrate_similarity_detection();
 }
 
 /// 演示解释器功能 / Demonstrate interpreter functionality
@@ -2309,10 +2312,22 @@ fn demonstrate_performance_analysis() {
 
             println!("\n性能指标 / Performance Metrics:");
             if let Some(record) = performance_analyzer.get_performance_history().last() {
-                println!("  时间复杂度 / Time Complexity: {}", record.metrics.time_complexity);
-                println!("  空间复杂度 / Space Complexity: {}", record.metrics.space_complexity);
-                println!("  预估执行时间 / Estimated Execution Time: {:.2} ms", record.metrics.estimated_execution_time);
-                println!("  预估内存使用 / Estimated Memory Usage: {:.2} KB", record.metrics.estimated_memory_usage);
+                println!(
+                    "  时间复杂度 / Time Complexity: {}",
+                    record.metrics.time_complexity
+                );
+                println!(
+                    "  空间复杂度 / Space Complexity: {}",
+                    record.metrics.space_complexity
+                );
+                println!(
+                    "  预估执行时间 / Estimated Execution Time: {:.2} ms",
+                    record.metrics.estimated_execution_time
+                );
+                println!(
+                    "  预估内存使用 / Estimated Memory Usage: {:.2} KB",
+                    record.metrics.estimated_memory_usage
+                );
             }
 
             println!("\n性能评分 / Performance Score:");
@@ -2322,7 +2337,12 @@ fn demonstrate_performance_analysis() {
             if !performance.bottlenecks.is_empty() {
                 println!("\n性能瓶颈 / Performance Bottlenecks:");
                 for (i, bottleneck) in performance.bottlenecks.iter().enumerate() {
-                    println!("  {}. {:?} - {}", i + 1, bottleneck.bottleneck_type, bottleneck.description);
+                    println!(
+                        "  {}. {:?} - {}",
+                        i + 1,
+                        bottleneck.bottleneck_type,
+                        bottleneck.description
+                    );
                     println!("     影响程度 / Impact: {:.2}", bottleneck.impact);
                 }
             }
@@ -2330,8 +2350,16 @@ fn demonstrate_performance_analysis() {
             if !performance.suggestions.is_empty() {
                 println!("\n优化建议 / Optimization Suggestions:");
                 for (i, suggestion) in performance.suggestions.iter().enumerate() {
-                    println!("  {}. [{}] {}", i + 1, suggestion.suggestion_type, suggestion.content);
-                    println!("     预期改进 / Expected Improvement: {:.2}%", suggestion.expected_improvement);
+                    println!(
+                        "  {}. [{}] {}",
+                        i + 1,
+                        suggestion.suggestion_type,
+                        suggestion.content
+                    );
+                    println!(
+                        "     预期改进 / Expected Improvement: {:.2}%",
+                        suggestion.expected_improvement
+                    );
                     println!("     优先级 / Priority: {}", suggestion.priority);
                 }
             }
@@ -2352,17 +2380,114 @@ fn demonstrate_performance_analysis() {
             println!("  最新分析 / Latest Analysis:");
             println!("    评分 / Score: {:.2}", latest.analysis.performance_score);
             println!("    等级 / Level: {:?}", latest.analysis.performance_level);
-            println!("    时间 / Time: {}", latest.timestamp.format("%Y-%m-%d %H:%M:%S"));
+            println!(
+                "    时间 / Time: {}",
+                latest.timestamp.format("%Y-%m-%d %H:%M:%S")
+            );
         }
     }
 
     // 显示性能统计 / Show performance statistics
     println!("\n性能统计 / Performance Statistics:");
     let stats = performance_analyzer.get_performance_statistics();
-    println!("  {}", serde_json::to_string_pretty(&stats).unwrap_or_default());
+    println!(
+        "  {}",
+        serde_json::to_string_pretty(&stats).unwrap_or_default()
+    );
 
     println!(
         "\n提示 / Note: 性能分析能够自动分析代码性能，识别性能瓶颈，提供优化建议，帮助提高代码执行效率"
     );
     println!("Performance analysis can automatically analyze code performance, identify bottlenecks, provide optimization suggestions, and help improve code execution efficiency");
+}
+
+/// 演示代码相似度检测功能 / Demonstrate code similarity detection functionality
+fn demonstrate_similarity_detection() {
+    println!("\n26. 代码相似度检测演示 / Code Similarity Detection Demo");
+    println!("--------------------------------------------");
+
+    use crate::evolution::{CodeAnalyzer, SimilarityDetector};
+    use crate::parser::AdaptiveParser;
+
+    let parser = AdaptiveParser::new(true);
+    let analyzer = CodeAnalyzer::new();
+    let mut similarity_detector = SimilarityDetector::new();
+
+    // 测试代码（包含重复和相似代码）/ Test code (with duplicates and similar code)
+    let test_code = r#"
+        (def add (x y) (+ x y))
+        (def subtract (x y) (- x y))
+        (def multiply (x y) (* x y))
+        (def add2 (a b) (+ a b))
+        (def add3 (m n) (+ m n))
+    "#;
+
+    println!("测试代码 / Test Code:\n{}", test_code);
+
+    match parser.parse(test_code) {
+        Ok(ast) => {
+            // 分析代码 / Analyze code
+            let analysis = analyzer.analyze(&ast);
+
+            // 相似度检测 / Similarity detection
+            println!("\n进行相似度检测 / Performing Similarity Detection:");
+            let similarity = similarity_detector.detect_similarity(&ast, &analysis);
+
+            println!("\n相似度评分 / Similarity Score:");
+            println!("  评分 / Score: {:.2}/100", similarity.similarity_score);
+
+            if !similarity.similar_pairs.is_empty() {
+                println!("\n相似代码对 / Similar Code Pairs:");
+                for (i, pair) in similarity.similar_pairs.iter().take(5).enumerate() {
+                    println!("  {}. 相似度 / Similarity: {:.2}% ({:?})", i + 1, pair.similarity * 100.0, pair.similarity_type);
+                    println!("     位置1 / Location 1: {}", pair.block1.location);
+                    println!("     位置2 / Location 2: {}", pair.block2.location);
+                }
+            }
+
+            if !similarity.duplicates.is_empty() {
+                println!("\n重复代码块 / Duplicate Code Blocks:");
+                for (i, duplicate) in similarity.duplicates.iter().take(5).enumerate() {
+                    println!("  {}. 出现次数 / Occurrences: {}", i + 1, duplicate.count);
+                    println!("     位置 / Locations: {:?}", duplicate.locations);
+                }
+            }
+
+            if !similarity.suggestions.is_empty() {
+                println!("\n重构建议 / Refactoring Suggestions:");
+                for (i, suggestion) in similarity.suggestions.iter().enumerate() {
+                    println!("  {}. [{}] {}", i + 1, suggestion.suggestion_type, suggestion.content);
+                    println!("     优先级 / Priority: {}", suggestion.priority);
+                }
+            }
+        }
+        Err(e) => {
+            println!("解析错误 / Parse error: {:?}", e);
+        }
+    }
+
+    // 显示检测历史 / Show detection history
+    println!("\n相似度检测历史 / Similarity Detection History:");
+    let history = similarity_detector.get_detection_history();
+    if history.is_empty() {
+        println!("  暂无历史数据 / No history data yet");
+    } else {
+        println!("  记录数 / Records: {}", history.len());
+        if let Some(latest) = history.last() {
+            println!("  最新检测 / Latest Detection:");
+            println!("    相似代码对 / Similar Pairs: {}", latest.similar_pairs.len());
+            println!("    重复代码块 / Duplicates: {}", latest.duplicates.len());
+            println!("    时间 / Time: {}", latest.timestamp.format("%Y-%m-%d %H:%M:%S"));
+        }
+    }
+
+    // 显示相似度统计 / Show similarity statistics
+    println!("\n相似度统计 / Similarity Statistics:");
+    let stats = similarity_detector.get_similarity_statistics();
+    println!("  {}", serde_json::to_string_pretty(&stats).unwrap_or_default());
+
+    println!(
+        "\n提示 / Note: 代码相似度检测能够自动检测代码重复和相似模式，帮助识别重构机会，提高代码质量"
+    );
+    println!("Code similarity detection can automatically detect code duplication and similar patterns, helping identify refactoring opportunities and improve code quality");
 }

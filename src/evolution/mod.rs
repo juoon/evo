@@ -13,6 +13,7 @@ pub mod learning;
 pub mod optimizer;
 pub mod performance;
 pub mod quality_assessor;
+pub mod similarity;
 pub mod test_generator;
 pub mod tracker;
 
@@ -27,6 +28,7 @@ pub use learning::*;
 pub use optimizer::*;
 pub use performance::*;
 pub use quality_assessor::*;
+pub use similarity::*;
 pub use test_generator::*;
 pub use tracker::*;
 
