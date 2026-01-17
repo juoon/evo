@@ -1,0 +1,27 @@
+; 字符串操作和类型转换测试 / String operations and type conversion test
+
+; 字符串操作测试 / String operations test
+(string-split "hello,world,test" ",")  ; 应该返回 ["hello", "world", "test"]
+(string-join (list "a" "b" "c") "-")   ; 应该返回 "a-b-c"
+(string-trim "  hello  ")              ; 应该返回 "hello"
+(string-replace "hello world" "world" "aevo")  ; 应该返回 "hello aevo"
+(string-length "hello")                 ; 应该返回 5
+
+; 类型转换测试 / Type conversion test
+(to-string 42)                         ; 应该返回 "42"
+(to-string 3.14)                      ; 应该返回 "3.14"
+(to-int "123")                        ; 应该返回 123
+(to-int 3.14)                         ; 应该返回 3
+(to-float "3.14")                     ; 应该返回 3.14
+(to-float 42)                         ; 应该返回 42.0
+
+; 类型检查测试 / Type checking test
+(is-string "hello")                   ; 应该返回 true
+(is-string 42)                        ; 应该返回 false
+(is-int 42)                           ; 应该返回 true
+(is-int "42")                         ; 应该返回 false
+(is-float 3.14)                       ; 应该返回 true
+(is-bool true)                        ; 应该返回 true
+(is-list (list 1 2 3))                ; 应该返回 true
+(is-dict (dict "x" 1))                ; 应该返回 true
+(is-null null)                        ; 应该返回 true

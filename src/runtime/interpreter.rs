@@ -1198,10 +1198,243 @@ impl Interpreter {
                     )),
                 }
             }
-            _ => Err(InterpreterError::RuntimeError(format!(
-                "Unknown function: {}",
-                name
-            ))),
+            // 字符串操作 / String operations
+            "string-split" | "split" => {
+                if args.len() != 2 {
+                    return Err(InterpreterError::runtime_error(
+                        "string-split requires 2 arguments: string and delimiter".to_string(),
+                        None,
+                    ));
+                }
+                let string = self.eval_expr(&args[0])?;
+                let delimiter = self.eval_expr(&args[1])?;
+                match (string, delimiter) {
+                    (Value::String(s), Value::String(d)) => {
+                        let parts: Vec<Value> = s
+                            .split(&d)
+                            .map(|part| Value::String(part.to_string()))
+                            .collect();
+                        Ok(Value::List(parts))
+                    }
+                    _ => Err(InterpreterError::type_error(
+                        "string-split requires two strings".to_string(),
+                        None,
+                    )),
+                }
+            }
+            "string-join" | "join" => {
+                if args.len() != 2 {
+                    return Err(InterpreterError::runtime_error(
+                        "string-join requires 2 arguments: list and delimiter".to_string(),
+                        None,
+                    ));
+                }
+                let list = self.eval_expr(&args[0])?;
+                let delimiter = self.eval_expr(&args[1])?;
+                match (list, delimiter) {
+                    (Value::List(l), Value::String(d)) => {
+                        let strings: Vec<String> = l
+                            .iter()
+                            .filter_map(|v| {
+                                if let Value::String(s) = v {
+                                    Some(s.clone())
+                                } else {
+                                    None
+                                }
+                            })
+                            .collect();
+                        Ok(Value::String(strings.join(&d)))
+                    }
+                    _ => Err(InterpreterError::type_error(
+                        "string-join requires a list of strings and a string delimiter".to_string(),
+                        None,
+                    )),
+                }
+            }
+            "string-trim" | "trim" => {
+                if args.len() != 1 {
+                    return Err(InterpreterError::runtime_error(
+                        "string-trim requires 1 argument: string".to_string(),
+                        None,
+                    ));
+                }
+                let string = self.eval_expr(&args[0])?;
+                match string {
+                    Value::String(s) => Ok(Value::String(s.trim().to_string())),
+                    _ => Err(InterpreterError::type_error(
+                        "string-trim requires a string".to_string(),
+                        None,
+                    )),
+                }
+            }
+            "string-replace" | "replace" => {
+                if args.len() != 3 {
+                    return Err(InterpreterError::runtime_error(
+                        "string-replace requires 3 arguments: string, old, new".to_string(),
+                        None,
+                    ));
+                }
+                let string = self.eval_expr(&args[0])?;
+                let old_str = self.eval_expr(&args[1])?;
+                let new_str = self.eval_expr(&args[2])?;
+                match (string, old_str, new_str) {
+                    (Value::String(s), Value::String(o), Value::String(n)) => {
+                        Ok(Value::String(s.replace(&o, &n)))
+                    }
+                    _ => Err(InterpreterError::type_error(
+                        "string-replace requires three strings".to_string(),
+                        None,
+                    )),
+                }
+            }
+            "string-length" | "strlen" => {
+                if args.len() != 1 {
+                    return Err(InterpreterError::runtime_error(
+                        "string-length requires 1 argument: string".to_string(),
+                        None,
+                    ));
+                }
+                let string = self.eval_expr(&args[0])?;
+                match string {
+                    Value::String(s) => Ok(Value::Int(s.len() as i64)),
+                    _ => Err(InterpreterError::type_error(
+                        "string-length requires a string".to_string(),
+                        None,
+                    )),
+                }
+            }
+            // 类型转换 / Type conversion
+            "to-string" => {
+                if args.len() != 1 {
+                    return Err(InterpreterError::runtime_error(
+                        "to-string requires 1 argument".to_string(),
+                        None,
+                    ));
+                }
+                let value = self.eval_expr(&args[0])?;
+                Ok(Value::String(value.to_string()))
+            }
+            "to-int" => {
+                if args.len() != 1 {
+                    return Err(InterpreterError::runtime_error(
+                        "to-int requires 1 argument".to_string(),
+                        None,
+                    ));
+                }
+                let value = self.eval_expr(&args[0])?;
+                match value {
+                    Value::Int(i) => Ok(Value::Int(i)),
+                    Value::Float(f) => Ok(Value::Int(f as i64)),
+                    Value::String(s) => s.parse::<i64>().map(Value::Int).map_err(|_| {
+                        InterpreterError::type_error(
+                            format!("Cannot convert '{}' to integer", s),
+                            None,
+                        )
+                    }),
+                    _ => Err(InterpreterError::type_error(
+                        "Cannot convert to integer".to_string(),
+                        None,
+                    )),
+                }
+            }
+            "to-float" => {
+                if args.len() != 1 {
+                    return Err(InterpreterError::runtime_error(
+                        "to-float requires 1 argument".to_string(),
+                        None,
+                    ));
+                }
+                let value = self.eval_expr(&args[0])?;
+                match value {
+                    Value::Int(i) => Ok(Value::Float(i as f64)),
+                    Value::Float(f) => Ok(Value::Float(f)),
+                    Value::String(s) => s.parse::<f64>().map(Value::Float).map_err(|_| {
+                        InterpreterError::type_error(
+                            format!("Cannot convert '{}' to float", s),
+                            None,
+                        )
+                    }),
+                    _ => Err(InterpreterError::type_error(
+                        "Cannot convert to float".to_string(),
+                        None,
+                    )),
+                }
+            }
+            // 类型检查 / Type checking
+            "is-string" => {
+                if args.len() != 1 {
+                    return Err(InterpreterError::runtime_error(
+                        "is-string requires 1 argument".to_string(),
+                        None,
+                    ));
+                }
+                let value = self.eval_expr(&args[0])?;
+                Ok(Value::Bool(matches!(value, Value::String(_))))
+            }
+            "is-int" => {
+                if args.len() != 1 {
+                    return Err(InterpreterError::runtime_error(
+                        "is-int requires 1 argument".to_string(),
+                        None,
+                    ));
+                }
+                let value = self.eval_expr(&args[0])?;
+                Ok(Value::Bool(matches!(value, Value::Int(_))))
+            }
+            "is-float" => {
+                if args.len() != 1 {
+                    return Err(InterpreterError::runtime_error(
+                        "is-float requires 1 argument".to_string(),
+                        None,
+                    ));
+                }
+                let value = self.eval_expr(&args[0])?;
+                Ok(Value::Bool(matches!(value, Value::Float(_))))
+            }
+            "is-bool" => {
+                if args.len() != 1 {
+                    return Err(InterpreterError::runtime_error(
+                        "is-bool requires 1 argument".to_string(),
+                        None,
+                    ));
+                }
+                let value = self.eval_expr(&args[0])?;
+                Ok(Value::Bool(matches!(value, Value::Bool(_))))
+            }
+            "is-list" => {
+                if args.len() != 1 {
+                    return Err(InterpreterError::runtime_error(
+                        "is-list requires 1 argument".to_string(),
+                        None,
+                    ));
+                }
+                let value = self.eval_expr(&args[0])?;
+                Ok(Value::Bool(matches!(value, Value::List(_))))
+            }
+            "is-dict" => {
+                if args.len() != 1 {
+                    return Err(InterpreterError::runtime_error(
+                        "is-dict requires 1 argument".to_string(),
+                        None,
+                    ));
+                }
+                let value = self.eval_expr(&args[0])?;
+                Ok(Value::Bool(matches!(value, Value::Dict(_))))
+            }
+            "is-null" => {
+                if args.len() != 1 {
+                    return Err(InterpreterError::runtime_error(
+                        "is-null requires 1 argument".to_string(),
+                        None,
+                    ));
+                }
+                let value = self.eval_expr(&args[0])?;
+                Ok(Value::Bool(matches!(value, Value::Null)))
+            }
+            _ => Err(InterpreterError::runtime_error(
+                format!("Unknown function: {}", name),
+                None,
+            )),
         }
     }
 
