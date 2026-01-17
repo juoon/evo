@@ -389,6 +389,12 @@ match parser.parse(code) {
     - 逻辑函数：and、or、not
     - 工具函数：identity
     - 为未来高级函数（map、filter、reduce）预留接口
+15. ✅ ~~从诗歌理解到代码生成 - 完整的情感到代码映射~~ - 已完成
+    - 实现generate_code_from_poetry()方法
+    - 基于情感生成代码结构（思乡、宁静、孤独等）
+    - 基于主题生成函数定义
+    - 基于意象生成数据结构
+    - 增强诗歌理解的深度和代码生成能力
 
 ## 贡献 / Contributing
 

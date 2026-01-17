@@ -389,36 +389,203 @@ impl EvolutionEngine {
     fn generate_rules_from_poetry(&self, analysis: &crate::poetry::PoemAnalysis) -> Result<Vec<GrammarRule>, EvolutionError> {
         let mut rules = Vec::new();
 
-        // 基于情感生成规则（简化示例） / Generate rules based on emotion (simplified example)
+        // 基于情感生成规则 / Generate rules based on emotion
         let emotion_name = format!("{:?}", analysis.emotion_analysis.primary_emotion).to_lowercase();
         
-        // 如果主要情感是思乡，可以生成相关的语法规则 / If primary emotion is nostalgia, generate related syntax rules
-        if analysis.emotion_analysis.primary_emotion == crate::poetry::emotion::Emotion::Nostalgia {
-            // 创建一个简化规则示例 / Create a simplified rule example
-            let rule = GrammarRule::new(
-                format!("poetry_emotion_{}", emotion_name),
-                Pattern {
-                    elements: vec![PatternElement::NaturalLang("思乡".to_string())],
-                    variadic: false,
-                },
-                Production {
-                    target: GrammarElement::Atom("nostalgia".to_string()),
-                    transform: Vec::new(),
-                    conditions: Vec::new(),
-                },
-                RuleMetadata {
-                    version: "0.1.0".to_string(),
-                    defined_by: DefinitionMethod::Evolutionary,
-                    stability: Stability::Experimental,
-                    description: format!("Generated from poetry understanding: {}", emotion_name),
-                    examples: vec!["思乡".to_string()],
-                    natural_lang_synonyms: vec!["思乡".to_string(), "怀念".to_string(), "思念".to_string()],
-                },
-            );
-            rules.push(rule);
+        // 为每种情感生成对应的语法规则 / Generate corresponding syntax rules for each emotion
+        match analysis.emotion_analysis.primary_emotion {
+            crate::poetry::emotion::Emotion::Nostalgia => {
+                // 思乡情感 -> 生成思念相关的代码结构 / Nostalgia emotion -> generate code structures related to missing
+                let rule = GrammarRule::new(
+                    format!("poetry_emotion_{}", emotion_name),
+                    Pattern {
+                        elements: vec![PatternElement::NaturalLang("思乡".to_string())],
+                        variadic: false,
+                    },
+                    Production {
+                        target: GrammarElement::List(vec![
+                            GrammarElement::Atom("def".to_string()),
+                            GrammarElement::Atom("nostalgia".to_string()),
+                            GrammarElement::List(vec![]),
+                            GrammarElement::Expr(Box::new(crate::grammar::core::Expr::Literal(
+                                crate::grammar::core::Literal::String("思念故乡".to_string())
+                            ))),
+                        ]),
+                        transform: Vec::new(),
+                        conditions: Vec::new(),
+                    },
+                    RuleMetadata {
+                        version: "0.1.0".to_string(),
+                        defined_by: DefinitionMethod::Evolutionary,
+                        stability: Stability::Experimental,
+                        description: format!("Generated from poetry understanding: {}", emotion_name),
+                        examples: vec!["思乡".to_string()],
+                        natural_lang_synonyms: vec!["思乡".to_string(), "怀念".to_string(), "思念".to_string()],
+                    },
+                );
+                rules.push(rule);
+            }
+            crate::poetry::emotion::Emotion::Tranquility => {
+                // 宁静情感 -> 生成平静相关的代码结构 / Tranquility emotion -> generate code structures related to peace
+                let rule = GrammarRule::new(
+                    format!("poetry_emotion_{}", emotion_name),
+                    Pattern {
+                        elements: vec![PatternElement::NaturalLang("宁静".to_string())],
+                        variadic: false,
+                    },
+                    Production {
+                        target: GrammarElement::List(vec![
+                            GrammarElement::Atom("def".to_string()),
+                            GrammarElement::Atom("tranquility".to_string()),
+                            GrammarElement::List(vec![]),
+                            GrammarElement::Expr(Box::new(crate::grammar::core::Expr::Literal(
+                                crate::grammar::core::Literal::String("内心平静".to_string())
+                            ))),
+                        ]),
+                        transform: Vec::new(),
+                        conditions: Vec::new(),
+                    },
+                    RuleMetadata {
+                        version: "0.1.0".to_string(),
+                        defined_by: DefinitionMethod::Evolutionary,
+                        stability: Stability::Experimental,
+                        description: format!("Generated from poetry understanding: {}", emotion_name),
+                        examples: vec!["宁静".to_string()],
+                        natural_lang_synonyms: vec!["宁静".to_string(), "安静".to_string(), "平和".to_string()],
+                    },
+                );
+                rules.push(rule);
+            }
+            _ => {}
+        }
+
+        // 基于主题生成规则 / Generate rules based on themes
+        for theme in &analysis.themes {
+            if theme.confidence > 0.7 {
+                let rule = GrammarRule::new(
+                    format!("poetry_theme_{}", theme.name),
+                    Pattern {
+                        elements: vec![PatternElement::NaturalLang(theme.name.clone())],
+                        variadic: false,
+                    },
+                    Production {
+                        target: GrammarElement::List(vec![
+                            GrammarElement::Atom("def".to_string()),
+                            GrammarElement::Atom(theme.name.to_lowercase()),
+                            GrammarElement::List(vec![]),
+                            GrammarElement::Expr(Box::new(crate::grammar::core::Expr::Literal(
+                                crate::grammar::core::Literal::String(theme.description.clone())
+                            ))),
+                        ]),
+                        transform: Vec::new(),
+                        conditions: Vec::new(),
+                    },
+                    RuleMetadata {
+                        version: "0.1.0".to_string(),
+                        defined_by: DefinitionMethod::Evolutionary,
+                        stability: Stability::Experimental,
+                        description: format!("Generated from poetry theme: {}", theme.name),
+                        examples: vec![theme.name.clone()],
+                        natural_lang_synonyms: vec![theme.name.clone()],
+                    },
+                );
+                rules.push(rule);
+            }
+        }
+
+        // 基于意象生成代码结构 / Generate code structures based on imagery
+        for img in &analysis.imagery {
+            if img.frequency > 1 {
+                // 高频意象 -> 生成对应的数据结构 / High-frequency imagery -> generate corresponding data structures
+                let rule = GrammarRule::new(
+                    format!("poetry_imagery_{}", img.element),
+                    Pattern {
+                        elements: vec![PatternElement::NaturalLang(img.element.clone())],
+                        variadic: false,
+                    },
+                    Production {
+                        target: GrammarElement::List(vec![
+                            GrammarElement::Atom("dict".to_string()),
+                            GrammarElement::Atom("\"element\"".to_string()),
+                            GrammarElement::Expr(Box::new(crate::grammar::core::Expr::Literal(
+                                crate::grammar::core::Literal::String(img.element.clone())
+                            ))),
+                            GrammarElement::Atom("\"meaning\"".to_string()),
+                            GrammarElement::Expr(Box::new(crate::grammar::core::Expr::Literal(
+                                crate::grammar::core::Literal::String(img.meaning.clone())
+                            ))),
+                        ]),
+                        transform: Vec::new(),
+                        conditions: Vec::new(),
+                    },
+                    RuleMetadata {
+                        version: "0.1.0".to_string(),
+                        defined_by: DefinitionMethod::Evolutionary,
+                        stability: Stability::Experimental,
+                        description: format!("Generated from poetry imagery: {}", img.element),
+                        examples: vec![img.element.clone()],
+                        natural_lang_synonyms: vec![img.element.clone()],
+                    },
+                );
+                rules.push(rule);
+            }
         }
 
         Ok(rules)
+    }
+
+    /// 从诗歌理解生成可执行代码 / Generate executable code from poetry understanding
+    pub fn generate_code_from_poetry(&self, poem: &str) -> Result<String, EvolutionError> {
+        // 解析诗歌 / Parse poetry
+        let analysis = self.poetry_parser.parse(poem).map_err(|e| {
+            EvolutionError::IntegrationFailed(format!("Failed to parse poetry: {:?}", e))
+        })?;
+
+        // 生成代码片段 / Generate code snippets
+        let mut code_parts = Vec::new();
+
+        // 基于情感生成代码 / Generate code based on emotion
+        let emotion_code = match analysis.emotion_analysis.primary_emotion {
+            crate::poetry::emotion::Emotion::Nostalgia => {
+                format!("(def nostalgia () \"思念故乡的情感\")")
+            }
+            crate::poetry::emotion::Emotion::Tranquility => {
+                format!("(def tranquility () \"夜晚的宁静，内心的平和\")")
+            }
+            crate::poetry::emotion::Emotion::Loneliness => {
+                format!("(def loneliness () \"孤独感，缺少陪伴\")")
+            }
+            _ => String::new(),
+        };
+        if !emotion_code.is_empty() {
+            code_parts.push(emotion_code);
+        }
+
+        // 基于主题生成代码 / Generate code based on themes
+        for theme in &analysis.themes {
+            if theme.confidence > 0.7 {
+                code_parts.push(format!(
+                    "(def {} () \"{}\")",
+                    theme.name.to_lowercase(),
+                    theme.description
+                ));
+            }
+        }
+
+        // 基于意象生成数据结构 / Generate data structures based on imagery
+        for img in &analysis.imagery {
+            if img.frequency > 0 {
+                code_parts.push(format!(
+                    "(let {} (dict \"element\" \"{}\" \"meaning\" \"{}\" \"frequency\" {}))",
+                    img.element.to_lowercase(),
+                    img.element,
+                    img.meaning,
+                    img.frequency
+                ));
+            }
+        }
+
+        Ok(code_parts.join("\n"))
     }
 
     /// 获取进化历史 / Get evolution history

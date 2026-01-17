@@ -257,6 +257,32 @@ fn demonstrate_poetry_understanding() {
                     img.element, img.meaning, img.frequency
                 );
             }
+
+            // 演示从诗歌生成代码 / Demonstrate code generation from poetry
+            println!("\n从诗歌生成代码 / Code Generation from Poetry:");
+            let mut engine = EvolutionEngine::new();
+            match engine.generate_code_from_poetry(poem) {
+                Ok(code) => {
+                    println!("生成的代码 / Generated Code:");
+                    println!("{}", code);
+                    
+                    // 尝试执行生成的代码 / Try to execute generated code
+                    let code_parser = AdaptiveParser::new(true);
+                    let mut code_interpreter = Interpreter::new();
+                    match code_parser.parse(&code) {
+                        Ok(ast) => {
+                            match code_interpreter.execute(&ast) {
+                                Ok(_) => println!("代码执行成功 / Code executed successfully"),
+                                Err(e) => println!("代码执行错误 / Code execution error: {:?}", e),
+                            }
+                        }
+                        Err(e) => println!("代码解析错误 / Code parse error: {:?}", e),
+                    }
+                }
+                Err(e) => {
+                    println!("生成代码错误 / Code generation error: {:?}", e);
+                }
+            }
         }
         Err(e) => {
             println!("解析错误 / Parse Error: {:?}", e);
