@@ -98,6 +98,9 @@ fn main() {
 
     // 演示代码相似度检测 / Demonstrate code similarity detection
     demonstrate_similarity_detection();
+
+    // 演示代码依赖分析 / Demonstrate code dependency analysis
+    demonstrate_dependency_analysis();
 }
 
 /// 演示解释器功能 / Demonstrate interpreter functionality
@@ -2509,4 +2512,97 @@ fn demonstrate_similarity_detection() {
         "\n提示 / Note: 代码相似度检测能够自动检测代码重复和相似模式，帮助识别重构机会，提高代码质量"
     );
     println!("Code similarity detection can automatically detect code duplication and similar patterns, helping identify refactoring opportunities and improve code quality");
+}
+
+/// 演示代码依赖分析功能 / Demonstrate code dependency analysis functionality
+fn demonstrate_dependency_analysis() {
+    println!("\n27. 代码依赖分析演示 / Code Dependency Analysis Demo");
+    println!("--------------------------------------------");
+
+    use crate::evolution::{CodeAnalyzer, DependencyAnalyzer};
+    use crate::parser::AdaptiveParser;
+
+    let parser = AdaptiveParser::new(true);
+    let analyzer = CodeAnalyzer::new();
+    let mut dependency_analyzer = DependencyAnalyzer::new();
+
+    // 测试代码（包含依赖关系）/ Test code (with dependencies)
+    let test_code = r#"
+        (def add (x y) (+ x y))
+        (def multiply (x y) (* x y))
+        (def calculate (a b) (multiply (add a b) 2))
+        (def compute (x) (calculate x 5))
+    "#;
+
+    println!("测试代码 / Test Code:\n{}", test_code);
+
+    match parser.parse(test_code) {
+        Ok(ast) => {
+            // 分析代码 / Analyze code
+            let analysis = analyzer.analyze(&ast);
+
+            // 依赖分析 / Dependency analysis
+            println!("\n进行依赖分析 / Performing Dependency Analysis:");
+            let dependency = dependency_analyzer.analyze_dependencies(&ast, &analysis);
+
+            println!("\n依赖统计 / Dependency Statistics:");
+            println!("  总依赖数 / Total Dependencies: {}", dependency.statistics.total_dependencies);
+            println!("  函数依赖数 / Function Dependencies: {}", dependency.statistics.function_dependencies);
+            println!("  变量依赖数 / Variable Dependencies: {}", dependency.statistics.variable_dependencies);
+            println!("  模块依赖数 / Module Dependencies: {}", dependency.statistics.module_dependencies);
+            println!("  最大依赖深度 / Max Depth: {}", dependency.statistics.max_depth);
+            println!("  循环依赖数 / Circular Dependencies: {}", dependency.statistics.circular_count);
+
+            if !dependency.dependencies.is_empty() {
+                println!("\n依赖关系 / Dependencies:");
+                for (i, dep) in dependency.dependencies.iter().take(10).enumerate() {
+                    println!("  {}. {} -> {} ({:?})", i + 1, dep.dependent, dep.dependency, dep.dependency_type);
+                }
+            }
+
+            if !dependency.circular_dependencies.is_empty() {
+                println!("\n循环依赖 / Circular Dependencies:");
+                for (i, circular) in dependency.circular_dependencies.iter().enumerate() {
+                    println!("  {}. {:?} - {}", i + 1, circular.severity, circular.description);
+                    println!("     路径 / Path: {}", circular.path.join(" -> "));
+                }
+            }
+
+            if !dependency.suggestions.is_empty() {
+                println!("\n优化建议 / Optimization Suggestions:");
+                for (i, suggestion) in dependency.suggestions.iter().enumerate() {
+                    println!("  {}. [{}] {}", i + 1, suggestion.suggestion_type, suggestion.content);
+                    println!("     优先级 / Priority: {}", suggestion.priority);
+                }
+            }
+        }
+        Err(e) => {
+            println!("解析错误 / Parse error: {:?}", e);
+        }
+    }
+
+    // 显示分析历史 / Show analysis history
+    println!("\n依赖分析历史 / Dependency Analysis History:");
+    let history = dependency_analyzer.get_analysis_history();
+    if history.is_empty() {
+        println!("  暂无历史数据 / No history data yet");
+    } else {
+        println!("  记录数 / Records: {}", history.len());
+        if let Some(latest) = history.last() {
+            println!("  最新分析 / Latest Analysis:");
+            println!("    依赖数 / Dependencies: {}", latest.dependencies.len());
+            println!("    循环依赖数 / Circular: {}", latest.circular_dependencies.len());
+            println!("    时间 / Time: {}", latest.timestamp.format("%Y-%m-%d %H:%M:%S"));
+        }
+    }
+
+    // 显示依赖统计 / Show dependency statistics
+    println!("\n依赖统计 / Dependency Statistics:");
+    let stats = dependency_analyzer.get_dependency_statistics();
+    println!("  {}", serde_json::to_string_pretty(&stats).unwrap_or_default());
+
+    println!(
+        "\n提示 / Note: 代码依赖分析能够自动分析代码依赖关系，检测循环依赖，帮助优化代码结构"
+    );
+    println!("Code dependency analysis can automatically analyze code dependencies, detect circular dependencies, and help optimize code structure");
 }
