@@ -50,6 +50,9 @@ fn main() {
 
     // 演示标准库 / Demonstrate standard library
     demonstrate_std_library();
+
+    // 演示代码解释 / Demonstrate code explanation
+    demonstrate_code_explanation();
 }
 
 /// 演示解释器功能 / Demonstrate interpreter functionality
@@ -969,4 +972,45 @@ fn demonstrate_std_library() {
 
     println!("\n提示 / Note: 标准库提供了map、filter、reduce等高级列表操作");
     println!("Standard library provides map, filter, reduce and other advanced list operations");
+}
+
+/// 演示代码解释功能 / Demonstrate code explanation functionality
+fn demonstrate_code_explanation() {
+    println!("\n11. 代码解释演示 / Code Explanation Demo");
+    println!("--------------------------------------------");
+
+    use crate::parser::{AdaptiveParser, CodeExplainer, Language};
+
+    let parser = AdaptiveParser::new(true);
+    let explainer_chinese = CodeExplainer::new(Language::Chinese);
+    let explainer_english = CodeExplainer::new(Language::English);
+
+    let test_cases = vec![
+        ("(let x 5)", "变量定义 / Variable definition"),
+        ("(def add (x y) (+ x y))", "函数定义 / Function definition"),
+        ("(if (> x 3) 10 20)", "条件表达式 / Conditional expression"),
+        ("(+ 3 7)", "二元运算 / Binary operation"),
+        ("(list 1 2 3)", "列表字面量 / List literal"),
+    ];
+
+    for (code, description) in test_cases {
+        println!("\n测试 / Test: {}", description);
+        println!("代码 / Code: {}", code);
+        
+        match parser.parse(code) {
+            Ok(ast) => {
+                println!("\n中文解释 / Chinese Explanation:");
+                println!("  {}", explainer_chinese.explain_ast(&ast));
+                
+                println!("\n英文解释 / English Explanation:");
+                println!("  {}", explainer_english.explain_ast(&ast));
+            }
+            Err(e) => {
+                println!("解析错误 / Parse error: {:?}", e);
+            }
+        }
+    }
+
+    println!("\n提示 / Note: 代码解释功能帮助理解代码含义，增强代码可读性");
+    println!("Code explanation helps understand code meaning and enhances code readability");
 }
