@@ -84,6 +84,11 @@
 - ✅ **数据验证函数** - `std.validate-range`, `std.validate-not-null`, `std.validate-not-empty`, `std.validate-condition`, `std.validate-in-list`
 - ✅ **高级列表操作** - `std.list-slice-range`, `std.list-insert`, `std.list-remove-at`, `std.list-remove`, `std.list-indices`, `std.list-chunk`, `std.list-rotate`, `std.list-windows`, `std.list-combinations`, `std.list-permutations`
 - ✅ **工具函数** - `std.identity`, `std.repeat`, `std.when`, `std.unless`, `std.if_else`, `std.cond`, `std.null?`, `std.not_null?`, `std.default`, `std.safe_get`, `std.coalesce`, `std.clamp`, `std.in_range?`, `std.repeat_list`, `std.flatten`, `std.zip`, `std.unzip`, `std.string_len`
+- ✅ **字符串处理函数** - `std.string-len`, `std.string-split`, `std.string-join`, `std.string-trim`, `std.string-replace`, `std.string-substring`, `std.string-upper`, `std.string-lower`, `std.string-starts-with`, `std.string-ends-with`, `std.string-contains`
+  - 基础操作：string-len（长度）、string-split（分割）、string-join（连接）、string-trim（修剪）
+  - 转换操作：string-upper（转大写）、string-lower（转小写）- 解释器内置实现
+  - 查找操作：string-substring（子串）- 解释器内置实现；string-starts-with（前缀检查）、string-ends-with（后缀检查）、string-contains（包含检查）- 用Evo-lang自举实现
+  - 替换操作：string-replace（替换）
 - ✅ **类型检查函数** - `std.number?`, `std.int?`, `std.float?`, `std.bool?`, `std.list?`
 - ✅ **高阶函数** - `std.map`, `std.filter`, `std.reduce`
 

@@ -670,18 +670,68 @@
 ; 字符串工具函数（封装内置函数） / String utility functions (wrap built-in functions)
 ; ========================================
 
-; 注意：以下函数需要调用解释器内置函数，这里提供标准库接口
-; Note: The following functions need to call built-in interpreter functions, here we provide standard library interface
-; 这些是占位函数，实际执行时会调用解释器的内置实现
-; These are placeholder functions, actual execution will call interpreter's built-in implementation
+; 注意：以下函数调用解释器内置函数，这里提供标准库接口
+; Note: The following functions call built-in interpreter functions, here we provide standard library interface
 
 ; 字符串长度（使用内置函数） / String length (use built-in function)
 (def string-len (str)
   (string-length str))
 
-; 字符串连接（简化实现，需要内置支持） / String concatenation (simplified, needs built-in support)
-; 注意：Evo-lang可能需要内置函数支持字符串操作
-; Note: Evo-lang may need built-in function support for string operations
+; 字符串分割 / String split
+(def string-split (str delimiter)
+  (string-split str delimiter))
+
+; 字符串连接 / String join
+(def string-join (lst delimiter)
+  (string-join lst delimiter))
+
+; 字符串去除空白 / String trim
+(def string-trim (str)
+  (string-trim str))
+
+; 字符串替换 / String replace
+(def string-replace (str old new)
+  (string-replace str old new))
+
+; 字符串子串 / String substring
+(def string-substring (str start end)
+  (string-substring str start end))
+
+; 字符串转大写 / String to uppercase
+(def string-upper (str)
+  (string-upper str))
+
+; 字符串转小写 / String to lowercase
+(def string-lower (str)
+  (string-lower str))
+
+; 字符串前缀检查 / String starts with (self-hosted implementation)
+(def string-starts-with (str prefix)
+  (let prefix-len (string-length prefix)
+    (let str-len (string-length str)
+      (if (< str-len prefix-len)
+        false
+        (let str-prefix (string-substring str 0 prefix-len)
+          (= str-prefix prefix))))))
+
+; 字符串后缀检查 / String ends with (self-hosted implementation)
+(def string-ends-with (str suffix)
+  (let str-len (string-length str)
+    (let suffix-len (string-length suffix)
+      (if (< str-len suffix-len)
+        false
+        (let str-suffix (string-substring str (- str-len suffix-len) str-len)
+          (= str-suffix suffix))))))
+
+; 字符串包含检查 / String contains (self-hosted implementation)
+; 使用 split 实现：如果包含子串，split 会返回多个部分
+(def string-contains (str substring)
+  (let parts (string-split str substring)
+    (> (list-length parts) 1)))
+
+; 字符串连接（使用+操作符） / String concatenation (using + operator)
+; 注意：可以直接使用 + 操作符连接字符串
+; Note: Can directly use + operator to concatenate strings
 
 ; ========================================
 ; 扩展字典工具函数 / Extended dictionary utility functions

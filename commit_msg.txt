@@ -1,0 +1,25 @@
+V1.0.63 扩展字符串处理功能 - 添加完整的字符串操作函数集（遵循自举原则）
+
+主要变更：
+- 在解释器中新增3个字符串操作内置函数（仅保留无法自举的底层操作）：
+  - string-substring（子串提取）- 需要字符索引访问
+  - string-upper（转大写）- 需要字符级别转换
+  - string-lower（转小写）- 需要字符级别转换
+- 在标准库std.evo中用Evo-lang自举实现3个字符串检查函数：
+  - string-starts-with（前缀检查）- 使用string-substring和=实现
+  - string-ends-with（后缀检查）- 使用string-substring和=实现
+  - string-contains（包含检查）- 使用string-split和列表操作实现
+- 在标准库std.evo中封装所有字符串处理函数，提供完整的字符串操作API：
+  - 基础操作：string-len、string-split、string-join、string-trim
+  - 转换操作：string-upper、string-lower
+  - 查找操作：string-substring、string-starts-with、string-ends-with、string-contains
+  - 替换操作：string-replace
+
+- 更新CHANGELOG.md，记录新增功能（任务41）
+- 更新FEATURES.md，列出所有字符串处理函数
+- 更新evolution-status.md，反映标准库函数数量增长（90+ → 100+）
+
+影响范围：
+- 解释器功能增强：新增3个字符串操作内置函数（仅保留无法自举的底层操作）
+- 标准库功能增强：用Evo-lang自举实现字符串检查函数，遵循自举原则，提升自举能力
+- 开发效率提升：开发者可以使用完整的字符串处理工具集，简化字符串操作代码

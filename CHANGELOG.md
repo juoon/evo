@@ -226,6 +226,12 @@
     - 高级列表操作（10+个）：list-slice-range（范围切片）、list-insert（插入元素）、list-remove-at（删除指定位置）、list-remove（删除元素）、list-indices（查找所有索引）、list-chunk（分块）、list-rotate（轮换）、list-windows（滑动窗口）
     - 组合和排列函数（2个）：list-combinations（组合）、list-permutations（排列）
     - 大幅增强标准库：新增30+个函数，提供完整的字典处理、数据验证、高级列表操作能力
+41. ✅ ~~扩展字符串处理功能 - 添加完整的字符串操作函数集（遵循自举原则）~~ - 已完成
+    - 解释器新增内置函数（3个，仅保留无法自举的底层操作）：string-substring（子串提取，需要字符索引访问）、string-upper（转大写，需要字符级别转换）、string-lower（转小写，需要字符级别转换）
+    - 标准库自举实现（3个，用Evo-lang实现）：string-starts-with（前缀检查，使用string-substring和=实现）、string-ends-with（后缀检查，使用string-substring和=实现）、string-contains（包含检查，使用string-split和列表操作实现）
+    - 标准库字符串函数封装：在std.evo中封装所有字符串处理函数，包括string-split、string-join、string-trim、string-replace等
+    - 完整的字符串操作能力：提供分割、连接、修剪、替换、子串、大小写转换、前缀/后缀/包含检查等功能
+    - 遵循自举原则：仅在解释器中实现无法自举的底层操作，其他功能用Evo-lang实现，提升自举能力
 
 ## 计划中的功能 / Planned Features
 

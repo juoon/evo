@@ -1463,6 +1463,64 @@ impl Interpreter {
                     )),
                 }
             }
+            "string-substring" | "substring" => {
+                if args.len() != 3 {
+                    return Err(InterpreterError::runtime_error(
+                        "string-substring requires 3 arguments: string, start, end".to_string(),
+                        None,
+                    ));
+                }
+                let string = self.eval_expr(&args[0])?;
+                let start = self.eval_expr(&args[1])?;
+                let end = self.eval_expr(&args[2])?;
+                match (string, start, end) {
+                    (Value::String(s), Value::Int(st), Value::Int(e)) => {
+                        let start_idx = (st as usize).min(s.len());
+                        let end_idx = (e as usize).min(s.len());
+                        if start_idx > end_idx {
+                            Ok(Value::String(String::new()))
+                        } else {
+                            Ok(Value::String(s[start_idx..end_idx].to_string()))
+                        }
+                    }
+                    _ => Err(InterpreterError::type_error(
+                        "string-substring requires a string and two integers".to_string(),
+                        None,
+                    )),
+                }
+            }
+            "string-upper" | "upper" => {
+                if args.len() != 1 {
+                    return Err(InterpreterError::runtime_error(
+                        "string-upper requires 1 argument: string".to_string(),
+                        None,
+                    ));
+                }
+                let string = self.eval_expr(&args[0])?;
+                match string {
+                    Value::String(s) => Ok(Value::String(s.to_uppercase())),
+                    _ => Err(InterpreterError::type_error(
+                        "string-upper requires a string".to_string(),
+                        None,
+                    )),
+                }
+            }
+            "string-lower" | "lower" => {
+                if args.len() != 1 {
+                    return Err(InterpreterError::runtime_error(
+                        "string-lower requires 1 argument: string".to_string(),
+                        None,
+                    ));
+                }
+                let string = self.eval_expr(&args[0])?;
+                match string {
+                    Value::String(s) => Ok(Value::String(s.to_lowercase())),
+                    _ => Err(InterpreterError::type_error(
+                        "string-lower requires a string".to_string(),
+                        None,
+                    )),
+                }
+            }
             // 类型转换 / Type conversion
             "to-string" => {
                 if args.len() != 1 {
