@@ -201,10 +201,13 @@ impl Tokenizer {
                     '\\' => string.push('\\'),
                     '"' => string.push('"'),
                     ch => {
-                        return Err(ParseError::SyntaxError(format!(
-                            "Invalid escape sequence '\\{}' at line {}, column {}",
-                            ch, self.line, self.column
-                        )))
+                        return Err(ParseError::syntax_error(
+                            format!(
+                                "Invalid escape sequence '\\{}' at line {}, column {}",
+                                ch, self.line, self.column
+                            ),
+                            Some(Location::new(self.line, self.column)),
+                        ))
                     }
                 }
             } else {
@@ -551,8 +554,9 @@ impl ParserState {
         while !self.check(&Token::RightParen) {
             // 每个case是一个列表: (pattern expr)
             if !self.check(&Token::LeftParen) {
-                return Err(ParseError::SyntaxError(
+                return Err(ParseError::syntax_error(
                     "Expected '(' for match case".to_string(),
+                    None,
                 ));
             }
             self.consume(&Token::LeftParen, "Expected '(' for match case")?;
@@ -633,6 +637,23 @@ impl ParserState {
         })))
     }
 
+    fn parse_try(&mut self) -> Result<GrammarElement, ParseError> {
+        // (try try_body catch_body)
+        let try_body_elem = self.parse_element()?;
+        let catch_body_elem = self.parse_element()?;
+
+        self.consume(&Token::RightParen, "Expected ')' after try expression")?;
+
+        let try_body_expr = self.element_to_expr(&try_body_elem)?;
+        let catch_body_expr = self.element_to_expr(&catch_body_elem)?;
+
+        Ok(GrammarElement::Expr(Box::new(Expr::Try {
+            try_body: Box::new(try_body_expr),
+            catch_var: None, // 暂时不支持 catch 变量名
+            catch_body: Box::new(catch_body_expr),
+        })))
+    }
+
     fn element_to_pattern(&self, elem: &GrammarElement) -> Result<Pattern, ParseError> {
         use crate::grammar::core::Pattern::*;
         match elem {
@@ -646,8 +667,9 @@ impl ParserState {
             GrammarElement::Expr(boxed_expr) => match boxed_expr.as_ref() {
                 Expr::Literal(lit) => Ok(Literal(lit.clone())),
                 Expr::Var(name) => Ok(Var(name.clone())),
-                _ => Err(ParseError::SyntaxError(
+                _ => Err(ParseError::syntax_error(
                     "Invalid pattern in match expression".to_string(),
+                    None,
                 )),
             },
             GrammarElement::List(list) => {
@@ -657,8 +679,9 @@ impl ParserState {
                 }
                 Ok(List(patterns))
             }
-            _ => Err(ParseError::SyntaxError(
+            _ => Err(ParseError::syntax_error(
                 "Invalid pattern in match expression".to_string(),
+                None,
             )),
         }
     }
@@ -690,8 +713,9 @@ impl ParserState {
             let value_elem = if !self.check(&Token::RightParen) {
                 self.parse_element()?
             } else {
-                return Err(ParseError::SyntaxError(
+                return Err(ParseError::syntax_error(
                     "Dictionary requires key-value pairs".to_string(),
+                    None,
                 ));
             };
 
@@ -704,14 +728,16 @@ impl ParserState {
                     } else if let Expr::Var(s) = boxed_expr.as_ref() {
                         s.clone()
                     } else {
-                        return Err(ParseError::SyntaxError(
+                        return Err(ParseError::syntax_error(
                             "Dictionary key must be a string or identifier".to_string(),
+                            None,
                         ));
                     }
                 }
                 _ => {
-                    return Err(ParseError::SyntaxError(
+                    return Err(ParseError::syntax_error(
                         "Dictionary key must be a string or identifier".to_string(),
+                        None,
                     ));
                 }
             };
@@ -737,7 +763,7 @@ impl ParserState {
             Token::String(s) => Ok(GrammarElement::Expr(Box::new(Expr::Literal(
                 Literal::String(s),
             )))),
-            _ => Err(ParseError::SyntaxError("Expected string".to_string())),
+            _ => Err(ParseError::syntax_error("Expected string".to_string(), None)),
         }
     }
 
@@ -748,14 +774,14 @@ impl ParserState {
                 if n.contains('.') {
                     n.parse::<f64>()
                         .map(|f| GrammarElement::Expr(Box::new(Expr::Literal(Literal::Float(f)))))
-                        .map_err(|_| ParseError::SyntaxError(format!("Invalid float: {}", n)))
+                        .map_err(|_| ParseError::syntax_error(format!("Invalid float: {}", n), None))
                 } else {
                     n.parse::<i64>()
                         .map(|i| GrammarElement::Expr(Box::new(Expr::Literal(Literal::Int(i)))))
-                        .map_err(|_| ParseError::SyntaxError(format!("Invalid integer: {}", n)))
+                        .map_err(|_| ParseError::syntax_error(format!("Invalid integer: {}", n), None))
                 }
             }
-            _ => Err(ParseError::SyntaxError("Expected number".to_string())),
+            _ => Err(ParseError::syntax_error("Expected number".to_string(), None)),
         }
     }
 
@@ -783,7 +809,7 @@ impl ParserState {
                     }
                 }
             }
-            _ => Err(ParseError::SyntaxError("Expected symbol".to_string())),
+            _ => Err(ParseError::syntax_error("Expected symbol".to_string(), None)),
         }
     }
 
@@ -809,8 +835,9 @@ impl ParserState {
             GrammarElement::Atom(s) => {
                 // 尝试解析为变量或操作符
                 if s.starts_with("op:") {
-                    Err(ParseError::SyntaxError(
+                    Err(ParseError::syntax_error(
                         "Operator in wrong context".to_string(),
+                        None,
                     ))
                 } else {
                     Ok(Expr::Var(s.clone()))
@@ -827,14 +854,16 @@ impl ParserState {
                             if let Expr::Var(s) = boxed_expr.as_ref() {
                                 s.clone()
                             } else {
-                                return Err(ParseError::SyntaxError(
+                                return Err(ParseError::syntax_error(
                                     "Function name must be an atom or variable".to_string(),
+                                    None,
                                 ));
                             }
                         }
                         _ => {
-                            return Err(ParseError::SyntaxError(
+                            return Err(ParseError::syntax_error(
                                 "Function name must be an atom or variable".to_string(),
+                                None,
                             ));
                         }
                     };
@@ -846,8 +875,9 @@ impl ParserState {
                     Ok(Expr::Call(func_name, args))
                 }
             }
-            GrammarElement::NaturalLang(_) => Err(ParseError::SyntaxError(
+            GrammarElement::NaturalLang(_) => Err(ParseError::syntax_error(
                 "Natural language not supported in expressions".to_string(),
+                None,
             )),
         }
     }
@@ -900,8 +930,6 @@ impl ParserState {
     }
 }
 
-/// 解析错误 / Parse error
-#[derive(Debug, Clone, PartialEq, Eq)]
 /// 源代码位置 / Source code location
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Location {

@@ -45,6 +45,10 @@ impl CodeExplainer {
             Expr::If(cond, then_expr, else_expr) => {
                 self.explain_conditional(cond, then_expr, else_expr)
             }
+            Expr::Match(_, _) => "Match expression".to_string(),
+            Expr::For { .. } => "For loop".to_string(),
+            Expr::While { .. } => "While loop".to_string(),
+            Expr::Try { .. } => "Try-catch expression".to_string(),
         }
     }
 

@@ -129,20 +129,43 @@ impl EvolutionTracker {
 
     /// 获取事件的祖先链 / Get ancestor chain of an event
     pub fn get_ancestors(&self, event_id: Uuid) -> Vec<Uuid> {
+        self.get_ancestors_recursive(event_id, 0, &mut std::collections::HashSet::new(), 100)
+    }
+
+    /// 递归获取祖先链（带深度限制和循环检测）/ Recursively get ancestors (with depth limit and cycle detection)
+    fn get_ancestors_recursive(
+        &self,
+        event_id: Uuid,
+        current_depth: usize,
+        visited: &mut std::collections::HashSet<Uuid>,
+        max_depth: usize,
+    ) -> Vec<Uuid> {
+        // 防止无限递归：检查深度和循环 / Prevent infinite recursion: check depth and cycles
+        if current_depth >= max_depth || visited.contains(&event_id) {
+            return Vec::new();
+        }
+
+        visited.insert(event_id);
         let mut ancestors = Vec::new();
 
         // 在事件日志中查找父事件 / Find parent events in event log
         if let Some(event) = self.event_log.iter().find(|e| e.id == event_id) {
             let parents = self.find_parent_events(event);
             for parent_id in parents {
-                if !ancestors.contains(&parent_id) {
+                if !ancestors.contains(&parent_id) && !visited.contains(&parent_id) {
                     ancestors.push(parent_id);
                     // 递归查找祖先 / Recursively find ancestors
-                    ancestors.extend(self.get_ancestors(parent_id));
+                    ancestors.extend(self.get_ancestors_recursive(
+                        parent_id,
+                        current_depth + 1,
+                        visited,
+                        max_depth,
+                    ));
                 }
             }
         }
 
+        visited.remove(&event_id);
         ancestors
     }
 
@@ -309,6 +332,27 @@ impl EvolutionGenealogy {
 
     /// 获取谱系树结构 / Get genealogy tree structure
     pub fn get_tree_structure(&self, root_id: Uuid) -> serde_json::Value {
+        self.get_tree_structure_recursive(root_id, 0, &mut std::collections::HashSet::new(), 100)
+    }
+
+    /// 递归获取谱系树结构（带深度限制和循环检测）/ Recursively get tree structure (with depth limit and cycle detection)
+    fn get_tree_structure_recursive(
+        &self,
+        root_id: Uuid,
+        current_depth: usize,
+        visited: &mut std::collections::HashSet<Uuid>,
+        max_depth: usize,
+    ) -> serde_json::Value {
+        // 防止无限递归：检查深度和循环 / Prevent infinite recursion: check depth and cycles
+        if current_depth >= max_depth || visited.contains(&root_id) {
+            return serde_json::json!({
+                "event_id": root_id.to_string(),
+                "children": [],
+                "truncated": true
+            });
+        }
+
+        visited.insert(root_id);
         let mut tree = serde_json::json!({
             "event_id": root_id.to_string(),
             "children": []
@@ -317,9 +361,15 @@ impl EvolutionGenealogy {
         let children = self.get_children(root_id);
         let mut children_array = Vec::new();
         for child_id in children {
-            children_array.push(self.get_tree_structure(child_id));
+            children_array.push(self.get_tree_structure_recursive(
+                child_id,
+                current_depth + 1,
+                visited,
+                max_depth,
+            ));
         }
         tree["children"] = serde_json::json!(children_array);
+        visited.remove(&root_id);
 
         tree
     }

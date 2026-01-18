@@ -186,10 +186,10 @@ impl ErrorRecoverer {
     /// 提取错误类型 / Extract error type
     fn extract_error_type(&self, error: &InterpreterError) -> String {
         match error {
-            InterpreterError::UndefinedVariable(_) => "UndefinedVariable".to_string(),
-            InterpreterError::TypeError(_) => "TypeError".to_string(),
-            InterpreterError::DivisionByZero => "DivisionByZero".to_string(),
-            InterpreterError::RuntimeError(_) => "RuntimeError".to_string(),
+            InterpreterError::UndefinedVariable { .. } => "UndefinedVariable".to_string(),
+            InterpreterError::TypeError { .. } => "TypeError".to_string(),
+            InterpreterError::DivisionByZero { .. } => "DivisionByZero".to_string(),
+            InterpreterError::RuntimeError { .. } => "RuntimeError".to_string(),
             _ => "UnknownError".to_string(),
         }
     }
@@ -197,13 +197,13 @@ impl ErrorRecoverer {
     /// 检查错误是否匹配规则 / Check if error matches rule
     fn matches_error(&self, error: &InterpreterError, rule: &FixRule) -> bool {
         match error {
-            InterpreterError::UndefinedVariable(_) => {
+            InterpreterError::UndefinedVariable { .. } => {
                 rule.error_pattern.contains("未定义") || rule.error_pattern.contains("变量")
             }
-            InterpreterError::TypeError(_) => {
+            InterpreterError::TypeError { .. } => {
                 rule.error_pattern.contains("类型") || rule.error_pattern.contains("Type")
             }
-            InterpreterError::DivisionByZero => {
+            InterpreterError::DivisionByZero { .. } => {
                 rule.error_pattern.contains("除零") || rule.error_pattern.contains("Division")
             }
             _ => false,

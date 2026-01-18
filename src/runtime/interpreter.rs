@@ -202,8 +202,9 @@ impl Interpreter {
                 }
             }
             _ => {
-                return Err(InterpreterError::RuntimeError(
+                return Err(InterpreterError::runtime_error(
                     "Function name must be an atom or variable".to_string(),
+                    None,
                 ))
             }
         };
@@ -224,8 +225,9 @@ impl Interpreter {
                             ))
                         }
                     }
-                    _ => Err(InterpreterError::RuntimeError(
+                    _ => Err(InterpreterError::runtime_error(
                         "Parameter must be an atom or variable".to_string(),
+                        None,
                     )),
                 })
                 .collect::<Result<Vec<_>, _>>()?,
@@ -256,8 +258,9 @@ impl Interpreter {
     /// 评估let绑定 / Evaluate let binding
     fn eval_let(&mut self, rest: &[GrammarElement]) -> Result<Value, InterpreterError> {
         if rest.len() < 3 {
-            return Err(InterpreterError::RuntimeError(
+            return Err(InterpreterError::runtime_error(
                 "Let requires: name, value, body".to_string(),
+                None,
             ));
         }
 
@@ -268,14 +271,16 @@ impl Interpreter {
                 if let Expr::Var(s) = boxed_expr.as_ref() {
                     s.clone()
                 } else {
-                    return Err(InterpreterError::RuntimeError(
+                    return Err(InterpreterError::runtime_error(
                         "Variable name must be an atom or variable".to_string(),
+                        None,
                     ));
                 }
             }
             _ => {
-                return Err(InterpreterError::RuntimeError(
+                return Err(InterpreterError::runtime_error(
                     "Variable name must be an atom or variable".to_string(),
+                    None,
                 ))
             }
         };
@@ -302,8 +307,9 @@ impl Interpreter {
     /// 评估if特殊形式 / Evaluate if special form
     fn eval_if_special(&mut self, rest: &[GrammarElement]) -> Result<Value, InterpreterError> {
         if rest.is_empty() {
-            return Err(InterpreterError::RuntimeError(
+            return Err(InterpreterError::runtime_error(
                 "If requires at least a condition".to_string(),
+                None,
             ));
         }
 
@@ -328,8 +334,9 @@ impl Interpreter {
     /// 语法: (lambda (params...) body)
     fn eval_lambda(&mut self, rest: &[GrammarElement]) -> Result<Value, InterpreterError> {
         if rest.len() < 2 {
-            return Err(InterpreterError::RuntimeError(
+            return Err(InterpreterError::runtime_error(
                 "Lambda requires: params and body".to_string(),
+                None,
             ));
         }
 
@@ -348,8 +355,9 @@ impl Interpreter {
                 .collect(),
             GrammarElement::Atom(single_param) => vec![single_param.clone()],
             _ => {
-                return Err(InterpreterError::RuntimeError(
+                return Err(InterpreterError::runtime_error(
                     "Lambda params must be a list of atoms".to_string(),
+                    None,
                 ))
             }
         };
@@ -624,7 +632,7 @@ impl Interpreter {
                     if let Some(old) = old_value {
                         self.environment.insert(var.clone(), old);
                     } else {
-                        self.environment.remove(&var);
+                        self.environment.remove(var.as_str());
                     }
 
                     Ok(result)
@@ -693,8 +701,9 @@ impl Interpreter {
                 result.extend_from_slice(b);
                 Ok(Value::List(result))
             }
-            _ => Err(InterpreterError::TypeError(
+            _ => Err(InterpreterError::type_error(
                 "Invalid types for addition".to_string(),
+                None,
             )),
         }
     }
@@ -704,8 +713,9 @@ impl Interpreter {
         match (left, right) {
             (Value::Int(a), Value::Int(b)) => Ok(Value::Int(a - b)),
             (Value::Float(a), Value::Float(b)) => Ok(Value::Float(a - b)),
-            _ => Err(InterpreterError::TypeError(
+            _ => Err(InterpreterError::type_error(
                 "Invalid types for subtraction".to_string(),
+                None,
             )),
         }
     }
@@ -715,8 +725,9 @@ impl Interpreter {
         match (left, right) {
             (Value::Int(a), Value::Int(b)) => Ok(Value::Int(a * b)),
             (Value::Float(a), Value::Float(b)) => Ok(Value::Float(a * b)),
-            _ => Err(InterpreterError::TypeError(
+            _ => Err(InterpreterError::type_error(
                 "Invalid types for multiplication".to_string(),
+                None,
             )),
         }
     }
@@ -787,10 +798,10 @@ impl Interpreter {
         args: &[Expr],
     ) -> Result<Value, InterpreterError> {
         if args.len() != 2 {
-            return Err(InterpreterError::RuntimeError(format!(
-                "Operator {} requires 2 arguments",
-                name
-            )));
+            return Err(InterpreterError::runtime_error(
+                format!("Operator {} requires 2 arguments", name),
+                None,
+            ));
         }
 
         let left = self.eval_expr(&args[0])?;
@@ -809,10 +820,10 @@ impl Interpreter {
             "<=" => BinOp::Le,
             ">=" => BinOp::Ge,
             _ => {
-                return Err(InterpreterError::RuntimeError(format!(
-                    "Unknown operator: {}",
-                    op_str
-                )))
+                return Err(InterpreterError::runtime_error(
+                    format!("Unknown operator: {}", op_str),
+                    None,
+                ))
             }
         };
 
@@ -827,11 +838,14 @@ impl Interpreter {
         args: &[Expr],
     ) -> Result<Value, InterpreterError> {
         if args.len() != params.len() {
-            return Err(InterpreterError::RuntimeError(format!(
-                "Lambda expects {} arguments, got {}",
-                params.len(),
-                args.len()
-            )));
+            return Err(InterpreterError::runtime_error(
+                format!(
+                    "Lambda expects {} arguments, got {}",
+                    params.len(),
+                    args.len()
+                ),
+                None,
+            ));
         }
 
         // 从注册表中获取Lambda函数体和捕获的环境
@@ -839,10 +853,10 @@ impl Interpreter {
             .lambda_registry
             .get(lambda_id)
             .ok_or_else(|| {
-                InterpreterError::RuntimeError(format!(
-                    "Lambda {} not found in registry",
-                    lambda_id
-                ))
+                InterpreterError::runtime_error(
+                    format!("Lambda {} not found in registry", lambda_id),
+                    None,
+                )
             })?
             .clone();
 
@@ -889,13 +903,14 @@ impl Interpreter {
         }
 
         // 恢复捕获的环境（只恢复之前存在的变量）
+        let saved_env_keys: Vec<String> = saved_env.keys().cloned().collect();
         for (key, old_value) in saved_env {
             self.environment.insert(key, old_value);
         }
 
         // 移除捕获环境中新增的变量（Lambda执行时新增的）
         for key in captured_env.keys() {
-            if !saved_env.contains_key(key) && !params.contains(key) {
+            if !saved_env_keys.contains(key) && !params.contains(key) {
                 // 这个变量是Lambda执行时新增的，不应该保留
                 self.environment.remove(key);
             }
@@ -915,11 +930,14 @@ impl Interpreter {
         args: &[Expr],
     ) -> Result<Value, InterpreterError> {
         if args.len() != func.params.len() {
-            return Err(InterpreterError::RuntimeError(format!(
-                "Function expects {} arguments, got {}",
-                func.params.len(),
-                args.len()
-            )));
+            return Err(InterpreterError::runtime_error(
+                format!(
+                    "Function expects {} arguments, got {}",
+                    func.params.len(),
+                    args.len()
+                ),
+                None,
+            ));
         }
 
         // 评估参数
@@ -961,8 +979,9 @@ impl Interpreter {
         match name {
             "import" => {
                 if args.is_empty() || args.len() > 2 {
-                    return Err(InterpreterError::RuntimeError(
+                    return Err(InterpreterError::runtime_error(
                         "import requires 1 or 2 arguments: module_name [alias]".to_string(),
+                        None,
                     ));
                 }
                 let module_name = self.module_name_from_expr(&args[0])?;
@@ -985,8 +1004,9 @@ impl Interpreter {
             // 列表操作 / List operations
             "list-get" | "get" => {
                 if args.len() != 2 {
-                    return Err(InterpreterError::RuntimeError(
+                    return Err(InterpreterError::runtime_error(
                         "list-get requires 2 arguments: list and index".to_string(),
+                        None,
                     ));
                 }
                 let list = self.eval_expr(&args[0])?;
@@ -994,24 +1014,25 @@ impl Interpreter {
                 match (list, index) {
                     (Value::List(l), Value::Int(i)) => {
                         if i < 0 || i as usize >= l.len() {
-                            Err(InterpreterError::RuntimeError(format!(
-                                "Index {} out of bounds for list of length {}",
-                                i,
-                                l.len()
-                            )))
+                            Err(InterpreterError::runtime_error(
+                                format!("Index {} out of bounds for list of length {}", i, l.len()),
+                                None,
+                            ))
                         } else {
                             Ok(l[i as usize].clone())
                         }
                     }
-                    _ => Err(InterpreterError::TypeError(
+                    _ => Err(InterpreterError::type_error(
                         "list-get requires a list and an integer index".to_string(),
+                        None,
                     )),
                 }
             }
             "list-set" | "set" => {
                 if args.len() != 3 {
-                    return Err(InterpreterError::RuntimeError(
+                    return Err(InterpreterError::runtime_error(
                         "list-set requires 3 arguments: list, index, value".to_string(),
+                        None,
                     ));
                 }
                 let list = self.eval_expr(&args[0])?;
@@ -1020,25 +1041,26 @@ impl Interpreter {
                 match (list, index) {
                     (Value::List(mut l), Value::Int(i)) => {
                         if i < 0 || i as usize >= l.len() {
-                            Err(InterpreterError::RuntimeError(format!(
-                                "Index {} out of bounds for list of length {}",
-                                i,
-                                l.len()
-                            )))
+                            Err(InterpreterError::runtime_error(
+                                format!("Index {} out of bounds for list of length {}", i, l.len()),
+                                None,
+                            ))
                         } else {
                             l[i as usize] = value;
                             Ok(Value::List(l))
                         }
                     }
-                    _ => Err(InterpreterError::TypeError(
+                    _ => Err(InterpreterError::type_error(
                         "list-set requires a list, an integer index, and a value".to_string(),
+                        None,
                     )),
                 }
             }
             "list-append" | "append" => {
                 if args.len() != 2 {
-                    return Err(InterpreterError::RuntimeError(
+                    return Err(InterpreterError::runtime_error(
                         "list-append requires 2 arguments: list and value".to_string(),
+                        None,
                     ));
                 }
                 let list = self.eval_expr(&args[0])?;
@@ -1048,30 +1070,34 @@ impl Interpreter {
                         l.push(value);
                         Ok(Value::List(l))
                     }
-                    _ => Err(InterpreterError::TypeError(
+                    _ => Err(InterpreterError::type_error(
                         "list-append requires a list".to_string(),
+                        None,
                     )),
                 }
             }
             "list-length" | "length" => {
                 if args.len() != 1 {
-                    return Err(InterpreterError::RuntimeError(
+                    return Err(InterpreterError::runtime_error(
                         "list-length requires 1 argument: list".to_string(),
+                        None,
                     ));
                 }
                 let list = self.eval_expr(&args[0])?;
                 match list {
                     Value::List(l) => Ok(Value::Int(l.len() as i64)),
-                    _ => Err(InterpreterError::TypeError(
+                    _ => Err(InterpreterError::type_error(
                         "list-length requires a list".to_string(),
+                        None,
                     )),
                 }
             }
             // 字典操作 / Dictionary operations
             "dict-get" => {
                 if args.len() != 2 {
-                    return Err(InterpreterError::RuntimeError(
+                    return Err(InterpreterError::runtime_error(
                         "dict-get requires 2 arguments: dict and key".to_string(),
+                        None,
                     ));
                 }
                 let dict = self.eval_expr(&args[0])?;
@@ -1080,15 +1106,17 @@ impl Interpreter {
                     (Value::Dict(d), Value::String(k)) => {
                         Ok(d.get(&k).cloned().unwrap_or(Value::Null))
                     }
-                    _ => Err(InterpreterError::TypeError(
+                    _ => Err(InterpreterError::type_error(
                         "dict-get requires a dict and a string key".to_string(),
+                        None,
                     )),
                 }
             }
             "dict-set" => {
                 if args.len() != 3 {
-                    return Err(InterpreterError::RuntimeError(
+                    return Err(InterpreterError::runtime_error(
                         "dict-set requires 3 arguments: dict, key, value".to_string(),
+                        None,
                     ));
                 }
                 let dict = self.eval_expr(&args[0])?;
@@ -1099,15 +1127,17 @@ impl Interpreter {
                         d.insert(k, value);
                         Ok(Value::Dict(d))
                     }
-                    _ => Err(InterpreterError::TypeError(
+                    _ => Err(InterpreterError::type_error(
                         "dict-set requires a dict, a string key, and a value".to_string(),
+                        None,
                     )),
                 }
             }
             "dict-keys" => {
                 if args.len() != 1 {
-                    return Err(InterpreterError::RuntimeError(
+                    return Err(InterpreterError::runtime_error(
                         "dict-keys requires 1 argument: dict".to_string(),
+                        None,
                     ));
                 }
                 let dict = self.eval_expr(&args[0])?;
@@ -1116,15 +1146,17 @@ impl Interpreter {
                         let keys: Vec<Value> = d.keys().map(|k| Value::String(k.clone())).collect();
                         Ok(Value::List(keys))
                     }
-                    _ => Err(InterpreterError::TypeError(
+                    _ => Err(InterpreterError::type_error(
                         "dict-keys requires a dict".to_string(),
+                        None,
                     )),
                 }
             }
             "dict-values" => {
                 if args.len() != 1 {
-                    return Err(InterpreterError::RuntimeError(
+                    return Err(InterpreterError::runtime_error(
                         "dict-values requires 1 argument: dict".to_string(),
+                        None,
                     ));
                 }
                 let dict = self.eval_expr(&args[0])?;
@@ -1133,31 +1165,35 @@ impl Interpreter {
                         let values: Vec<Value> = d.values().cloned().collect();
                         Ok(Value::List(values))
                     }
-                    _ => Err(InterpreterError::TypeError(
+                    _ => Err(InterpreterError::type_error(
                         "dict-values requires a dict".to_string(),
+                        None,
                     )),
                 }
             }
             "dict-has" => {
                 if args.len() != 2 {
-                    return Err(InterpreterError::RuntimeError(
+                    return Err(InterpreterError::runtime_error(
                         "dict-has requires 2 arguments: dict and key".to_string(),
+                        None,
                     ));
                 }
                 let dict = self.eval_expr(&args[0])?;
                 let key = self.eval_expr(&args[1])?;
                 match (dict, key) {
                     (Value::Dict(d), Value::String(k)) => Ok(Value::Bool(d.contains_key(&k))),
-                    _ => Err(InterpreterError::TypeError(
+                    _ => Err(InterpreterError::type_error(
                         "dict-has requires a dict and a string key".to_string(),
+                        None,
                     )),
                 }
             }
             // 函数式编程操作 / Functional programming operations
             "map" => {
                 if args.len() != 2 {
-                    return Err(InterpreterError::RuntimeError(
+                    return Err(InterpreterError::runtime_error(
                         "map requires 2 arguments: function and list".to_string(),
+                        None,
                     ));
                 }
                 let func_value = self.eval_expr(&args[0])?;
@@ -1165,8 +1201,9 @@ impl Interpreter {
                 match (func_value, list) {
                     (Value::Lambda { id, params }, Value::List(l)) => {
                         if params.len() != 1 {
-                            return Err(InterpreterError::RuntimeError(
+                            return Err(InterpreterError::runtime_error(
                                 "map function must accept exactly 1 argument".to_string(),
+                                None,
                             ));
                         }
                         // 优化：预分配容量
@@ -1181,9 +1218,10 @@ impl Interpreter {
                                 Value::Null => Literal::Null,
                                 Value::List(_) | Value::Dict(_) | Value::Lambda { .. } => {
                                     // 对于复杂值，需要先求值
-                                    return Err(InterpreterError::RuntimeError(
+                                    return Err(InterpreterError::runtime_error(
                                         "map: complex values need to be evaluated first"
                                             .to_string(),
+                                        None,
                                     ));
                                 }
                             });
@@ -1192,18 +1230,21 @@ impl Interpreter {
                         }
                         Ok(Value::List(result))
                     }
-                    (Value::Lambda { .. }, _) => Err(InterpreterError::TypeError(
+                    (Value::Lambda { .. }, _) => Err(InterpreterError::type_error(
                         "map requires a list as second argument".to_string(),
+                        None,
                     )),
-                    _ => Err(InterpreterError::TypeError(
+                    _ => Err(InterpreterError::type_error(
                         "map requires a function (lambda) as first argument".to_string(),
+                        None,
                     )),
                 }
             }
             "filter" => {
                 if args.len() != 2 {
-                    return Err(InterpreterError::RuntimeError(
+                    return Err(InterpreterError::runtime_error(
                         "filter requires 2 arguments: predicate and list".to_string(),
+                        None,
                     ));
                 }
                 let func_value = self.eval_expr(&args[0])?;
@@ -1211,8 +1252,9 @@ impl Interpreter {
                 match (func_value, list) {
                     (Value::Lambda { id, params }, Value::List(l)) => {
                         if params.len() != 1 {
-                            return Err(InterpreterError::RuntimeError(
+                            return Err(InterpreterError::runtime_error(
                                 "filter predicate must accept exactly 1 argument".to_string(),
+                                None,
                             ));
                         }
                         // 优化：预分配容量
@@ -1228,9 +1270,10 @@ impl Interpreter {
                                 Value::Bool(b) => Literal::Bool(b),
                                 Value::Null => Literal::Null,
                                 Value::List(_) | Value::Dict(_) | Value::Lambda { .. } => {
-                                    return Err(InterpreterError::RuntimeError(
+                                    return Err(InterpreterError::runtime_error(
                                         "filter: complex values need to be evaluated first"
                                             .to_string(),
+                                        None,
                                     ));
                                 }
                             });
@@ -1242,19 +1285,22 @@ impl Interpreter {
                         }
                         Ok(Value::List(result))
                     }
-                    (Value::Lambda { .. }, _) => Err(InterpreterError::TypeError(
+                    (Value::Lambda { .. }, _) => Err(InterpreterError::type_error(
                         "filter requires a list as second argument".to_string(),
+                        None,
                     )),
-                    _ => Err(InterpreterError::TypeError(
+                    _ => Err(InterpreterError::type_error(
                         "filter requires a function (lambda) as first argument".to_string(),
+                        None,
                     )),
                 }
             }
             "reduce" => {
                 if args.len() != 3 {
-                    return Err(InterpreterError::RuntimeError(
+                    return Err(InterpreterError::runtime_error(
                         "reduce requires 3 arguments: function, initial value, and list"
                             .to_string(),
+                        None,
                     ));
                 }
                 let func_value = self.eval_expr(&args[0])?;
@@ -1263,8 +1309,9 @@ impl Interpreter {
                 match (func_value, list) {
                     (Value::Lambda { id, params }, Value::List(l)) => {
                         if params.len() != 2 {
-                            return Err(InterpreterError::RuntimeError(
+                            return Err(InterpreterError::runtime_error(
                                 "reduce function must accept exactly 2 arguments".to_string(),
+                                None,
                             ));
                         }
                         let mut accumulator = initial;
@@ -1277,8 +1324,9 @@ impl Interpreter {
                                 Value::Bool(b) => Literal::Bool(b),
                                 Value::Null => Literal::Null,
                                 Value::List(_) | Value::Dict(_) | Value::Lambda { .. } => {
-                                    return Err(InterpreterError::RuntimeError(
+                                    return Err(InterpreterError::runtime_error(
                                         "reduce: complex accumulator values need to be evaluated first".to_string(),
+                                        None,
                                     ));
                                 }
                             });
@@ -1289,9 +1337,10 @@ impl Interpreter {
                                 Value::Bool(b) => Literal::Bool(b),
                                 Value::Null => Literal::Null,
                                 Value::List(_) | Value::Dict(_) | Value::Lambda { .. } => {
-                                    return Err(InterpreterError::RuntimeError(
+                                    return Err(InterpreterError::runtime_error(
                                         "reduce: complex item values need to be evaluated first"
                                             .to_string(),
+                                        None,
                                     ));
                                 }
                             });
@@ -1299,11 +1348,13 @@ impl Interpreter {
                         }
                         Ok(accumulator)
                     }
-                    (Value::Lambda { .. }, _) => Err(InterpreterError::TypeError(
+                    (Value::Lambda { .. }, _) => Err(InterpreterError::type_error(
                         "reduce requires a list as third argument".to_string(),
+                        None,
                     )),
-                    _ => Err(InterpreterError::TypeError(
+                    _ => Err(InterpreterError::type_error(
                         "reduce requires a function (lambda) as first argument".to_string(),
+                        None,
                     )),
                 }
             }
@@ -1766,8 +1817,9 @@ impl Interpreter {
         match expr {
             Expr::Literal(Literal::String(s)) => Ok(s.clone()),
             Expr::Var(name) => Ok(name.clone()),
-            _ => Err(InterpreterError::RuntimeError(
+            _ => Err(InterpreterError::runtime_error(
                 "Module name must be a string literal or identifier".to_string(),
+                None,
             )),
         }
     }
@@ -1799,26 +1851,26 @@ impl Interpreter {
     fn load_module(&self, module_name: &str) -> Result<Module, InterpreterError> {
         let path = self.resolve_module_path(module_name)?;
         let code = fs::read_to_string(&path).map_err(|e| {
-            InterpreterError::RuntimeError(format!(
-                "Failed to read module '{}': {}",
-                module_name, e
-            ))
+            InterpreterError::runtime_error(
+                format!("Failed to read module '{}': {}", module_name, e),
+                None,
+            )
         })?;
 
         let parser = AdaptiveParser::new(true);
         let ast = parser.parse(&code).map_err(|e| {
-            InterpreterError::RuntimeError(format!(
-                "Failed to parse module '{}': {:?}",
-                module_name, e
-            ))
+            InterpreterError::runtime_error(
+                format!("Failed to parse module '{}': {:?}", module_name, e),
+                None,
+            )
         })?;
 
         let mut module_interpreter = Interpreter::new();
         module_interpreter.execute(&ast).map_err(|e| {
-            InterpreterError::RuntimeError(format!(
-                "Failed to execute module '{}': {:?}",
-                module_name, e
-            ))
+            InterpreterError::runtime_error(
+                format!("Failed to execute module '{}': {:?}", module_name, e),
+                None,
+            )
         })?;
 
         Ok(Module {
@@ -1847,10 +1899,13 @@ impl Interpreter {
             }
         }
 
-        Err(InterpreterError::RuntimeError(format!(
-            "Module '{}' not found in modules/, examples/, or current directory",
-            module_name
-        )))
+        Err(InterpreterError::runtime_error(
+            format!(
+                "Module '{}' not found in modules/, examples/, or current directory",
+                module_name
+            ),
+            None,
+        ))
     }
 
     /// 比较值 / Compare values
@@ -1884,11 +1939,14 @@ impl Interpreter {
                 _ => unreachable!(),
             },
             _ => {
-                return Err(InterpreterError::TypeError(format!(
-                    "Cannot compare {} and {}",
-                    self.value_type_name(left),
-                    self.value_type_name(right)
-                )));
+                return Err(InterpreterError::type_error(
+                    format!(
+                        "Cannot compare {} and {}",
+                        self.value_type_name(left),
+                        self.value_type_name(right)
+                    ),
+                    None,
+                ));
             }
         };
         Ok(Value::Bool(result))

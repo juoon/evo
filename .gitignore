@@ -1,3 +1,4 @@
 /target
 .vscode
+.cargo
 commit_msg.txt

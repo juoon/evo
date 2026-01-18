@@ -745,6 +745,27 @@ fn format_expr(expr: &crate::grammar::core::Expr) -> String {
                 format_expr(else_expr)
             )
         }
+        crate::grammar::core::Expr::Match(value, cases) => {
+            let mut result = format!("(match {}", format_expr(value));
+            for (pattern, expr) in cases {
+                result.push_str(&format!(" ({:?} {})", pattern, format_expr(expr)));
+            }
+            result.push(')');
+            result
+        }
+        crate::grammar::core::Expr::For { var, iterable, body } => {
+            format!("(for {} {} {})", var, format_expr(iterable), format_expr(body))
+        }
+        crate::grammar::core::Expr::While { condition, body } => {
+            format!("(while {} {})", format_expr(condition), format_expr(body))
+        }
+        crate::grammar::core::Expr::Try { try_body, catch_var, catch_body } => {
+            if let Some(var) = catch_var {
+                format!("(try {} (catch {} {}))", format_expr(try_body), var, format_expr(catch_body))
+            } else {
+                format!("(try {} {})", format_expr(try_body), format_expr(catch_body))
+            }
+        }
     }
 }
 

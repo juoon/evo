@@ -194,6 +194,8 @@ impl JITCompiler {
             }
             // 字面量和变量保持不变 / Literals and variables remain unchanged
             Expr::Literal(_) | Expr::Var(_) => Ok(expr.clone()),
+            // 其他表达式暂不支持优化 / Other expressions don't support optimization yet
+            Expr::Match(_, _) | Expr::For { .. } | Expr::While { .. } | Expr::Try { .. } => Ok(expr.clone()),
         }
     }
 
@@ -216,13 +218,13 @@ impl JITCompiler {
             (BinOp::Mul, Literal::Float(a), Literal::Float(b)) => Ok(Literal::Float(a * b)),
             (BinOp::Div, Literal::Int(a), Literal::Int(b)) => {
                 if *b == 0 {
-                    return Err(InterpreterError::DivisionByZero);
+                    return Err(InterpreterError::division_by_zero(None));
                 }
                 Ok(Literal::Int(a / b))
             }
             (BinOp::Div, Literal::Float(a), Literal::Float(b)) => {
                 if *b == 0.0 {
-                    return Err(InterpreterError::DivisionByZero);
+                    return Err(InterpreterError::division_by_zero(None));
                 }
                 Ok(Literal::Float(a / b))
             }
@@ -232,8 +234,9 @@ impl JITCompiler {
                 if matches!(left, Literal::List(_) | Literal::Dict(_))
                     || matches!(right, Literal::List(_) | Literal::Dict(_))
                 {
-                    return Err(InterpreterError::TypeError(
+                    return Err(InterpreterError::type_error(
                         "Cannot fold comparison with list or dict literals".to_string(),
+                        None,
                     ));
                 }
                 Ok(Literal::Bool(left == right))
@@ -243,8 +246,9 @@ impl JITCompiler {
                 if matches!(left, Literal::List(_) | Literal::Dict(_))
                     || matches!(right, Literal::List(_) | Literal::Dict(_))
                 {
-                    return Err(InterpreterError::TypeError(
+                    return Err(InterpreterError::type_error(
                         "Cannot fold comparison with list or dict literals".to_string(),
+                        None,
                     ));
                 }
                 Ok(Literal::Bool(left != right))
@@ -261,11 +265,13 @@ impl JITCompiler {
             (_, Literal::List(_), _)
             | (_, _, Literal::List(_))
             | (_, Literal::Dict(_), _)
-            | (_, _, Literal::Dict(_)) => Err(InterpreterError::TypeError(
+            | (_, _, Literal::Dict(_)) => Err(InterpreterError::type_error(
                 "Cannot fold binary operation with list or dict literals".to_string(),
+                None,
             )),
-            _ => Err(InterpreterError::TypeError(
+            _ => Err(InterpreterError::type_error(
                 "Invalid types for binary operation".to_string(),
+                None,
             )),
         }
     }
@@ -292,8 +298,9 @@ impl JITCompiler {
                 interpreter.execute(&compiled.ast)
             }
         } else {
-            Err(InterpreterError::RuntimeError(
+            Err(InterpreterError::runtime_error(
                 "Compiled code not found".to_string(),
+                None,
             ))
         }
     }
