@@ -763,7 +763,10 @@ impl ParserState {
             Token::String(s) => Ok(GrammarElement::Expr(Box::new(Expr::Literal(
                 Literal::String(s),
             )))),
-            _ => Err(ParseError::syntax_error("Expected string".to_string(), None)),
+            _ => Err(ParseError::syntax_error(
+                "Expected string".to_string(),
+                None,
+            )),
         }
     }
 
@@ -774,14 +777,21 @@ impl ParserState {
                 if n.contains('.') {
                     n.parse::<f64>()
                         .map(|f| GrammarElement::Expr(Box::new(Expr::Literal(Literal::Float(f)))))
-                        .map_err(|_| ParseError::syntax_error(format!("Invalid float: {}", n), None))
+                        .map_err(|_| {
+                            ParseError::syntax_error(format!("Invalid float: {}", n), None)
+                        })
                 } else {
                     n.parse::<i64>()
                         .map(|i| GrammarElement::Expr(Box::new(Expr::Literal(Literal::Int(i)))))
-                        .map_err(|_| ParseError::syntax_error(format!("Invalid integer: {}", n), None))
+                        .map_err(|_| {
+                            ParseError::syntax_error(format!("Invalid integer: {}", n), None)
+                        })
                 }
             }
-            _ => Err(ParseError::syntax_error("Expected number".to_string(), None)),
+            _ => Err(ParseError::syntax_error(
+                "Expected number".to_string(),
+                None,
+            )),
         }
     }
 
@@ -809,7 +819,10 @@ impl ParserState {
                     }
                 }
             }
-            _ => Err(ParseError::syntax_error("Expected symbol".to_string(), None)),
+            _ => Err(ParseError::syntax_error(
+                "Expected symbol".to_string(),
+                None,
+            )),
         }
     }
 

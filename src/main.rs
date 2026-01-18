@@ -11,13 +11,58 @@ mod poetry;
 mod python;
 mod runtime;
 
+use clap::{Parser, Subcommand};
 use evolution::*;
 use grammar::*;
 use parser::*;
 use poetry::*;
 use runtime::*;
+use std::path::PathBuf;
+
+#[derive(Parser)]
+#[command(name = "evo")]
+#[command(about = "Evo-lang - 自进化编程语言 / Self-evolving Programming Language")]
+struct Cli {
+    #[command(subcommand)]
+    command: Option<Commands>,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    /// 运行演示程序 / Run demo program
+    Demo,
+    /// 进化模式：自动进化代码 / Evolution mode: auto-evolve code
+    Evolve {
+        /// 进化事件输出目录 / Evolution events output directory
+        #[arg(short, long, default_value = "evolution_events")]
+        output: PathBuf,
+        /// Prompt文件路径 / Prompt file path
+        #[arg(short, long, default_value = "prompt.txt")]
+        prompt: PathBuf,
+        /// 进化迭代次数 / Evolution iterations
+        #[arg(short, long, default_value = "10")]
+        iterations: usize,
+    },
+}
 
 fn main() {
+    let cli = Cli::parse();
+
+    match cli.command {
+        Some(Commands::Evolve {
+            output,
+            prompt,
+            iterations,
+        }) => {
+            run_evolution_mode(&output, &prompt, iterations);
+        }
+        Some(Commands::Demo) | None => {
+            run_demo();
+        }
+    }
+}
+
+fn run_demo() {
     println!("Evo-lang - 自进化编程语言 / Self-evolving Programming Language");
     println!("============================================================");
 
@@ -753,17 +798,39 @@ fn format_expr(expr: &crate::grammar::core::Expr) -> String {
             result.push(')');
             result
         }
-        crate::grammar::core::Expr::For { var, iterable, body } => {
-            format!("(for {} {} {})", var, format_expr(iterable), format_expr(body))
+        crate::grammar::core::Expr::For {
+            var,
+            iterable,
+            body,
+        } => {
+            format!(
+                "(for {} {} {})",
+                var,
+                format_expr(iterable),
+                format_expr(body)
+            )
         }
         crate::grammar::core::Expr::While { condition, body } => {
             format!("(while {} {})", format_expr(condition), format_expr(body))
         }
-        crate::grammar::core::Expr::Try { try_body, catch_var, catch_body } => {
+        crate::grammar::core::Expr::Try {
+            try_body,
+            catch_var,
+            catch_body,
+        } => {
             if let Some(var) = catch_var {
-                format!("(try {} (catch {} {}))", format_expr(try_body), var, format_expr(catch_body))
+                format!(
+                    "(try {} (catch {} {}))",
+                    format_expr(try_body),
+                    var,
+                    format_expr(catch_body)
+                )
             } else {
-                format!("(try {} {})", format_expr(try_body), format_expr(catch_body))
+                format!(
+                    "(try {} {})",
+                    format_expr(try_body),
+                    format_expr(catch_body)
+                )
             }
         }
     }
@@ -2667,4 +2734,164 @@ fn demonstrate_dependency_analysis() {
 
     println!("\n提示 / Note: 代码依赖分析能够自动分析代码依赖关系，检测循环依赖，帮助优化代码结构");
     println!("Code dependency analysis can automatically analyze code dependencies, detect circular dependencies, and help optimize code structure");
+}
+
+/// 运行进化模式 / Run evolution mode
+fn run_evolution_mode(output_dir: &PathBuf, prompt_file: &PathBuf, iterations: usize) {
+    println!("Evo-lang 进化模式 / Evolution Mode");
+    println!("============================================================");
+    println!("输出目录 / Output directory: {:?}", output_dir);
+    println!("Prompt文件 / Prompt file: {:?}", prompt_file);
+    println!("迭代次数 / Iterations: {}", iterations);
+    println!();
+
+    // 创建进化引擎 / Create evolution engine
+    let mut engine = EvolutionEngine::new();
+
+    // 读取prompt文件获取目标 / Read prompt file to get goals
+    let goals = match read_goals_from_prompt(prompt_file) {
+        Ok(g) => {
+            println!("从prompt文件读取目标 / Goals from prompt file:");
+            for goal in &g {
+                println!("  - {}", goal);
+            }
+            println!();
+            g
+        }
+        Err(e) => {
+            eprintln!(
+                "警告：无法读取prompt文件 / Warning: Cannot read prompt file: {}",
+                e
+            );
+            vec!["自进化能力的持续完善".to_string()]
+        }
+    };
+
+    // 确保输出目录存在 / Ensure output directory exists
+    std::fs::create_dir_all(output_dir).expect("Failed to create output directory");
+
+    // 执行进化迭代 / Execute evolution iterations
+    for i in 1..=iterations {
+        println!("迭代 {} / Iteration {}: ", i, i);
+
+        // 执行自我进化 / Perform self-evolution
+        match engine.self_evolve() {
+            Ok(result) => {
+                println!("  自我进化完成 / Self-evolution completed");
+                if let Some(improvements) = result.get("improvement_count") {
+                    println!("  改进数量 / Improvements: {}", improvements);
+                }
+            }
+            Err(e) => {
+                eprintln!("  自我进化错误 / Self-evolution error: {:?}", e);
+            }
+        }
+
+        // 从使用模式学习 / Learn from usage patterns
+        match engine.learn_from_usage() {
+            Ok(result) => {
+                if let Some(performed) = result.get("learning_performed") {
+                    if performed.as_bool().unwrap_or(false) {
+                        println!("  从使用模式学习完成 / Learning from usage completed");
+                    }
+                }
+            }
+            Err(e) => {
+                eprintln!("  学习错误 / Learning error: {:?}", e);
+            }
+        }
+
+        // 基于目标预测进化 / Predict evolutions based on goals
+        let predictions = engine.predict_evolutions(goals.clone());
+        if !predictions.is_empty() {
+            println!(
+                "  预测到 {} 个可能的进化 / Predicted {} possible evolutions",
+                predictions.len(),
+                predictions.len()
+            );
+        }
+
+        // 每5次迭代保存一次事件 / Save events every 5 iterations
+        if i % 5 == 0 {
+            match engine.save_events_to_dir(output_dir) {
+                Ok(_) => {
+                    println!(
+                        "  已保存进化事件到 {:?} / Saved evolution events to {:?}",
+                        output_dir, output_dir
+                    );
+                }
+                Err(e) => {
+                    eprintln!("  保存事件错误 / Save events error: {:?}", e);
+                }
+            }
+        }
+
+        println!();
+    }
+
+    // 最终保存所有事件 / Final save of all events
+    match engine.save_events_to_dir(output_dir) {
+        Ok(_) => {
+            println!(
+                "所有进化事件已保存到 {:?} / All evolution events saved to {:?}",
+                output_dir, output_dir
+            );
+        }
+        Err(e) => {
+            eprintln!("保存事件错误 / Save events error: {:?}", e);
+        }
+    }
+
+    // 显示统计信息 / Show statistics
+    let history = engine.get_history();
+    println!("\n进化统计 / Evolution Statistics:");
+    println!("  总事件数 / Total events: {}", history.len());
+
+    let stats = engine.get_knowledge_stats();
+    println!(
+        "  知识图谱节点数 / Knowledge nodes: {}",
+        stats["nodes_count"]
+    );
+    println!(
+        "  发现模式数 / Patterns discovered: {}",
+        stats["patterns_count"]
+    );
+}
+
+/// 从prompt文件读取目标 / Read goals from prompt file
+fn read_goals_from_prompt(prompt_file: &PathBuf) -> Result<Vec<String>, std::io::Error> {
+    let content = std::fs::read_to_string(prompt_file)?;
+    let mut goals = Vec::new();
+
+    // 简单解析：查找"当前重点"部分 / Simple parsing: find "当前重点" section
+    let mut in_goals_section = false;
+    for line in content.lines() {
+        if line.contains("当前重点") || line.contains("Project Goals") {
+            in_goals_section = true;
+            continue;
+        }
+
+        if in_goals_section {
+            if line.trim().starts_with("-") {
+                let goal = line.trim().trim_start_matches("-").trim().to_string();
+                if !goal.is_empty() && !goal.starts_with("#") {
+                    goals.push(goal);
+                }
+            } else if line.trim().starts_with("#") && line.contains("项目目标") {
+                // 遇到下一个主要章节，停止 / Encounter next major section, stop
+                break;
+            }
+        }
+    }
+
+    if goals.is_empty() {
+        // 如果没有找到，返回默认目标 / If not found, return default goals
+        goals = vec![
+            "自进化能力的持续完善".to_string(),
+            "理解能力的深度增强".to_string(),
+            "代码生成与优化的智能化".to_string(),
+        ];
+    }
+
+    Ok(goals)
 }

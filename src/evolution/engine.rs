@@ -460,6 +460,26 @@ impl EvolutionEngine {
         Ok(())
     }
 
+    /// 保存所有进化事件到目录 / Save all evolution events to directory
+    pub fn save_events_to_dir(
+        &self,
+        events_dir: impl AsRef<std::path::Path>,
+    ) -> Result<(), EvolutionError> {
+        self.tracker
+            .save_all_events(events_dir)
+            .map_err(|e| EvolutionError::IntegrationFailed(e))
+    }
+
+    /// 从目录加载进化事件 / Load evolution events from directory
+    pub fn load_events_from_dir(
+        &mut self,
+        events_dir: impl AsRef<std::path::Path>,
+    ) -> Result<(), EvolutionError> {
+        self.tracker
+            .load_events_from_dir(events_dir)
+            .map_err(|e| EvolutionError::IntegrationFailed(e))
+    }
+
     /// 获取进化谱系树 / Get evolution genealogy tree
     pub fn get_genealogy_tree(&self, root_id: Option<uuid::Uuid>) -> serde_json::Value {
         let genealogy = self.tracker.get_genealogy();

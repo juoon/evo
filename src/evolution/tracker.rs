@@ -174,6 +174,39 @@ impl EvolutionTracker {
         &self.event_log
     }
 
+    /// 保存所有事件到目录 / Save all events to directory
+    pub fn save_all_events(&self, events_dir: impl AsRef<std::path::Path>) -> Result<(), String> {
+        use crate::evolution::event_manager::EvolutionEventManager;
+        let manager = EvolutionEventManager::new(events_dir);
+
+        for event in &self.event_log {
+            manager
+                .save_event(event)
+                .map_err(|e| format!("Failed to save event {}: {}", event.id, e))?;
+        }
+
+        Ok(())
+    }
+
+    /// 从目录加载所有事件 / Load all events from directory
+    pub fn load_events_from_dir(
+        &mut self,
+        events_dir: impl AsRef<std::path::Path>,
+    ) -> Result<(), String> {
+        use crate::evolution::event_manager::EvolutionEventManager;
+        let manager = EvolutionEventManager::new(events_dir);
+
+        let events = manager
+            .load_all_events()
+            .map_err(|e| format!("Failed to load events: {}", e))?;
+
+        for event in events {
+            self.record(event);
+        }
+
+        Ok(())
+    }
+
     /// 获取进化谱系 / Get evolution genealogy
     pub fn get_genealogy(&self) -> &EvolutionGenealogy {
         &self.genealogy

@@ -195,7 +195,9 @@ impl JITCompiler {
             // 字面量和变量保持不变 / Literals and variables remain unchanged
             Expr::Literal(_) | Expr::Var(_) => Ok(expr.clone()),
             // 其他表达式暂不支持优化 / Other expressions don't support optimization yet
-            Expr::Match(_, _) | Expr::For { .. } | Expr::While { .. } | Expr::Try { .. } => Ok(expr.clone()),
+            Expr::Match(_, _) | Expr::For { .. } | Expr::While { .. } | Expr::Try { .. } => {
+                Ok(expr.clone())
+            }
         }
     }
 
