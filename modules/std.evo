@@ -498,3 +498,187 @@
 ; 列表是否非空 / Check if list is not empty
 (def not-empty (lst)
   (> (list-length lst) 0))
+
+; ========================================
+; 通用工具函数 / General utility functions
+; ========================================
+
+; 条件组合函数 / Conditional composition functions
+
+; 如果条件为真执行操作，否则执行其他操作 / If condition is true execute action, else execute other
+(def if-else (condition then-action else-action)
+  (if condition
+    then-action
+    else-action))
+
+; 条件链：依次检查条件，返回第一个满足的值 / Condition chain: check conditions in order, return first satisfied value
+(def cond (conditions)
+  (cond-helper conditions))
+
+(def cond-helper (conditions)
+  (if (= (list-length conditions) 0)
+    null
+    (let current (list-get conditions 0)
+      (let condition (list-get current 0)
+        (if condition
+          (list-get current 1)
+          (cond-helper (list-slice conditions 1)))))))
+
+; 判断值是否为null / Check if value is null
+(def null? (value)
+  (= value null))
+
+; 判断值是否不为null / Check if value is not null
+(def not-null? (value)
+  (not (null? value)))
+
+; 类型检查函数 / Type checking functions
+
+; 检查是否为数字（整数或浮点数） / Check if value is number (int or float)
+(def number? (value)
+  (or (int? value) (float? value)))
+
+; 检查是否为整数（简化实现，仅检查是否为数值范围） / Check if value is integer (simplified, check numeric range only)
+; 注意：完整的类型检查需要在解释器层面实现
+; Note: Full type checking needs to be implemented at interpreter level
+(def int? (value)
+  (and (>= value -1000000) (<= value 1000000)))
+
+; 检查是否为浮点数（简化实现，检查是否有小数部分） / Check if value is float (simplified, check if has fractional part)
+; 注意：需要使用math模块的floor函数或内置实现
+; Note: Need to use math.floor function or built-in implementation
+(def float? (value)
+  false)
+
+; 检查是否为布尔值 / Check if value is boolean
+(def bool? (value)
+  (or (= value true) (= value false)))
+
+; 检查是否为列表 / Check if value is list (简化实现，总是返回true，因为无法直接判断类型)
+; 注意：在Evo-lang中类型检查有限，这是一个简化实现
+; Note: Type checking is limited in Evo-lang, this is a simplified implementation
+(def list? (value)
+  true)
+
+; ========================================
+; 值操作函数 / Value manipulation functions
+; ========================================
+
+; 获取默认值（如果值为null则返回默认值） / Get default value (return default if value is null)
+(def default (value default-value)
+  (if (null? value)
+    default-value
+    value))
+
+; 安全获取值（如果值为null或异常则返回默认值） / Safely get value (return default if null or exception)
+(def safe-get (get-func default-value)
+  (let result (get-func)
+    (if (null? result)
+      default-value
+      result)))
+
+; 选择第一个非null值 / Select first non-null value
+(def coalesce (values)
+  (if (= (list-length values) 0)
+    null
+    (let first (list-get values 0)
+      (if (not-null? first)
+        first
+        (coalesce (list-slice values 1))))))
+
+; ========================================
+; 数值范围函数 / Number range functions
+; ========================================
+
+; 限制值在范围内 / Clamp value within range
+(def clamp (value min max)
+  (if (< value min)
+    min
+    (if (> value max)
+      max
+      value)))
+
+; 检查值是否在范围内 / Check if value is within range
+(def in-range? (value min max)
+  (and (>= value min) (<= value max)))
+
+; ========================================
+; 列表生成和变换函数 / List generation and transformation functions
+; ========================================
+
+; 生成重复元素的列表 / Generate list with repeated elements
+(def repeat-list (item n)
+  (repeat-list-helper item n (list)))
+
+(def repeat-list-helper (item n result)
+  (if (<= n 0)
+    result
+    (repeat-list-helper
+      item
+      (- n 1)
+      (list-append result (list item)))))
+
+; 展平嵌套列表（一层） / Flatten nested list (one level)
+(def flatten (lst)
+  (flatten-helper lst (list)))
+
+(def flatten-helper (lst result)
+  (if (= (list-length lst) 0)
+    result
+    (let current (list-get lst 0)
+      (if (list? current)
+        (flatten-helper
+          (list-slice lst 1)
+          (concat result current))
+        (flatten-helper
+          (list-slice lst 1)
+          (list-append result (list current)))))))
+
+; 列表压缩（将两个列表合并为键值对列表） / Zip two lists into pairs
+(def zip (lst1 lst2)
+  (zip-helper lst1 lst2 (list)))
+
+(def zip-helper (lst1 lst2 result)
+  (if (or (= (list-length lst1) 0) (= (list-length lst2) 0))
+    result
+    (zip-helper
+      (list-slice lst1 1)
+      (list-slice lst2 1)
+      (list-append result (list (list (list-get lst1 0) (list-get lst2 0)))))))
+
+; 列表解压（将键值对列表拆分为两个列表） / Unzip pairs list into two lists
+(def unzip (pairs)
+  (dict "first" (unzip-first pairs (list)) "second" (unzip-second pairs (list))))
+
+(def unzip-first (pairs result)
+  (if (= (list-length pairs) 0)
+    result
+    (let pair (list-get pairs 0)
+      (unzip-first
+        (list-slice pairs 1)
+        (list-append result (list (list-get pair 0)))))))
+
+(def unzip-second (pairs result)
+  (if (= (list-length pairs) 0)
+    result
+    (let pair (list-get pairs 0)
+      (unzip-second
+        (list-slice pairs 1)
+        (list-append result (list (list-get pair 1)))))))
+
+; ========================================
+; 字符串工具函数（封装内置函数） / String utility functions (wrap built-in functions)
+; ========================================
+
+; 注意：以下函数需要调用解释器内置函数，这里提供标准库接口
+; Note: The following functions need to call built-in interpreter functions, here we provide standard library interface
+; 这些是占位函数，实际执行时会调用解释器的内置实现
+; These are placeholder functions, actual execution will call interpreter's built-in implementation
+
+; 字符串长度（使用内置函数） / String length (use built-in function)
+(def string-len (str)
+  (string-length str))
+
+; 字符串连接（简化实现，需要内置支持） / String concatenation (simplified, needs built-in support)
+; 注意：Evo-lang可能需要内置函数支持字符串操作
+; Note: Evo-lang may need built-in function support for string operations

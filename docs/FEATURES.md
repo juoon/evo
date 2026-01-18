@@ -81,7 +81,8 @@
 - ✅ **列表操作函数** - `std.sum`, `std.product`, `std.reverse`, `std.contains`, `std.count`, `std.take`, `std.drop`, `std.concat`, `std.all-equal`, `std.any-equal`, `std.find_index`, `std.find`, `std.unique`, `std.any`, `std.all`, `std.partition`, `std.remove_if`, `std.group_by`, `std.frequencies`, `std.first`, `std.last`, `std.butlast`, `std.empty`, `std.not_empty`
 - ✅ **范围生成函数** - `std.range`, `std.range-step`
 - ✅ **字典操作函数** - `std.dict-has-key`, `std.dict-merge`, `std.dict-update`, `std.dict-remove`, `std.dict-size`, `std.dict-empty`
-- ✅ **工具函数** - `std.identity`, `std.repeat`, `std.when`, `std.unless`
+- ✅ **工具函数** - `std.identity`, `std.repeat`, `std.when`, `std.unless`, `std.if_else`, `std.cond`, `std.null?`, `std.not_null?`, `std.default`, `std.safe_get`, `std.coalesce`, `std.clamp`, `std.in_range?`, `std.repeat_list`, `std.flatten`, `std.zip`, `std.unzip`, `std.string_len`
+- ✅ **类型检查函数** - `std.number?`, `std.int?`, `std.float?`, `std.bool?`, `std.list?`
 - ✅ **高阶函数** - `std.map`, `std.filter`, `std.reduce`
 
 ### ✅ JIT编译器 (JIT Compiler)
