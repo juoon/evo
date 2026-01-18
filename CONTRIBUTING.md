@@ -170,7 +170,7 @@ git push origin feature/compute-contribution
   "id": "uuid",
   "timestamp": "2024-01-15T10:30:00Z",
   "event_type": "SyntaxEvolution",
-  "base_version": "v1.0.52",
+  "base_version": "v1.0.56,
   "delta": {
     "added_rules": [...],      // 新增的语法规则
     "modified_rules": [],      // 修改的规则
@@ -407,7 +407,7 @@ V版本号: 简短描述 / Short description
 示例：
 
 ```
-V1.0.52: 添加列表推导式语法支持 / Add list comprehension syntax support
+V1.0.56 添加列表推导式语法支持 / Add list comprehension syntax support
 
 - 新增语法规则：list_comprehension
 - 更新解析器以支持新语法

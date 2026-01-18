@@ -212,3 +212,131 @@
   (if condition
     null
     action))
+
+; ========================================
+; 新增列表实用函数 / New list utility functions
+; ========================================
+
+; 取列表前n个元素 / Take first n elements from list
+(def take (lst n)
+  (if (<= n 0)
+    (list)
+    (if (= (list-length lst) 0)
+      (list)
+      (if (= n 1)
+        (list (list-get lst 0))
+        (list-append
+          (list (list-get lst 0))
+          (take (list-slice lst 1) (- n 1)))))))
+
+; 删除列表前n个元素 / Drop first n elements from list
+(def drop (lst n)
+  (if (<= n 0)
+    lst
+    (if (= (list-length lst) 0)
+      (list)
+      (drop (list-slice lst 1) (- n 1)))))
+
+; 连接两个列表 / Concatenate two lists
+(def concat (lst1 lst2)
+  (if (= (list-length lst1) 0)
+    lst2
+    (list-append
+      (list (list-get lst1 0))
+      (concat (list-slice lst1 1) lst2))))
+
+; 检查列表中所有元素是否相等 / Check if all elements in list are equal
+(def all-equal (lst)
+  (if (<= (list-length lst) 1)
+    true
+    (if (= (list-get lst 0) (list-get lst 1))
+      (all-equal (list-slice lst 1))
+      false)))
+
+; 检查列表是否有元素等于给定值 / Check if list has element equal to value
+(def any-equal (lst value)
+  (if (= (list-length lst) 0)
+    false
+    (if (= (list-get lst 0) value)
+      true
+      (any-equal (list-slice lst 1) value))))
+
+; ========================================
+; 新增数学函数 / New math functions
+; ========================================
+
+; 最大公约数 / Greatest Common Divisor
+(def gcd (a b)
+  (gcd-helper (abs a) (abs b)))
+
+(def gcd-helper (a b)
+  (if (= b 0)
+    a
+    (gcd-helper b (gcd-mod a b))))
+
+(def gcd-mod (a b)
+  (- a (* b (/ a b))))
+
+; 最小公倍数 / Least Common Multiple
+(def lcm (a b)
+  (if (or (= a 0) (= b 0))
+    0
+    (/ (abs (* a b)) (gcd (abs a) (abs b)))))
+
+; 计算斐波那契数列的第n个数 / Calculate nth Fibonacci number
+(def fibonacci (n)
+  (if (< n 0)
+    0
+    (if (= n 0)
+      0
+      (if (= n 1)
+        1
+        (+ (fibonacci (- n 1)) (fibonacci (- n 2)))))))
+
+; 生成斐波那契数列前n个数 / Generate first n Fibonacci numbers
+(def fibonacci-sequence (n)
+  (fibonacci-sequence-helper n 0 (list)))
+
+(def fibonacci-sequence-helper (n current result)
+  (if (>= current n)
+    result
+    (fibonacci-sequence-helper
+      n
+      (+ current 1)
+      (list-append result (list (fibonacci current))))))
+
+; ========================================
+; 新增字典操作函数 / New dictionary operations
+; ========================================
+
+; 更新字典中的值（如果键存在则更新，不存在则添加） / Update dictionary value (update if exists, add if not)
+(def dict-update (dict key value)
+  (dict-set dict key value))
+
+; 从字典中删除键（通过创建新字典实现） / Remove key from dictionary (by creating new dict)
+(def dict-remove (dict key)
+  (dict-remove-helper dict (dict-keys dict) key (dict)))
+
+(def dict-remove-helper (dict keys target-key result)
+  (if (= (list-length keys) 0)
+    result
+    (let current-key (list-get keys 0)
+      (if (= current-key target-key)
+        (dict-remove-helper
+          dict
+          (list-slice keys 1)
+          target-key
+          result)
+        (dict-remove-helper
+          dict
+          (list-slice keys 1)
+          target-key
+          (dict-set result current-key (dict-get dict current-key)))))))
+
+; 获取字典大小（键的数量） / Get dictionary size (number of keys)
+(def dict-size (dict)
+  (list-length (dict-keys dict)))
+
+; 检查字典是否为空 / Check if dictionary is empty
+(def dict-empty (dict)
+  (= (dict-size dict) 0))

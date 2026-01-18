@@ -1,0 +1,78 @@
+; 测试新增标准库函数 / Test new standard library functions
+
+(import "std")
+
+; ========================================
+; 测试列表实用函数 / Test list utility functions
+; ========================================
+
+; 测试 take 函数 / Test take function
+(let lst1 (list 1 2 3 4 5)
+  (std.take lst1 3))  ; 期望: (list 1 2 3)
+
+; 测试 drop 函数 / Test drop function
+(let lst2 (list 1 2 3 4 5)
+  (std.drop lst2 2))  ; 期望: (list 3 4 5)
+
+; 测试 concat 函数 / Test concat function
+(let lst3 (list 1 2 3)
+  (let lst4 (list 4 5 6)
+    (std.concat lst3 lst4)))  ; 期望: (list 1 2 3 4 5 6)
+
+; 测试 all-equal 函数 / Test all-equal function
+(let lst5 (list 1 1 1)
+  (std.all-equal lst5))  ; 期望: true
+
+(let lst6 (list 1 2 1)
+  (std.all-equal lst6))  ; 期望: false
+
+; 测试 any-equal 函数 / Test any-equal function
+(let lst7 (list 1 2 3 4 5)
+  (std.any-equal lst7 3))  ; 期望: true
+
+(let lst8 (list 1 2 3 4 5)
+  (std.any-equal lst8 10))  ; 期望: false
+
+; ========================================
+; 测试数学函数 / Test math functions
+; ========================================
+
+; 测试 gcd 函数 / Test gcd function
+(std.gcd 48 18)  ; 期望: 6
+(std.gcd 17 13)  ; 期望: 1
+
+; 测试 lcm 函数 / Test lcm function
+(std.lcm 12 18)  ; 期望: 36
+(std.lcm 5 7)    ; 期望: 35
+
+; 测试 fibonacci 函数 / Test fibonacci function
+(std.fibonacci 0)   ; 期望: 0
+(std.fibonacci 1)   ; 期望: 1
+(std.fibonacci 5)   ; 期望: 5
+(std.fibonacci 10)  ; 期望: 55
+
+; 测试 fibonacci-sequence 函数 / Test fibonacci-sequence function
+(std.fibonacci-sequence 5)  ; 期望: (list 0 1 1 2 3)
+
+; ========================================
+; 测试字典操作函数 / Test dictionary operations
+; ========================================
+
+; 测试 dict-update 函数 / Test dict-update function
+(let dict1 (dict "name" "Evo" "version" "1.0")
+  (std.dict-update dict1 "version" "1.1"))  ; 更新版本号
+
+; 测试 dict-remove 函数 / Test dict-remove function
+(let dict2 (dict "a" 1 "b" 2 "c" 3)
+  (std.dict-remove dict2 "b"))  ; 删除键 "b"
+
+; 测试 dict-size 函数 / Test dict-size function
+(let dict3 (dict "x" 1 "y" 2 "z" 3)
+  (std.dict-size dict3))  ; 期望: 3
+
+; 测试 dict-empty 函数 / Test dict-empty function
+(let dict4 (dict)
+  (std.dict-empty dict4))  ; 期望: true
+
+(let dict5 (dict "key" "value")
+  (std.dict-empty dict5))  ; 期望: false

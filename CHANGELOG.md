@@ -171,13 +171,18 @@
     - 命令行支持：添加clap依赖，支持--evolution-mode、--prompt、--output等参数
     - 进化模式入口：实现run_evolution_mode()函数，支持从prompt.txt读取目标进行自动进化
     - 贡献指南：创建CONTRIBUTING.md，详细说明四种贡献方式（代码、算力、使用、决策）
+34. ✅ ~~增强标准库函数 - 添加更多实用工具函数~~ - 已完成
+    - 列表实用函数：take（取前n个元素）、drop（删除前n个元素）、concat（连接两个列表）、all-equal（检查所有元素是否相等）、any-equal（检查是否有元素等于给定值）
+    - 数学函数：gcd（最大公约数）、lcm（最小公倍数）、fibonacci（计算第n个斐波那契数）、fibonacci-sequence（生成前n个斐波那契数）
+    - 字典操作函数：dict-update（更新字典值）、dict-remove（删除键）、dict-size（获取字典大小）、dict-empty（检查字典是否为空）
+    - 增强自举能力：更多常用功能用Evo-lang本身实现
 
 ## 计划中的功能 / Planned Features
 
 - 集成NLU模型（本地轻量模型或云API）- 提升自然语言理解能力
 - 更多优化和性能提升
 - 增强的模块系统
-- 更多标准库函数
+- 继续扩展标准库函数（字符串处理、更多列表操作等）
 
 ## 版本历史 / Version History
 
