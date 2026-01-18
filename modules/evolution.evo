@@ -1,4 +1,5 @@
 ; Evolution rules defined in Evo-lang (bootstrapping)
+; 自举规则定义 - 用Evo-lang自身定义进化规则
 
 (def make_rule (name keywords production description)
   (dict
@@ -54,3 +55,140 @@
               "BinaryOperation"
               "从意图生成操作表达式规则"))
           (list))))))
+
+; ========================================
+; 增强的自举规则生成 / Enhanced bootstrap rule generation
+; ========================================
+
+; 代码分析规则生成 / Code analysis rule generation
+(def analysis_rules ()
+  (list
+    (make_rule
+      "代码分析"
+      (list "分析" "analyze" "检查" "check")
+      "CodeAnalysis"
+      "从自然语言生成代码分析规则")
+    (make_rule
+      "复杂度检测"
+      (list "复杂度" "complexity" "复杂" "complex")
+      "ComplexityAnalysis"
+      "从自然语言生成复杂度分析规则")
+    (make_rule
+      "模式识别"
+      (list "模式" "pattern" "识别" "recognize")
+      "PatternRecognition"
+      "从自然语言生成模式识别规则")))
+
+; 优化规则生成 / Optimization rule generation
+(def optimization_rules ()
+  (list
+    (make_rule
+      "代码优化"
+      (list "优化" "optimize" "改进" "improve")
+      "CodeOptimization"
+      "从自然语言生成代码优化规则")
+    (make_rule
+      "性能优化"
+      (list "性能" "performance" "加速" "speed")
+      "PerformanceOptimization"
+      "从自然语言生成性能优化规则")
+    (make_rule
+      "重构规则"
+      (list "重构" "refactor" "重组" "reorganize")
+      "RefactoringRule"
+      "从自然语言生成重构规则")))
+
+; 测试生成规则 / Test generation rules
+(def test_generation_rules ()
+  (list
+    (make_rule
+      "测试生成"
+      (list "测试" "test" "验证" "verify")
+      "TestGeneration"
+      "从自然语言生成测试用例的规则")
+    (make_rule
+      "单元测试"
+      (list "单元测试" "unit_test" "单测")
+      "UnitTestGeneration"
+      "从自然语言生成单元测试规则")
+    (make_rule
+      "集成测试"
+      (list "集成测试" "integration_test" "集成")
+      "IntegrationTestGeneration"
+      "从自然语言生成集成测试规则")))
+
+; 质量评估规则 / Quality assessment rules
+(def quality_assessment_rules ()
+  (list
+    (make_rule
+      "质量评估"
+      (list "质量" "quality" "评估" "assess")
+      "QualityAssessment"
+      "从自然语言生成质量评估规则")
+    (make_rule
+      "代码审查"
+      (list "审查" "review" "检查" "inspect")
+      "CodeReview"
+      "从自然语言生成代码审查规则")
+    (make_rule
+      "可读性评估"
+      (list "可读性" "readability" "清晰" "clear")
+      "ReadabilityAssessment"
+      "从自然语言生成可读性评估规则")))
+
+; 获取所有增强规则 / Get all enhanced rules
+(def enhanced_bootstrap_rules ()
+  (concat
+    (bootstrap_rules)
+    (concat
+      (analysis_rules)
+      (concat
+        (optimization_rules)
+        (concat
+          (test_generation_rules)
+          (quality_assessment_rules))))))
+
+; ========================================
+; 自举工具函数 / Bootstrap utility functions
+; ========================================
+
+; 验证规则完整性 / Validate rule completeness
+(def validate_rule (rule)
+  (and
+    (dict-has-key rule "name")
+    (dict-has-key rule "keywords")
+    (dict-has-key rule "production")
+    (dict-has-key rule "description")))
+
+; 验证规则列表 / Validate rule list
+(def validate_rules (rules)
+  (if (= (list-length rules) 0)
+    true
+    (if (validate_rule (list-get rules 0))
+      (validate_rules (list-slice rules 1))
+      false)))
+
+; 合并规则列表 / Merge rule lists
+(def merge_rules (rules1 rules2)
+  (concat rules1 rules2))
+
+; 根据名称查找规则 / Find rule by name
+(def find_rule_by_name (rules name)
+  (if (= (list-length rules) 0)
+    null
+    (let current (list-get rules 0)
+      (if (= (dict-get current "name") name)
+        current
+        (find_rule_by_name (list-slice rules 1) name)))))
+
+; 根据关键词查找规则 / Find rules by keyword
+(def find_rules_by_keyword (rules keyword)
+  (if (= (list-length rules) 0)
+    (list)
+    (let current (list-get rules 0)
+      (let keywords (dict-get current "keywords")
+        (if (contains keywords keyword)
+          (list-append
+            (list current)
+            (find_rules_by_keyword (list-slice rules 1) keyword))
+          (find_rules_by_keyword (list-slice rules 1) keyword))))))

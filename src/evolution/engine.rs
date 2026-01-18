@@ -871,6 +871,52 @@ impl EvolutionEngine {
         Self::rules_from_value_static(&value).unwrap_or_default()
     }
 
+    /// 加载增强的自举规则 / Load enhanced bootstrap rules
+    fn load_enhanced_bootstrap_rules() -> Vec<GrammarRule> {
+        let code = "(import \"evolution\")\n(evolution.enhanced_bootstrap_rules)";
+        let mut interpreter = Interpreter::new();
+        let parser = AdaptiveParser::new(true);
+        let ast = match parser.parse(code) {
+            Ok(ast) => ast,
+            Err(_) => return Vec::new(),
+        };
+        let value = match interpreter.execute(&ast) {
+            Ok(value) => value,
+            Err(_) => return Vec::new(),
+        };
+        Self::rules_from_value_static(&value).unwrap_or_default()
+    }
+
+    /// 加载自举工具列表 / Load self-hosting tools list
+    pub fn load_self_hosting_tools(&self) -> Result<Vec<String>, EvolutionError> {
+        let code = "(import \"self_hosting\")\n(self_hosting.get_self_hosting_tools)";
+        let value = self.execute_evo_code(code)?;
+        match value {
+            Value::List(tools) => {
+                let mut result = Vec::new();
+                for tool in tools {
+                    if let Value::String(s) = tool {
+                        result.push(s);
+                    }
+                }
+                Ok(result)
+            }
+            _ => Err(EvolutionError::IntegrationFailed(
+                "Expected a list of tool names".to_string(),
+            )),
+        }
+    }
+
+    /// 验证自举模块 / Validate self-hosting module
+    pub fn validate_self_hosting_module(&self) -> Result<bool, EvolutionError> {
+        let code = "(import \"self_hosting\")\n(self_hosting.validate_self_hosting_module)";
+        let value = self.execute_evo_code(code)?;
+        match value {
+            Value::Bool(b) => Ok(b),
+            _ => Ok(false),
+        }
+    }
+
     /// 执行Evo-lang代码 / Execute Evo-lang code
     fn execute_evo_code(&self, code: &str) -> Result<Value, EvolutionError> {
         let mut interpreter = Interpreter::new();

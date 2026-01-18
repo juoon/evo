@@ -103,6 +103,9 @@ impl EvolutionEngine {
     pub fn load_events_from_dir(&mut self, events_dir: impl AsRef<Path>) -> Result<(), EvolutionError>;
     pub fn get_history(&self) -> &[EvolutionEvent];
     pub fn get_knowledge_stats(&self) -> serde_json::Value;
+    pub fn load_self_hosting_tools(&self) -> Result<Vec<String>, EvolutionError>;
+    pub fn validate_self_hosting_module(&self) -> Result<bool, EvolutionError>;
+    fn load_enhanced_bootstrap_rules() -> Vec<GrammarRule>;
 }
 ```
 
@@ -112,6 +115,9 @@ impl EvolutionEngine {
 - `load_events_from_dir()` - 从目录加载进化事件
 - `get_history()` - 获取进化历史
 - `get_knowledge_stats()` - 获取知识图谱统计
+- `load_self_hosting_tools()` - 从self_hosting.evo模块加载自举工具列表
+- `validate_self_hosting_module()` - 验证自举模块的完整性
+- `load_enhanced_bootstrap_rules()` - 加载增强的自举规则（包括代码分析、优化等规则）
 
 ### KnowledgeGraph
 

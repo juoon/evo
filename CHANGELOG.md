@@ -176,6 +176,17 @@
     - 数学函数：gcd（最大公约数）、lcm（最小公倍数）、fibonacci（计算第n个斐波那契数）、fibonacci-sequence（生成前n个斐波那契数）
     - 字典操作函数：dict-update（更新字典值）、dict-remove（删除键）、dict-size（获取字典大小）、dict-empty（检查字典是否为空）
     - 增强自举能力：更多常用功能用Evo-lang本身实现
+35. ✅ ~~增强自举能力 - 添加更多用Evo-lang实现的自举功能~~ - 已完成
+    - 增强evolution.evo模块：添加代码分析规则、优化规则、测试生成规则、质量评估规则生成函数
+    - 创建self_hosting.evo模块：提供用Evo-lang实现的代码分析、优化、验证等自举工具函数
+    - 代码分析工具：estimate_complexity（估计复杂度）、detect_duplicates（检测重复）
+    - 代码优化工具：fold_constants（常量折叠）、suggest_extract_function（函数提取建议）
+    - 质量评估工具：assess_code_quality（质量评估）、generate_quality_suggestions（质量建议）
+    - 自我验证工具：validate_function_def（验证函数定义）、validate_module（验证模块）、detect_circular_deps（检测循环依赖）
+    - 测试生成工具：generate_test_template（生成测试模板）
+    - 代码生成工具：generate_function_from_spec（从规范生成函数）
+    - 增强进化引擎：添加load_enhanced_bootstrap_rules()、load_self_hosting_tools()、validate_self_hosting_module()方法
+    - 大幅增强自举能力：更多核心功能用语言自身实现
 
 ## 计划中的功能 / Planned Features
 

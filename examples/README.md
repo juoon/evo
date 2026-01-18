@@ -30,6 +30,14 @@
 - 导入模块（import）
 - 调用模块函数（带命名空间）
 
+### self_hosting_demo.evo
+自举能力演示，包括：
+- 代码分析工具使用（estimate_complexity, is_long_function）
+- 代码质量评估（assess_code_quality, generate_quality_suggestions）
+- 自我验证工具（validate_function_def, validate_self_hosting_module）
+- 测试生成工具（generate_test_template）
+- 自举工具列表查询（get_self_hosting_tools）
+
 ## 如何运行示例 / How to Run Examples
 
 ### 方式1: 使用演示程序

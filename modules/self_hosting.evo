@@ -1,0 +1,242 @@
+; 自举工具模块 / Self-hosting utility module
+; 提供用Evo-lang实现的代码分析、优化、验证等自举能力
+; Provides code analysis, optimization, validation and other self-hosting capabilities implemented in Evo-lang
+
+(import "std")
+
+; ========================================
+; 代码分析工具 / Code analysis tools
+; ========================================
+
+; 计算函数复杂度（基于参数数量和嵌套深度估算）
+(def estimate_complexity (func-def)
+  (let param-count (list-length (dict-get func-def "params"))
+    (let body-size (estimate-body-size (dict-get func-def "body"))
+      (+ param-count (* body-size 2)))))
+
+; 估算代码体大小
+(def estimate-body-size (body)
+  (if (= (list-length body) 0)
+    0
+    (+ 1 (estimate-body-size (list-slice body 1)))))
+
+; 检测长函数（超过阈值）
+(def is_long_function (func-def threshold)
+  (> (estimate_complexity func-def) threshold))
+
+; 检测代码重复
+(def detect_duplicates (code-blocks)
+  (detect-duplicates-helper code-blocks (list) (list)))
+
+(def detect-duplicates-helper (blocks seen duplicates)
+  (if (= (list-length blocks) 0)
+    duplicates
+    (let current (list-get blocks 0)
+      (if (std.contains seen current)
+        (detect-duplicates-helper
+          (list-slice blocks 1)
+          seen
+          (list-append duplicates (list current)))
+        (detect-duplicates-helper
+          (list-slice blocks 1)
+          (list-append seen (list current))
+          duplicates)))))
+
+; ========================================
+; 代码优化工具 / Code optimization tools
+; ========================================
+
+; 简化表达式（常量折叠）
+(def fold_constants (expr)
+  (if (= (dict-get expr "type") "BinaryOp")
+    (let left (dict-get expr "left")
+      (let right (dict-get expr "right")
+        (if (and
+              (= (dict-get left "type") "Literal")
+              (= (dict-get right "type") "Literal"))
+          (evaluate-constant-expr expr)
+          expr)))
+    expr))
+
+; 评估常量表达式
+(def evaluate-constant-expr (expr)
+  (let op (dict-get expr "operator")
+    (let left (dict-get expr "left" "value")
+      (let right (dict-get expr "right" "value")
+        (if (= op "+")
+          (dict "type" "Literal" "value" (+ left right))
+          (if (= op "-")
+            (dict "type" "Literal" "value" (- left right))
+            (if (= op "*")
+              (dict "type" "Literal" "value" (* left right))
+              (if (= op "/")
+                (dict "type" "Literal" "value" (/ left right))
+                expr))))))))
+
+; 提取函数（将重复代码块提取为函数）
+(def suggest_extract_function (code-blocks threshold)
+  (suggest-extract-helper code-blocks threshold (list)))
+
+(def suggest-extract-helper (blocks threshold suggestions)
+  (if (= (list-length blocks) 0)
+    suggestions
+    (let current (list-get blocks 0)
+      (let count (count-occurrences blocks current)
+        (if (>= count threshold)
+          (suggest-extract-helper
+            (list-slice blocks 1)
+            threshold
+            (list-append suggestions (list current)))
+          (suggest-extract-helper
+            (list-slice blocks 1)
+            threshold
+            suggestions))))))
+
+; 计算代码块出现次数
+(def count-occurrences (blocks block)
+  (if (= (list-length blocks) 0)
+    0
+    (if (= (list-get blocks 0) block)
+      (+ 1 (count-occurrences (list-slice blocks 1) block))
+      (count-occurrences (list-slice blocks 1) block))))
+
+; ========================================
+; 代码质量评估工具 / Code quality assessment tools
+; ========================================
+
+; 获取字典值，如果不存在则返回默认值
+(def dict-get-or-default (dict key default)
+  (let value (dict-get dict key)
+    (if (= value null)
+      default
+      value)))
+
+; 评估代码质量分数（0-100）
+(def assess_code_quality (code-metrics)
+  (let readability (dict-get-or-default code-metrics "readability" 70)
+    (let maintainability (dict-get-or-default code-metrics "maintainability" 70)
+      (let performance (dict-get-or-default code-metrics "performance" 70)
+        (/ (+ readability maintainability performance) 3)))))
+
+; 生成质量建议
+(def generate_quality_suggestions (code-metrics)
+  (let readability (dict-get-or-default code-metrics "readability" 70)
+    (let maintainability (dict-get-or-default code-metrics "maintainability" 70)
+      (let performance (dict-get-or-default code-metrics "performance" 70)
+        (generate-quality-suggestions-helper readability maintainability performance (list))))))
+
+(def generate-quality-suggestions-helper (readability maintainability performance suggestions)
+  (let new-suggestions (if (< readability 60)
+    (list-append suggestions (list "提高代码可读性：添加注释、使用清晰命名"))
+    suggestions)
+    (let new-suggestions2 (if (< maintainability 60)
+      (list-append new-suggestions (list "提高可维护性：拆分长函数、减少嵌套"))
+      new-suggestions)
+      (if (< performance 60)
+        (list-append new-suggestions2 (list "优化性能：减少不必要的计算、使用缓存"))
+        new-suggestions2)))))
+
+; ========================================
+; 自我验证工具 / Self-validation tools
+; ========================================
+
+; 验证函数定义的完整性
+(def validate_function_def (func-def)
+  (and
+    (std.dict-has-key func-def "name")
+    (std.dict-has-key func-def "params")
+    (std.dict-has-key func-def "body")))
+
+; 验证模块的完整性
+(def validate_module (module-def)
+  (and
+    (std.dict-has-key module-def "name")
+    (std.dict-has-key module-def "functions")
+    (validate-functions (dict-get module-def "functions"))))
+
+; 验证函数列表
+(def validate-functions (functions)
+  (if (= (list-length functions) 0)
+    true
+    (if (validate_function_def (list-get functions 0))
+      (validate-functions (list-slice functions 1))
+      false)))
+
+; 检测循环依赖
+(def detect_circular_deps (dependencies)
+  (detect-circular-helper dependencies (list)))
+
+(def detect-circular-helper (deps visited)
+  (if (= (list-length deps) 0)
+    false
+    (let current (dict-get (list-get deps 0) "from")
+      (if (std.contains visited current)
+        true
+        (let new-visited (list-append visited (list current))
+          (let targets (dict-get (list-get deps 0) "to")
+            (detect-circular-helper
+              (list-slice deps 1)
+              (std.concat new-visited targets))))))))
+
+; ========================================
+; 测试生成工具 / Test generation tools
+; ========================================
+
+; 生成函数测试用例模板（返回字典结构）
+(def generate_test_template (func-def)
+  (let func-name (dict-get func-def "name")
+    (let params (dict-get func-def "params")
+      (dict
+        "type" "TestTemplate"
+        "function_name" func-name
+        "test_function_name" (concat-test-name func-name)
+        "parameters" params
+        "expected_result" "expected-result"))))
+
+; 生成测试函数名
+(def concat-test-name (func-name)
+  (std.concat "test_" func-name))
+
+; ========================================
+; 代码生成工具 / Code generation tools
+; ========================================
+
+; 从规范生成函数定义
+(def generate_function_from_spec (spec)
+  (let name (dict-get spec "name")
+    (let params (dict-get spec "parameters")
+      (let body-template (dict-get spec "body_template")
+        (dict
+          "type" "FunctionDef"
+          "name" name
+          "params" params
+          "body" (generate-body-from-template body-template params))))))
+
+; 从模板生成函数体
+(def generate-body-from-template (template params)
+  (list template))
+
+; ========================================
+; 自举验证主函数 / Self-hosting validation main function
+; ========================================
+
+; 验证自举模块的完整性
+(def validate_self_hosting_module ()
+  (and
+    (validate_function_def (dict "name" "estimate_complexity" "params" (list) "body" (list)))
+    (validate_function_def (dict "name" "fold_constants" "params" (list) "body" (list)))
+    (validate_function_def (dict "name" "assess_code_quality" "params" (list) "body" (list)))
+    (validate_function_def (dict "name" "generate_test_template" "params" (list) "body" (list)))
+    true))
+
+; 获取自举工具列表
+(def get_self_hosting_tools ()
+  (list
+    "estimate_complexity"
+    "fold_constants"
+    "suggest_extract_function"
+    "assess_code_quality"
+    "validate_function_def"
+    "detect_circular_deps"
+    "generate_test_template"
+    "generate_function_from_spec"))

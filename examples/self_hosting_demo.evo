@@ -1,0 +1,78 @@
+; 自举能力演示 / Self-hosting capabilities demo
+; 演示如何使用新的自举工具模块
+; Demonstrates how to use the new self-hosting utility module
+
+(import "std")
+(import "self_hosting")
+
+; ========================================
+; 代码分析演示 / Code analysis demo
+; ========================================
+
+; 示例函数定义（字典格式）
+(let sample-function (dict
+    "name" "calculate_sum"
+    "params" (list "x" "y")
+    "body" (list "expr1" "expr2" "expr3" "expr4")))
+
+; 估计函数复杂度
+(let complexity (self_hosting.estimate_complexity sample-function))
+(std.print "函数复杂度：" complexity)
+
+; 检测长函数（阈值设为5）
+(let is-long (self_hosting.is_long_function sample-function 5))
+(std.print "是否长函数：" is-long)
+
+; ========================================
+; 代码质量评估演示 / Code quality assessment demo
+; ========================================
+
+; 示例代码质量指标
+(let code-metrics (dict
+    "readability" 75
+    "maintainability" 65
+    "performance" 80))
+
+; 评估代码质量分数
+(let quality-score (self_hosting.assess_code_quality code-metrics))
+(std.print "代码质量分数：" quality-score)
+
+; 生成质量建议
+(let suggestions (self_hosting.generate_quality_suggestions code-metrics))
+(std.print "质量建议数量：" (list-length suggestions))
+
+; ========================================
+; 自我验证演示 / Self-validation demo
+; ========================================
+
+; 验证函数定义的完整性
+(let valid-func (dict
+    "name" "test_func"
+    "params" (list "x")
+    "body" (list)))
+(let is-valid (self_hosting.validate_function_def valid-func))
+(std.print "函数定义是否有效：" is-valid)
+
+; 验证自举模块
+(let module-valid (self_hosting.validate_self_hosting_module))
+(std.print "自举模块是否有效：" module-valid)
+
+; ========================================
+; 获取自举工具列表 / Get self-hosting tools list
+; ========================================
+
+(let tools (self_hosting.get_self_hosting_tools))
+(std.print "可用自举工具数量：" (list-length tools))
+
+; ========================================
+; 测试生成演示 / Test generation demo
+; ========================================
+
+; 生成测试模板
+(let func-spec (dict
+    "name" "add"
+    "params" (list "x" "y")
+    "body" (list)))
+(let test-template (self_hosting.generate_test_template func-spec))
+(std.print "测试模板类型：" (dict-get test-template "type"))
+(std.print "测试函数名：" (dict-get test-template "test_function_name"))

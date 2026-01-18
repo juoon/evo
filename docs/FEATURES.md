@@ -96,6 +96,19 @@
   - 知识图谱构建：实体提取、关系挖掘、模式发现
   - 进化预测：基于历史模式和目标的智能预测
 - ✅ **进化规则自举** - 使用Evo-lang模块驱动进化规则生成
+  - evolution.evo模块：基础规则生成和增强规则生成（代码分析、优化、测试、质量评估规则）
+  - enhanced_bootstrap_rules()：获取所有增强的自举规则
+  - validate_rule()、validate_rules()：规则验证工具
+  - find_rule_by_name()、find_rules_by_keyword()：规则查找工具
+- ✅ **自举工具模块** - 用Evo-lang实现的代码分析、优化、验证等自举能力
+  - self_hosting.evo模块：提供代码分析、优化、验证、测试生成等自举工具函数
+  - 代码分析工具：estimate_complexity（估计复杂度）、detect_duplicates（检测重复）
+  - 代码优化工具：fold_constants（常量折叠）、suggest_extract_function（函数提取建议）
+  - 质量评估工具：assess_code_quality（质量评估）、generate_quality_suggestions（质量建议）
+  - 自我验证工具：validate_function_def（验证函数定义）、validate_module（验证模块）、detect_circular_deps（检测循环依赖）
+  - 测试生成工具：generate_test_template（生成测试模板）
+  - 代码生成工具：generate_function_from_spec（从规范生成函数）
+  - 进化引擎集成：load_enhanced_bootstrap_rules()、load_self_hosting_tools()、validate_self_hosting_module()
 - ✅ **知识图谱推理能力** - 智能相似度计算和自我反思
   - 规则相似度计算（名称、模式、产生式多维度）
   - 实体相似度查找

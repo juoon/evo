@@ -136,7 +136,10 @@ cargo build --release
 
 ```bash
 # 运行进化模式（使用 prompt.txt 作为指导）
-cargo run -- --evolution-mode --prompt prompt.txt
+cargo run -- evolve --prompt prompt.txt
+
+# 或者使用默认的 prompt.txt（可以省略 --prompt 参数）
+cargo run -- evolve
 ```
 
 系统会自动：
