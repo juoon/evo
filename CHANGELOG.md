@@ -220,6 +220,12 @@
     - 列表生成函数：repeat-list（生成重复元素列表）、flatten（展平嵌套列表）、zip（压缩两个列表）、unzip（解压键值对列表）
     - 字符串工具函数：string-len（字符串长度封装）
     - 进一步增强标准库：新增20+个通用工具函数，提升编程便利性
+40. ✅ ~~大规模扩展标准库 - 添加字典工具、数据验证、高级列表操作~~ - 已完成
+    - 字典工具函数（10个）：dict-get-or-default（获取默认值）、dict-update-if-exists（条件更新）、dict-select（选择键）、dict-omit（删除键）、dict-to-list（转换为列表）、list-to-dict（从列表创建）、dict-map（字典映射）、dict-filter（字典过滤）、dict-values-list（获取所有值）、dict-contains-value（检查值）
+    - 数据验证函数（5个）：validate-range（范围验证）、validate-not-null（非null验证）、validate-not-empty（非空验证）、validate-condition（条件验证）、validate-in-list（列表验证）
+    - 高级列表操作（10+个）：list-slice-range（范围切片）、list-insert（插入元素）、list-remove-at（删除指定位置）、list-remove（删除元素）、list-indices（查找所有索引）、list-chunk（分块）、list-rotate（轮换）、list-windows（滑动窗口）
+    - 组合和排列函数（2个）：list-combinations（组合）、list-permutations（排列）
+    - 大幅增强标准库：新增30+个函数，提供完整的字典处理、数据验证、高级列表操作能力
 
 ## 计划中的功能 / Planned Features
 

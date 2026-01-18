@@ -682,3 +682,356 @@
 ; 字符串连接（简化实现，需要内置支持） / String concatenation (simplified, needs built-in support)
 ; 注意：Evo-lang可能需要内置函数支持字符串操作
 ; Note: Evo-lang may need built-in function support for string operations
+
+; ========================================
+; 扩展字典工具函数 / Extended dictionary utility functions
+; ========================================
+
+; 获取字典值，如果不存在则返回默认值 / Get dictionary value with default if key doesn't exist
+(def dict-get-or-default (dict key default-value)
+  (let value (dict-get dict key)
+    (if (null? value)
+      default-value
+      value)))
+
+; 更新字典中的值（如果键存在） / Update dictionary value if key exists
+(def dict-update-if-exists (dict key value)
+  (if (dict-has-key dict key)
+    (dict-set dict key value)
+    dict))
+
+; 从字典中选择指定的键 / Select specified keys from dictionary
+(def dict-select (dict keys)
+  (dict-select-helper dict keys (dict)))
+
+(def dict-select-helper (dict keys result)
+  (if (= (list-length keys) 0)
+    result
+    (let key (list-get keys 0)
+      (let value (dict-get dict key)
+        (if (not-null? value)
+          (dict-select-helper
+            dict
+            (list-slice keys 1)
+            (dict-set result key value))
+          (dict-select-helper
+            dict
+            (list-slice keys 1)
+            result))))))
+
+; 从字典中删除指定的键 / Remove specified keys from dictionary
+(def dict-omit (dict keys)
+  (dict-omit-helper dict (dict-keys dict) keys (dict)))
+
+(def dict-omit-helper (dict all-keys to-remove result)
+  (if (= (list-length all-keys) 0)
+    result
+    (let key (list-get all-keys 0)
+      (if (contains to-remove key)
+        (dict-omit-helper
+          dict
+          (list-slice all-keys 1)
+          to-remove
+          result)
+        (dict-omit-helper
+          dict
+          (list-slice all-keys 1)
+          to-remove
+          (dict-set result key (dict-get dict key)))))))
+
+; 将字典转换为键值对列表 / Convert dictionary to list of key-value pairs
+(def dict-to-list (dict)
+  (dict-to-list-helper dict (dict-keys dict) (list)))
+
+(def dict-to-list-helper (dict keys result)
+  (if (= (list-length keys) 0)
+    result
+    (let key (list-get keys 0)
+      (let pair (list key (dict-get dict key))
+        (dict-to-list-helper
+          dict
+          (list-slice keys 1)
+          (list-append result (list pair)))))))
+
+; 从键值对列表创建字典 / Create dictionary from list of key-value pairs
+(def list-to-dict (pairs)
+  (list-to-dict-helper pairs (dict)))
+
+(def list-to-dict-helper (pairs result)
+  (if (= (list-length pairs) 0)
+    result
+    (let pair (list-get pairs 0)
+      (let key (list-get pair 0)
+        (let value (list-get pair 1)
+          (list-to-dict-helper
+            (list-slice pairs 1)
+            (dict-set result key value)))))))
+
+; 字典映射（对每个值应用函数） / Map over dictionary values
+(def dict-map (func dict)
+  (dict-map-helper func dict (dict-keys dict) (dict)))
+
+(def dict-map-helper (func dict keys result)
+  (if (= (list-length keys) 0)
+    result
+    (let key (list-get keys 0)
+      (let old-value (dict-get dict key)
+        (let new-value (func old-value)
+          (dict-map-helper
+            func
+            dict
+            (list-slice keys 1)
+            (dict-set result key new-value)))))))
+
+; 字典过滤（保留满足条件的键值对） / Filter dictionary (keep key-value pairs satisfying condition)
+(def dict-filter (pred dict)
+  (dict-filter-helper pred dict (dict-keys dict) (dict)))
+
+(def dict-filter-helper (pred dict keys result)
+  (if (= (list-length keys) 0)
+    result
+    (let key (list-get keys 0)
+      (let value (dict-get dict key)
+        (if (pred key value)
+          (dict-filter-helper
+            pred
+            dict
+            (list-slice keys 1)
+            (dict-set result key value))
+          (dict-filter-helper
+            pred
+            dict
+            (list-slice keys 1)
+            result))))))
+
+; 获取字典的所有值 / Get all values from dictionary
+(def dict-values-list (dict)
+  (dict-values dict))
+
+; 检查字典是否包含指定值 / Check if dictionary contains value
+(def dict-contains-value (dict value)
+  (contains (dict-values dict) value))
+
+; ========================================
+; 数据验证函数 / Data validation functions
+; ========================================
+
+; 验证值是否在指定范围内 / Validate if value is in specified range
+(def validate-range (value min max error-msg)
+  (if (and (>= value min) (<= value max))
+    value
+    error-msg))
+
+; 验证值是否为非null / Validate if value is not null
+(def validate-not-null (value error-msg)
+  (if (not-null? value)
+    value
+    error-msg))
+
+; 验证列表是否非空 / Validate if list is not empty
+(def validate-not-empty (lst error-msg)
+  (if (not-empty lst)
+    lst
+    error-msg))
+
+; 验证条件是否满足 / Validate if condition is satisfied
+(def validate-condition (condition error-msg)
+  (if condition
+    true
+    error-msg))
+
+; 验证值是否在列表中 / Validate if value is in list
+(def validate-in-list (value lst error-msg)
+  (if (contains lst value)
+    value
+    error-msg))
+
+; ========================================
+; 高级列表操作函数 / Advanced list operations
+; ========================================
+
+; 列表切片（指定起始和结束索引） / List slice (with start and end index)
+(def list-slice-range (lst start end)
+  (if (>= start end)
+    (list)
+    (list-slice-range-helper lst start end 0 (list))))
+
+(def list-slice-range-helper (lst start end current result)
+  (if (>= current end)
+    result
+    (if (>= current start)
+      (list-slice-range-helper
+        lst
+        start
+        end
+        (+ current 1)
+        (list-append result (list (list-get lst current))))
+      (list-slice-range-helper
+        lst
+        start
+        end
+        (+ current 1)
+        result))))
+
+; 列表插入（在指定位置插入元素） / Insert element at specified position
+(def list-insert (lst index item)
+  (if (<= index 0)
+    (list-append (list item) lst)
+    (list-insert-helper lst index item 0 (list))))
+
+(def list-insert-helper (lst index item current result)
+  (if (>= current (list-length lst))
+    result
+    (if (= current index)
+      (list-insert-helper
+        lst
+        index
+        item
+        (+ current 1)
+        (list-append result (list item (list-get lst current))))
+      (list-insert-helper
+        lst
+        index
+        item
+        (+ current 1)
+        (list-append result (list (list-get lst current)))))))
+
+; 列表删除（删除指定索引的元素） / Remove element at specified index
+(def list-remove-at (lst index)
+  (list-remove-at-helper lst index 0 (list)))
+
+(def list-remove-at-helper (lst index current result)
+  (if (>= current (list-length lst))
+    result
+    (if (= current index)
+      (list-remove-at-helper
+        lst
+        index
+        (+ current 1)
+        result)
+      (list-remove-at-helper
+        lst
+        index
+        (+ current 1)
+        (list-append result (list (list-get lst current)))))))
+
+; 列表删除第一个匹配的元素 / Remove first matching element
+(def list-remove (lst item)
+  (list-remove-helper lst item false (list)))
+
+(def list-remove-helper (lst item removed result)
+  (if (= (list-length lst) 0)
+    result
+    (let current (list-get lst 0)
+      (if (and (= current item) (not removed))
+        (list-remove-helper
+          (list-slice lst 1)
+          item
+          true
+          result)
+        (list-remove-helper
+          (list-slice lst 1)
+          item
+          removed
+          (list-append result (list current)))))))
+
+; 列表索引（查找元素的所有索引） / Find all indices of element
+(def list-indices (lst item)
+  (list-indices-helper lst item 0 (list)))
+
+(def list-indices-helper (lst item current-index result)
+  (if (= (list-length lst) 0)
+    result
+    (let current (list-get lst 0)
+      (let new-result (if (= current item)
+        (list-append result (list current-index))
+        result)
+        (list-indices-helper
+          (list-slice lst 1)
+          item
+          (+ current-index 1)
+          new-result)))))
+
+; 列表分块（将列表分成指定大小的块） / Chunk list into specified size chunks
+(def list-chunk (lst size)
+  (list-chunk-helper lst size (list)))
+
+(def list-chunk-helper (lst size result)
+  (if (= (list-length lst) 0)
+    result
+    (if (>= (list-length lst) size)
+      (list-chunk-helper
+        (list-slice lst size)
+        size
+        (list-append result (list (take lst size))))
+      (list-append result (list lst)))))
+
+; 列表轮换（将列表元素向左或向右移动） / Rotate list (shift elements left or right)
+(def list-rotate (lst n)
+  (if (>= n 0)
+    (list-rotate-left lst n)
+    (list-rotate-right lst (- n))))
+
+(def list-rotate-left (lst n)
+  (if (<= n 0)
+    lst
+    (if (= (list-length lst) 0)
+      (list)
+      (list-rotate-left
+        (list-append (list-slice lst 1) (list (list-get lst 0)))
+        (- n 1)))))
+
+(def list-rotate-right (lst n)
+  (if (<= n 0)
+    lst
+    (if (= (list-length lst) 0)
+      (list)
+      (list-rotate-right
+        (list-append (list (last lst)) (butlast lst))
+        (- n 1)))))
+
+; 列表窗口（生成滑动窗口） / Generate sliding windows from list
+(def list-windows (lst size)
+  (list-windows-helper lst size (list)))
+
+(def list-windows-helper (lst size result)
+  (if (< (list-length lst) size)
+    result
+    (list-windows-helper
+      (list-slice lst 1)
+      size
+      (list-append result (list (take lst size))))))
+
+; ========================================
+; 组合和排列函数 / Combination and permutation functions
+; ========================================
+
+; 列表的所有组合（长度为n） / All combinations of list (length n)
+(def list-combinations (lst n)
+  (if (or (<= n 0) (> n (list-length lst)))
+    (list)
+    (list-combinations-helper lst n 0 (list) (list))))
+
+(def list-combinations-helper (lst n start current result)
+  (if (= (list-length current) n)
+    (list-append result (list current))
+    (if (>= start (list-length lst))
+      result
+      (let new-current (list-append current (list (list-get lst start)))
+        (let result1 (list-combinations-helper lst n (+ start 1) new-current result)
+          (list-combinations-helper lst n (+ start 1) current result1)))))
+
+; 列表的排列（简化实现，生成前n个排列） / Permutations of list (simplified, generate first n permutations)
+(def list-permutations (lst)
+  (if (<= (list-length lst) 1)
+    (list lst)
+    (list-permutations-helper lst (list-length lst) (list))))
+
+(def list-permutations-helper (lst n result)
+  (if (<= n 0)
+    result
+    (let rotated (list-rotate lst n)
+      (list-permutations-helper
+        lst
+        (- n 1)
+        (list-append result (list rotated))))))

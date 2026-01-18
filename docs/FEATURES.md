@@ -80,7 +80,9 @@
 - ✅ **逻辑函数** - `std.and`, `std.or`, `std.not`
 - ✅ **列表操作函数** - `std.sum`, `std.product`, `std.reverse`, `std.contains`, `std.count`, `std.take`, `std.drop`, `std.concat`, `std.all-equal`, `std.any-equal`, `std.find_index`, `std.find`, `std.unique`, `std.any`, `std.all`, `std.partition`, `std.remove_if`, `std.group_by`, `std.frequencies`, `std.first`, `std.last`, `std.butlast`, `std.empty`, `std.not_empty`
 - ✅ **范围生成函数** - `std.range`, `std.range-step`
-- ✅ **字典操作函数** - `std.dict-has-key`, `std.dict-merge`, `std.dict-update`, `std.dict-remove`, `std.dict-size`, `std.dict-empty`
+- ✅ **字典操作函数** - `std.dict-has-key`, `std.dict-merge`, `std.dict-update`, `std.dict-remove`, `std.dict-size`, `std.dict-empty`, `std.dict-get-or-default`, `std.dict-update-if-exists`, `std.dict-select`, `std.dict-omit`, `std.dict-to-list`, `std.list-to-dict`, `std.dict-map`, `std.dict-filter`, `std.dict-values-list`, `std.dict-contains-value`
+- ✅ **数据验证函数** - `std.validate-range`, `std.validate-not-null`, `std.validate-not-empty`, `std.validate-condition`, `std.validate-in-list`
+- ✅ **高级列表操作** - `std.list-slice-range`, `std.list-insert`, `std.list-remove-at`, `std.list-remove`, `std.list-indices`, `std.list-chunk`, `std.list-rotate`, `std.list-windows`, `std.list-combinations`, `std.list-permutations`
 - ✅ **工具函数** - `std.identity`, `std.repeat`, `std.when`, `std.unless`, `std.if_else`, `std.cond`, `std.null?`, `std.not_null?`, `std.default`, `std.safe_get`, `std.coalesce`, `std.clamp`, `std.in_range?`, `std.repeat_list`, `std.flatten`, `std.zip`, `std.unzip`, `std.string_len`
 - ✅ **类型检查函数** - `std.number?`, `std.int?`, `std.float?`, `std.bool?`, `std.list?`
 - ✅ **高阶函数** - `std.map`, `std.filter`, `std.reduce`
