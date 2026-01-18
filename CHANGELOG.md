@@ -195,6 +195,14 @@
     - 代码文档工具：generate_function_doc（生成函数文档）、extract_function_signature（提取函数签名）
     - 更新get_self_hosting_tools()和validate_self_hosting_module()函数以包含新工具
     - 进一步增强自举能力：自举工具模块从8个工具扩展到18个工具
+37. ✅ ~~扩展标准库函数 - 添加更多列表操作和工具函数~~ - 已完成
+    - 列表查找函数：find_index（查找元素索引）、find（查找满足条件的元素）、unique（列表去重）
+    - 列表条件函数：any（检查是否有元素满足条件）、all（检查所有元素是否满足条件）
+    - 列表分区函数：partition（将列表分成满足条件和不满足条件两部分）、remove_if（移除满足条件的元素）
+    - 列表分组函数：group_by（按条件分组）、frequencies（统计元素出现次数）
+    - 列表访问函数：first（获取第一个元素）、last（获取最后一个元素）、butlast（获取除最后一个外的所有元素）
+    - 列表状态函数：empty（检查列表是否为空）、not_empty（检查列表是否非空）
+    - 进一步增强标准库：新增14个列表操作和工具函数，提升列表处理能力
 
 ## 计划中的功能 / Planned Features
 

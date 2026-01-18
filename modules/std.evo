@@ -340,3 +340,161 @@
 ; 检查字典是否为空 / Check if dictionary is empty
 (def dict-empty (dict)
   (= (dict-size dict) 0))
+
+; ========================================
+; 新增列表查找和搜索函数 / New list search and lookup functions
+; ========================================
+
+; 查找列表中第一个满足条件的元素 / Find first element in list that satisfies condition
+(def find (pred lst)
+  (if (= (list-length lst) 0)
+    null
+    (let first (list-get lst 0)
+      (if (pred first)
+        first
+        (find pred (list-slice lst 1))))))
+
+; 查找元素在列表中的索引（从0开始） / Find index of element in list (0-based)
+(def find-index (item lst)
+  (find-index-helper item lst 0))
+
+(def find-index-helper (item lst index)
+  (if (= (list-length lst) 0)
+    -1
+    (if (= (list-get lst 0) item)
+      index
+      (find-index-helper item (list-slice lst 1) (+ index 1)))))
+
+; 检查列表是否包含满足条件的元素 / Check if list contains element satisfying condition
+(def any (pred lst)
+  (if (= (list-length lst) 0)
+    false
+    (let first (list-get lst 0)
+      (if (pred first)
+        true
+        (any pred (list-slice lst 1))))))
+
+; 检查列表所有元素是否都满足条件 / Check if all elements in list satisfy condition
+(def all (pred lst)
+  (if (= (list-length lst) 0)
+    true
+    (let first (list-get lst 0)
+      (if (pred first)
+        (all pred (list-slice lst 1))
+        false))))
+
+; 将列表分成两部分（满足条件和不满足条件） / Partition list into two parts (satisfying and not satisfying condition)
+(def partition (pred lst)
+  (partition-helper pred lst (list) (list)))
+
+(def partition-helper (pred lst true-list false-list)
+  (if (= (list-length lst) 0)
+    (dict "true" true-list "false" false-list)
+    (let first (list-get lst 0)
+      (if (pred first)
+        (partition-helper
+          pred
+          (list-slice lst 1)
+          (list-append true-list (list first))
+          false-list)
+        (partition-helper
+          pred
+          (list-slice lst 1)
+          true-list
+          (list-append false-list (list first)))))))
+
+; 从列表中移除满足条件的元素 / Remove elements from list that satisfy condition
+(def remove-if (pred lst)
+  (if (= (list-length lst) 0)
+    (list)
+    (let first (list-get lst 0)
+      (if (pred first)
+        (remove-if pred (list-slice lst 1))
+        (list-append
+          (list first)
+          (remove-if pred (list-slice lst 1)))))))
+
+; 列表去重（保留第一次出现的元素） / Remove duplicates from list (keep first occurrence)
+(def unique (lst)
+  (unique-helper lst (list)))
+
+(def unique-helper (lst seen)
+  (if (= (list-length lst) 0)
+    seen
+    (let current (list-get lst 0)
+      (if (contains seen current)
+        (unique-helper (list-slice lst 1) seen)
+        (unique-helper
+          (list-slice lst 1)
+          (list-append seen (list current)))))))
+
+; ========================================
+; 新增列表分组和聚合函数 / New list grouping and aggregation functions
+; ========================================
+
+; 按条件对列表分组 / Group list elements by condition
+(def group-by (key-func lst)
+  (group-by-helper key-func lst (dict)))
+
+(def group-by-helper (key-func lst groups)
+  (if (= (list-length lst) 0)
+    groups
+    (let current (list-get lst 0)
+      (let key (key-func current)
+        (let existing-group (dict-get groups key)
+          (let new-group (if (= existing-group null)
+            (list current)
+            (list-append existing-group (list current)))
+            (group-by-helper
+              key-func
+              (list-slice lst 1)
+              (dict-set groups key new-group))))))))
+
+; 统计列表元素出现次数 / Count occurrences of elements in list
+(def frequencies (lst)
+  (frequencies-helper lst (dict)))
+
+(def frequencies-helper (lst counts)
+  (if (= (list-length lst) 0)
+    counts
+    (let current (list-get lst 0)
+      (let current-count (dict-get counts current)
+        (let new-count (if (= current-count null)
+          1
+          (+ current-count 1))
+          (frequencies-helper
+            (list-slice lst 1)
+            (dict-set counts current new-count)))))))
+
+; 获取列表的第一个元素 / Get first element of list
+(def first (lst)
+  (if (> (list-length lst) 0)
+    (list-get lst 0)
+    null))
+
+; 获取列表的最后一个元素 / Get last element of list
+(def last (lst)
+  (if (> (list-length lst) 0)
+    (list-get lst (- (list-length lst) 1))
+    null))
+
+; 获取列表除最后一个元素外的所有元素 / Get all elements except last
+(def butlast (lst)
+  (if (<= (list-length lst) 1)
+    (list)
+    (butlast-helper lst (list))))
+
+(def butlast-helper (lst result)
+  (if (<= (list-length lst) 1)
+    result
+    (butlast-helper
+      (list-slice lst 1)
+      (list-append result (list (list-get lst 0))))))
+
+; 列表是否为空 / Check if list is empty
+(def empty (lst)
+  (= (list-length lst) 0))
+
+; 列表是否非空 / Check if list is not empty
+(def not-empty (lst)
+  (> (list-length lst) 0))

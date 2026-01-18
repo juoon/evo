@@ -62,9 +62,10 @@
 - **核心模块**：12个（grammar, parser, runtime, evolution等）
 - **进化引擎子模块**：15个（分析工具、生成器、优化器等）
 - **标准库模块**：3个（std, math, evolution）
+- **标准库函数**：40+ 个（列表操作、数学函数、字典操作等）
 - **自举模块**：2个（evolution.evo, self_hosting.evo）
 - **自举工具数量**：18个（self_hosting.evo模块提供）
-- **已实现功能**：36+ 主要特性
+- **已实现功能**：37+ 主要特性
 - **版本记录**：详见 [CHANGELOG.md](../CHANGELOG.md)
 
 ### 能力覆盖

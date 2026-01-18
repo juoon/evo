@@ -65,7 +65,7 @@
   - 标准库：`(import "std")` 提供常用工具函数
 - ✅ **数学函数** - `std.abs`, `std.max`, `std.min`, `std.factorial`, `std.power`, `std.sqrt-approx`, `std.gcd`, `std.lcm`, `std.fibonacci`, `std.fibonacci-sequence`
 - ✅ **逻辑函数** - `std.and`, `std.or`, `std.not`
-- ✅ **列表操作函数** - `std.sum`, `std.product`, `std.reverse`, `std.contains`, `std.count`, `std.take`, `std.drop`, `std.concat`, `std.all-equal`, `std.any-equal`
+- ✅ **列表操作函数** - `std.sum`, `std.product`, `std.reverse`, `std.contains`, `std.count`, `std.take`, `std.drop`, `std.concat`, `std.all-equal`, `std.any-equal`, `std.find_index`, `std.find`, `std.unique`, `std.any`, `std.all`, `std.partition`, `std.remove_if`, `std.group_by`, `std.frequencies`, `std.first`, `std.last`, `std.butlast`, `std.empty`, `std.not_empty`
 - ✅ **范围生成函数** - `std.range`, `std.range-step`
 - ✅ **字典操作函数** - `std.dict-has-key`, `std.dict-merge`, `std.dict-update`, `std.dict-remove`, `std.dict-size`, `std.dict-empty`
 - ✅ **工具函数** - `std.identity`, `std.repeat`, `std.when`, `std.unless`
