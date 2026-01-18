@@ -667,43 +667,24 @@
         (list-append result (list (list-get pair 1)))))))
 
 ; ========================================
-; 字符串工具函数（封装内置函数） / String utility functions (wrap built-in functions)
+; 字符串工具函数 / String utility functions
 ; ========================================
 
-; 注意：以下函数调用解释器内置函数，这里提供标准库接口
-; Note: The following functions call built-in interpreter functions, here we provide standard library interface
+; 注意：以下函数都是解释器内置函数，无需在此定义
+; 解释器已提供：string-length, string-split, string-join, string-trim, string-replace,
+; string-substring, string-upper, string-lower
+; Note: The following functions are built-in interpreter functions, no need to define here
+; Interpreter provides: string-length, string-split, string-join, string-trim, string-replace,
+; string-substring, string-upper, string-lower
 
 ; 字符串长度（使用内置函数） / String length (use built-in function)
-(def string-len (str)
-  (string-length str))
+; 注意：std模块中使用string-length作为统一的API接口
+; Note: std module uses string-length as unified API interface
+; (可以直接使用内置函数 string-length)
 
-; 字符串分割 / String split
-(def string-split (str delimiter)
-  (string-split str delimiter))
-
-; 字符串连接 / String join
-(def string-join (lst delimiter)
-  (string-join lst delimiter))
-
-; 字符串去除空白 / String trim
-(def string-trim (str)
-  (string-trim str))
-
-; 字符串替换 / String replace
-(def string-replace (str old new)
-  (string-replace str old new))
-
-; 字符串子串 / String substring
-(def string-substring (str start end)
-  (string-substring str start end))
-
-; 字符串转大写 / String to uppercase
-(def string-upper (str)
-  (string-upper str))
-
-; 字符串转小写 / String to lowercase
-(def string-lower (str)
-  (string-lower str))
+; 字符串分割、连接、修剪、替换、子串、大小写转换都是解释器内置函数
+; String split, join, trim, replace, substring, case conversion are all built-in interpreter functions
+; (可以直接使用内置函数：string-split, string-join, string-trim, string-replace, string-substring, string-upper, string-lower)
 
 ; 字符串前缀检查 / String starts with (self-hosted implementation)
 (def string-starts-with (str prefix)

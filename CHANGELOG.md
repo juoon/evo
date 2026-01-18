@@ -232,6 +232,12 @@
     - 标准库字符串函数封装：在std.evo中封装所有字符串处理函数，包括string-split、string-join、string-trim、string-replace等
     - 完整的字符串操作能力：提供分割、连接、修剪、替换、子串、大小写转换、前缀/后缀/包含检查等功能
     - 遵循自举原则：仅在解释器中实现无法自举的底层操作，其他功能用Evo-lang实现，提升自举能力
+42. ✅ ~~修复标准库字符串函数无限递归问题~~ - 已完成
+    - 修复std.evo中string-split、string-join、string-trim、string-replace的无限递归bug
+    - 原因：这些函数试图调用同名内置函数，但用户定义函数覆盖了内置函数，导致无限递归
+    - 解决方案：删除这些多余的包装函数，直接使用解释器内置函数
+    - 保留自举实现的字符串函数：string-starts-with、string-ends-with、string-contains继续在标准库中用Evo-lang实现
+    - 提升标准库稳定性：修复导致运行时错误的严重bug
 
 ## 计划中的功能 / Planned Features
 
