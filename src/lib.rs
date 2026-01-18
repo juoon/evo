@@ -1,4 +1,4 @@
-// Aevolang - 自进化编程语言库 / Self-evolving Programming Language Library
+// Evo-lang - 自进化编程语言库 / Self-evolving Programming Language Library
 // Python模块导出 / Python module exports
 
 mod evolution;
@@ -19,27 +19,27 @@ pub use runtime::*;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 
-/// Python模块：Aevolang解析器和解释器
-/// Python module: Aevolang parser and interpreter
+/// Python模块：Evo-lang解析器和解释器
+/// Python module: Evo-lang parser and interpreter
 #[pymodule]
-fn aevo(_py: Python, m: &Bound<PyModule>) -> PyResult<()> {
-    m.add_class::<AevoInterpreter>()?;
-    m.add_class::<AevoParser>()?;
+fn evo(_py: Python, m: &Bound<PyModule>) -> PyResult<()> {
+    m.add_class::<EvoInterpreter>()?;
+    m.add_class::<EvoParser>()?;
     m.add_function(wrap_pyfunction!(parse, m)?)?;
     m.add_function(wrap_pyfunction!(execute, m)?)?;
     m.add_function(wrap_pyfunction!(eval, m)?)?;
     Ok(())
 }
 
-/// Aevolang解释器Python包装类
-/// Aevolang interpreter Python wrapper class
+/// Evo-lang解释器Python包装类
+/// Evo-lang interpreter Python wrapper class
 #[pyclass]
-pub struct AevoInterpreter {
+pub struct EvoInterpreter {
     interpreter: runtime::Interpreter,
 }
 
 #[pymethods]
-impl AevoInterpreter {
+impl EvoInterpreter {
     /// 创建新解释器 / Create new interpreter
     #[new]
     fn new() -> Self {
@@ -48,7 +48,7 @@ impl AevoInterpreter {
         }
     }
 
-    /// 执行Aevolang代码 / Execute Aevolang code
+    /// 执行Evo-lang代码 / Execute Evo-lang code
     fn execute(&mut self, code: &str) -> PyResult<String> {
         let parser = parser::AdaptiveParser::new(true);
         match parser.parse(code) {
@@ -73,15 +73,15 @@ impl AevoInterpreter {
     }
 }
 
-/// Aevolang解析器Python包装类
-/// Aevolang parser Python wrapper class
+/// Evo-lang解析器Python包装类
+/// Evo-lang parser Python wrapper class
 #[pyclass]
-pub struct AevoParser {
+pub struct EvoParser {
     parser: parser::AdaptiveParser,
 }
 
 #[pymethods]
-impl AevoParser {
+impl EvoParser {
     /// 创建新解析器 / Create new parser
     #[new]
     fn new(enable_nlu: bool) -> Self {
@@ -90,7 +90,7 @@ impl AevoParser {
         }
     }
 
-    /// 解析Aevolang代码 / Parse Aevolang code
+    /// 解析Evo-lang代码 / Parse Evo-lang code
     fn parse(&self, code: &str) -> PyResult<PyObject> {
         match self.parser.parse(code) {
             Ok(ast) => Python::with_gil(|py| Ok(ast_to_pyobject(py, &ast))),
@@ -99,8 +99,8 @@ impl AevoParser {
     }
 }
 
-/// 解析Aevolang代码并返回AST（Python字典格式）
-/// Parse Aevolang code and return AST (as Python dict)
+/// 解析Evo-lang代码并返回AST（Python字典格式）
+/// Parse Evo-lang code and return AST (as Python dict)
 #[pyfunction]
 fn parse(code: &str) -> PyResult<PyObject> {
     let parser = parser::AdaptiveParser::new(true);
@@ -110,8 +110,8 @@ fn parse(code: &str) -> PyResult<PyObject> {
     }
 }
 
-/// 执行Aevolang代码并返回结果字符串
-/// Execute Aevolang code and return result string
+/// 执行Evo-lang代码并返回结果字符串
+/// Execute Evo-lang code and return result string
 #[pyfunction]
 fn execute(code: &str) -> PyResult<String> {
     let parser = parser::AdaptiveParser::new(true);
@@ -125,8 +125,8 @@ fn execute(code: &str) -> PyResult<String> {
     }
 }
 
-/// 执行Aevolang代码并返回Python对象
-/// Execute Aevolang code and return Python object
+/// 执行Evo-lang代码并返回Python对象
+/// Execute Evo-lang code and return Python object
 #[pyfunction]
 fn eval(code: &str) -> PyResult<PyObject> {
     let parser = parser::AdaptiveParser::new(true);
@@ -140,8 +140,8 @@ fn eval(code: &str) -> PyResult<PyObject> {
     }
 }
 
-/// 将Aevolang Value转换为Python对象
-/// Convert Aevolang Value to Python object
+/// 将Evo-lang Value转换为Python对象
+/// Convert Evo-lang Value to Python object
 fn value_to_pyobject(py: Python, value: &runtime::interpreter::Value) -> PyObject {
     match value {
         runtime::interpreter::Value::Int(i) => i.to_object(py),

@@ -124,7 +124,7 @@ impl DocumentationGenerator {
 {returns}
 
 ### 示例 / Example
-```aevo
+```evo
 {example}
 ```
 
@@ -284,7 +284,7 @@ impl DocumentationGenerator {
                                 }
 
                                 doc.push_str("**示例 / Example**:\n");
-                                doc.push_str("```aevo\n");
+                                doc.push_str("```evo\n");
                                 doc.push_str(&format!("({} ...)\n", name));
                                 doc.push_str("```\n\n");
                             }

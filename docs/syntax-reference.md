@@ -1,8 +1,8 @@
-# Aevolang 语法参考 / Syntax Reference
+# Evo-lang 语法参考 / Syntax Reference
 
 ## 语法概述 / Syntax Overview
 
-Aevolang 使用 S-expression 语法，所有代码都是括号包围的列表。第一个元素通常是操作符或函数名，后续元素是参数。
+Evo-lang 使用 S-expression 语法，所有代码都是括号包围的列表。第一个元素通常是操作符或函数名，后续元素是参数。
 
 ## 表达式类型 / Expression Types
 
@@ -218,18 +218,18 @@ nil
 字典是键值对集合，键必须是字符串：
 
 ```lisp
-(dict "name" "Aevolang" "version" "1.0")  ; 创建字典
+(dict "name" "Evo-lang" "version" "1.0")  ; 创建字典
 (dict "x" 1 "y" 2 "z" 3)                  ; 数字值字典
 ```
 
 字典操作：
 
 ```lisp
-(dict-get (dict "name" "Aevo") "name")    ; 获取值: "Aevo"
+(dict-get (dict "name" "Evo") "name")    ; 获取值: "Evo"
 (dict-set (dict "x" 1) "y" 2)            ; 设置键值: {"x": 1, "y": 2}
 (dict-keys (dict "a" 1 "b" 2))           ; 获取所有键: ["a", "b"]
 (dict-values (dict "a" 1 "b" 2))         ; 获取所有值: [1, 2]
-(dict-has (dict "name" "Aevo") "name")   ; 检查键是否存在: true
+(dict-has (dict "name" "Evo") "name")   ; 检查键是否存在: true
 ```
 
 ## 作用域 / Scope

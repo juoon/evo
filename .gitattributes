@@ -7,7 +7,7 @@
 *.toml text eol=lf
 *.md text eol=lf
 *.txt text eol=lf
-*.aevo text eol=lf
+*.evo text eol=lf
 *.py text eol=lf
 
 # 二进制文件不处理 / Binary files are not processed

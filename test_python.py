@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Aevolang Python互操作测试脚本
-Aevolang Python Interoperability Test Script
+Evo-lang Python互操作测试脚本
+Evo-lang Python Interoperability Test Script
 
-测试Aevolang的Python接口
-Tests Aevolang's Python interface
+测试Evo-lang的Python接口
+Tests Evo-lang's Python interface
 """
 
 import sys
@@ -15,10 +15,10 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'target', 'release'))
 
 try:
-    import aevo
-    print("[OK] Aevolang模块导入成功 / Aevolang module imported successfully")
+    import evo
+    print("[OK] Evo-lang模块导入成功 / Evo-lang module imported successfully")
 except ImportError as e:
-    print(f"[ERROR] 无法导入Aevolang模块 / Failed to import Aevolang module: {e}")
+    print(f"[ERROR] 无法导入Evo-lang模块 / Failed to import Evo-lang module: {e}")
     print("\n提示 / Note: 需要先构建Python模块 / Need to build Python module first")
     print("使用以下命令构建 / Use the following command to build:")
     print("  maturin develop")
@@ -39,7 +39,7 @@ def test_basic_operations():
     
     for code, expected, description in test_cases:
         try:
-            result = aevo.execute(code)
+            result = evo.execute(code)
             print(f"[OK] {description}: {code} = {result} (期望 / Expected: {expected})")
             assert result == expected, f"期望 {expected}, 得到 {result}"
         except Exception as e:
@@ -56,7 +56,7 @@ def test_variables():
     
     for code, expected, description in test_cases:
         try:
-            result = aevo.execute(code)
+            result = evo.execute(code)
             print(f"[OK] {description}: {code} = {result} (期望 / Expected: {expected})")
             assert result == expected, f"期望 {expected}, 得到 {result}"
         except Exception as e:
@@ -74,7 +74,7 @@ def test_conditionals():
     
     for code, expected, description in test_cases:
         try:
-            result = aevo.execute(code)
+            result = evo.execute(code)
             print(f"[OK] {description}: {code} = {result} (期望 / Expected: {expected})")
             assert result == expected, f"期望 {expected}, 得到 {result}"
         except Exception as e:
@@ -87,7 +87,7 @@ def test_functions():
     # 使用解释器类来保持函数定义
     # Use interpreter class to maintain function definitions
     try:
-        interpreter = aevo.AevoInterpreter()
+        interpreter = evo.EvoInterpreter()
         
         # 定义函数
         define_code = "(def add (x y) (+ x y))"
@@ -107,7 +107,7 @@ def test_interpreter_class():
     print("\n=== 测试解释器类 / Testing Interpreter Class ===")
     
     try:
-        interpreter = aevo.AevoInterpreter()
+        interpreter = evo.EvoInterpreter()
         print("[OK] 解释器创建成功 / Interpreter created successfully")
         
         result = interpreter.execute("(+ 1 2)")
@@ -124,7 +124,7 @@ def test_parser_class():
     print("\n=== 测试解析器类 / Testing Parser Class ===")
     
     try:
-        parser = aevo.AevoParser(enable_nlu=True)
+        parser = evo.EvoParser(enable_nlu=True)
         print("[OK] 解析器创建成功 / Parser created successfully")
         
         ast = parser.parse("(+ 1 2)")
@@ -135,7 +135,7 @@ def test_parser_class():
 def main():
     """主测试函数 / Main test function"""
     print("=" * 60)
-    print("Aevolang Python互操作测试 / Aevolang Python Interoperability Test")
+    print("Evo-lang Python互操作测试 / Evo-lang Python Interoperability Test")
     print("=" * 60)
     
     test_basic_operations()

@@ -1,6 +1,6 @@
-# Aevolang 文档 / Documentation
+# Evo-lang 文档 / Documentation
 
-欢迎来到 Aevolang 文档中心！
+欢迎来到 Evo-lang 文档中心！
 
 ## 文档导航 / Documentation Navigation
 

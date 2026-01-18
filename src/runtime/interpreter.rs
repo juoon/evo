@@ -1,6 +1,6 @@
 // 解释器 / Interpreter
-// 执行Aevolang代码的解释器
-// Interpreter for executing Aevolang code
+// 执行Evo-lang代码的解释器
+// Interpreter for executing Evo-lang code
 
 use crate::grammar::core::{BinOp, Expr, GrammarElement, Literal, Pattern};
 use crate::parser::AdaptiveParser;
@@ -1883,10 +1883,10 @@ impl Interpreter {
     /// 解析模块路径 / Resolve module path
     fn resolve_module_path(&self, module_name: &str) -> Result<PathBuf, InterpreterError> {
         let mut candidates = Vec::new();
-        let name = if module_name.ends_with(".aevo") {
+        let name = if module_name.ends_with(".evo") {
             module_name.to_string()
         } else {
-            format!("{}.aevo", module_name)
+            format!("{}.evo", module_name)
         };
 
         candidates.push(PathBuf::from("modules").join(&name));

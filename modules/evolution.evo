@@ -1,4 +1,4 @@
-; Evolution rules defined in Aevolang (bootstrapping)
+; Evolution rules defined in Evo-lang (bootstrapping)
 
 (def make_rule (name keywords production description)
   (dict

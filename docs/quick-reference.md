@@ -1,4 +1,4 @@
-# Aevolang 快速参考 / Quick Reference
+# Evo-lang 快速参考 / Quick Reference
 
 ## 语法速查表 / Syntax Cheat Sheet
 

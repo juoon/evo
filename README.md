@@ -1,4 +1,4 @@
-# Aevolang - 自进化编程语言 / Self-evolving Programming Language
+# Evo-lang - 自进化编程语言 / Self-evolving Programming Language
 
 一个自进化的编程语言，能够根据使用和需求自我进化，终极目标是理解人类思想，促进人类与智能生命和谐共生。
 
@@ -78,9 +78,9 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
 ### Python互操作 / Python Interoperability
 
-Aevolang支持Python互操作，可以从Python代码中调用Aevolang功能。
+Evo-lang支持Python互操作，可以从Python代码中调用Evo-lang功能。
 
-Aevolang supports Python interoperability, allowing you to call Aevolang functions from Python code.
+Evo-lang supports Python interoperability, allowing you to call Evo-lang functions from Python code.
 
 **安装Python模块 / Install Python Module:**
 
@@ -95,14 +95,14 @@ maturin develop
 **使用示例 / Usage Example:**
 
 ```python
-import aevo
+import evo
 
-# 执行Aevolang代码
-result = aevo.execute("(+ 1 2)")
+# 执行Evo-lang代码
+result = evo.execute("(+ 1 2)")
 print(result)  # 输出: 3
 
 # 使用解释器类
-interpreter = aevo.AevoInterpreter()
+interpreter = evo.EvoInterpreter()
 interpreter.execute("(def add (x y) (+ x y))")
 result = interpreter.execute("(add 3 4)")
 print(result)  # 输出: 7
@@ -117,7 +117,7 @@ For more information, see [python/README.md](python/README.md).
 ```bash
 # 克隆仓库
 git clone <repository-url>
-cd aevo
+cd evo
 
 # 运行演示程序
 cargo run
@@ -132,34 +132,34 @@ cargo run
 
 ### 编写第一个程序 / Your First Program
 
-创建一个 `hello.aevo` 文件：
+创建一个 `hello.evo` 文件：
 
 ```lisp
 ; 定义问候函数
 (def greet (name) (+ "Hello, " name))
 
 ; 使用函数
-(greet "Aevolang")
+(greet "Evo-lang")
 ```
 
 在 Rust 代码中执行：
 
 ```rust
-use aevo::parser::AdaptiveParser;
-use aevo::runtime::Interpreter;
+use evo::parser::AdaptiveParser;
+use evo::runtime::Interpreter;
 
 let parser = AdaptiveParser::new(true);
 let mut interpreter = Interpreter::new();
 
 let code = r#"
     (def greet (name) (+ "Hello, " name))
-    (greet "Aevolang")
+    (greet "Evo-lang")
 "#;
 
 match parser.parse(code) {
     Ok(ast) => {
         match interpreter.execute(&ast) {
-            Ok(value) => println!("{}", value),  // 输出: Hello, Aevolang
+            Ok(value) => println!("{}", value),  // 输出: Hello, Evo-lang
             Err(e) => eprintln!("执行错误: {:?}", e),
         }
     }
@@ -245,10 +245,10 @@ match parser.parse(code) {
 
 ```lisp
 ; 创建字典 / Create dictionary
-(dict "name" "Aevolang" "version" "1.0")
+(dict "name" "Evo-lang" "version" "1.0")
 
 ; 获取字典值 / Get dictionary value
-(dict-get (dict "name" "Aevolang") "name")  ; 返回 "Aevolang"
+(dict-get (dict "name" "Evo-lang") "name")  ; 返回 "Evo-lang"
 
 ; 设置字典值 / Set dictionary value
 (dict-set (dict "x" 1) "y" 2)  ; 返回 {"x": 1, "y": 2}
@@ -257,7 +257,7 @@ match parser.parse(code) {
 (dict-keys (dict "a" 1 "b" 2))  ; 返回 ["a", "b"]
 
 ; 检查键是否存在 / Check if key exists
-(dict-has (dict "name" "Aevolang") "name")  ; 返回 true
+(dict-has (dict "name" "Evo-lang") "name")  ; 返回 true
 
 ; 字典合并 / Dictionary merge (V1.0.51)
 (dict-merge (dict "a" 1 "b" 2) (dict "c" 3))  ; 返回 {"a": 1, "b": 2, "c": 3}
@@ -281,7 +281,7 @@ match parser.parse(code) {
 
 ## 文档 / Documentation
 
-- [快速入门指南](docs/getting-started.md) - 学习如何使用 Aevolang
+- [快速入门指南](docs/getting-started.md) - 学习如何使用 Evo-lang
 - [语法参考](docs/syntax-reference.md) - 完整的语法文档
 - [高级特性](docs/advanced-features.md) - 深入了解语言特性
 - [示例代码](../examples/) - 各种示例程序
@@ -310,12 +310,12 @@ match parser.parse(code) {
 - ✅ **完整的解析器实现** - 支持 S-expression 语法解析
 - ✅ **完整的解释器实现** - 支持代码执行、函数调用、递归等
 - ✅ **进化引擎核心功能** - 自举规则加载、知识图谱、进化预测
-  - 从Aevolang模块加载引导规则
+  - 从Evo-lang模块加载引导规则
   - 知识图谱构建：实体提取、关系挖掘、模式发现
   - 进化预测：基于历史模式和目标的智能预测
-- ✅ **进化规则自举** - 使用Aevolang模块驱动进化规则生成
+- ✅ **进化规则自举** - 使用Evo-lang模块驱动进化规则生成
 - ✅ **简单NLU系统** - 基于规则的意图识别，支持中英文自然语言输入
-- ✅ **Python互操作** - 完整的PyO3集成，支持从Python调用Aevolang
+- ✅ **Python互操作** - 完整的PyO3集成，支持从Python调用Evo-lang
 - ✅ **JIT编译器** - 热点代码检测和优化，支持常量折叠等优化技术
 - ✅ **列表和字典** - 完整的数据结构支持，包括创建、访问、修改和内置函数
 
@@ -338,10 +338,10 @@ match parser.parse(code) {
   - 支持中文数字解析（如"二十三"、"一百"等）
   - 自动生成代码结构
 - ✅ **Python互操作** - PyO3集成
-  - Python模块导出（`aevo`）
-  - 支持从Python调用Aevolang解析器和解释器
+  - Python模块导出（`evo`）
+  - 支持从Python调用Evo-lang解析器和解释器
   - 提供`execute`、`eval`、`parse`函数接口
-  - 提供`AevoInterpreter`和`AevoParser`类
+  - 提供`EvoInterpreter`和`EvoParser`类
   - 完整的类型转换支持（Int, Float, String, Bool, None）
 - ✅ **JIT编译器** - 热点代码优化
   - 热点代码自动检测（基于执行次数阈值）
@@ -362,7 +362,7 @@ match parser.parse(code) {
   - 导入模块：`(import "module")` 或 `(import "module" "alias")`
   - 模块命名空间调用：`(module.function ...)`
   - 默认搜索路径：`modules/`, `examples/`, 当前目录
-- ✅ **标准库模块** - 用Aevolang实现的核心功能
+- ✅ **标准库模块** - 用Evo-lang实现的核心功能
   - 标准库：`(import "std")` 提供常用工具函数
   - 数学函数：`std.abs`, `std.max`, `std.min`, `std.factorial`
   - 逻辑函数：`std.and`, `std.or`, `std.not`
@@ -397,7 +397,7 @@ match parser.parse(code) {
    - 整合知识图谱到进化引擎
 8. ✅ ~~添加列表和数据结构支持~~ - 已完成
 9. ✅ ~~实现模块系统~~ - 已完成
-10. ✅ ~~进化规则自举 - 用Aevolang模块驱动规则生成~~ - 已完成
+10. ✅ ~~进化规则自举 - 用Evo-lang模块驱动规则生成~~ - 已完成
 11. ✅ ~~诗歌理解与进化引擎结合 - 从理解诗歌中学习并进化~~ - 已完成
     - 将情感、主题、意象作为知识图谱节点
     - 从诗歌理解中生成语法规则
@@ -412,8 +412,8 @@ match parser.parse(code) {
     - 实现进化回滚机制：rollback_to_event()
     - 实现谱系树结构查询
     - 实现祖先链和后代事件查询
-14. ✅ ~~标准库模块（std.aevo）- 增强自举能力~~ - 已完成
-    - 创建标准库模块，用Aevolang实现常用工具函数
+14. ✅ ~~标准库模块（std.evo）- 增强自举能力~~ - 已完成
+    - 创建标准库模块，用Evo-lang实现常用工具函数
     - 数学函数：abs、max、min、factorial
     - 逻辑函数：and、or、not
     - 工具函数：identity
@@ -453,7 +453,7 @@ match parser.parse(code) {
     - 自动解析变量和函数引用
     - 上下文感知的代码生成
     - 增强理解能力：让语言记住对话历史
-21. ✅ ~~增强标准库 - 更多用Aevolang实现的核心功能~~ - 已完成
+21. ✅ ~~增强标准库 - 更多用Evo-lang实现的核心功能~~ - 已完成
     - 添加更多列表操作函数：sum、product、reverse、contains、count
     - 添加更多数学函数：power、sqrt-approx
     - 添加范围生成函数：range、range-step

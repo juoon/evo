@@ -4,7 +4,7 @@
 (string-split "hello,world,test" ",")  ; 应该返回 ["hello", "world", "test"]
 (string-join (list "a" "b" "c") "-")   ; 应该返回 "a-b-c"
 (string-trim "  hello  ")              ; 应该返回 "hello"
-(string-replace "hello world" "world" "aevo")  ; 应该返回 "hello aevo"
+(string-replace "hello world" "world" "evo")  ; 应该返回 "hello evo"
 (string-length "hello")                 ; 应该返回 5
 
 ; 类型转换测试 / Type conversion test

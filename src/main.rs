@@ -1,4 +1,4 @@
-// Aevolang - 自进化编程语言 / Self-evolving programming language
+// Evo-lang - 自进化编程语言 / Self-evolving programming language
 // 该语言的核心特点是能够根据使用和需求自我进化
 // The core feature of this language is the ability to self-evolve based on usage and needs
 // 终极目标：理解人类思想，促进人类与智能生命和谐共生
@@ -18,7 +18,7 @@ use poetry::*;
 use runtime::*;
 
 fn main() {
-    println!("Aevolang - 自进化编程语言 / Self-evolving Programming Language");
+    println!("Evo-lang - 自进化编程语言 / Self-evolving Programming Language");
     println!("============================================================");
 
     // 演示《静夜思》的解析和理解 / Demonstrate parsing and understanding of "Quiet Night Thoughts"
@@ -935,11 +935,11 @@ fn demonstrate_data_structures() {
     println!("\n--- 测试字典操作 / Testing Dictionary Operations ---");
     let dict_tests = vec![
         (
-            "(dict \"name\" \"Aevolang\" \"version\" \"1.0\")",
+            "(dict \"name\" \"Evo-lang\" \"version\" \"1.0\")",
             "创建字典 / Create dictionary",
         ),
         (
-            "(dict-get (dict \"name\" \"Aevolang\") \"name\")",
+            "(dict-get (dict \"name\" \"Evo-lang\") \"name\")",
             "获取字典值 / Get dictionary value",
         ),
         (
@@ -951,7 +951,7 @@ fn demonstrate_data_structures() {
             "获取所有键 / Get all keys",
         ),
         (
-            "(dict-has (dict \"name\" \"Aevolang\") \"name\")",
+            "(dict-has (dict \"name\" \"Evo-lang\") \"name\")",
             "检查键是否存在 / Check if key exists",
         ),
     ];
@@ -1457,8 +1457,8 @@ fn demonstrate_enhanced_std() {
         }
     }
 
-    println!("\n提示 / Note: 增强的标准库提供了更多实用函数，用Aevolang实现，增强自举能力");
-    println!("Enhanced standard library provides more utility functions, implemented in Aevolang, enhancing bootstrapping capability");
+    println!("\n提示 / Note: 增强的标准库提供了更多实用函数，用Evo-lang实现，增强自举能力");
+    println!("Enhanced standard library provides more utility functions, implemented in Evo-lang, enhancing bootstrapping capability");
 }
 
 /// 演示使用模式学习功能 / Demonstrate usage pattern learning functionality

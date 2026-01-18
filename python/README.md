@@ -1,8 +1,8 @@
-# Aevolang Python互操作 / Aevolang Python Interoperability
+# Evo-lang Python互操作 / Evo-lang Python Interoperability
 
-本文档说明如何使用Aevolang的Python接口。
+本文档说明如何使用Evo-lang的Python接口。
 
-This document explains how to use Aevolang's Python interface.
+This document explains how to use Evo-lang's Python interface.
 
 ## 构建Python模块 / Building Python Module
 
@@ -31,32 +31,32 @@ cargo build --release
 ### 基本使用 / Basic Usage
 
 ```python
-import aevo
+import evo
 
-# 执行Aevolang代码并返回结果字符串
-# Execute Aevolang code and return result string
-result = aevo.execute("(+ 1 2)")
+# 执行Evo-lang代码并返回结果字符串
+# Execute Evo-lang code and return result string
+result = evo.execute("(+ 1 2)")
 print(result)  # 输出: 3
 
 # 执行代码并返回Python对象
 # Execute code and return Python object
-result = aevo.eval("(* 3 4)")
+result = evo.eval("(* 3 4)")
 print(result)  # 输出: 12 (整数)
 
 # 解析代码并返回AST
 # Parse code and return AST
-ast = aevo.parse("(def add (x y) (+ x y))")
+ast = evo.parse("(def add (x y) (+ x y))")
 print(ast)
 ```
 
 ### 使用解释器类 / Using Interpreter Class
 
 ```python
-import aevo
+import evo
 
 # 创建解释器实例
 # Create interpreter instance
-interpreter = aevo.AevoInterpreter()
+interpreter = evo.EvoInterpreter()
 
 # 执行代码
 # Execute code
@@ -72,11 +72,11 @@ print(result)  # 输出: 6 (整数)
 ### 使用解析器类 / Using Parser Class
 
 ```python
-import aevo
+import evo
 
 # 创建解析器实例（启用NLU）
 # Create parser instance (with NLU enabled)
-parser = aevo.AevoParser(enable_nlu=True)
+parser = evo.EvoParser(enable_nlu=True)
 
 # 解析代码
 # Parse code
@@ -90,62 +90,62 @@ print(ast)
 
 #### `execute(code: str) -> str`
 
-执行Aevolang代码并返回结果字符串。
+执行Evo-lang代码并返回结果字符串。
 
-Execute Aevolang code and return result string.
+Execute Evo-lang code and return result string.
 
 **参数 / Parameters:**
-- `code`: Aevolang代码字符串 / Aevolang code string
+- `code`: Evo-lang代码字符串 / Evo-lang code string
 
 **返回 / Returns:**
 - 执行结果的字符串表示 / String representation of execution result
 
 **示例 / Example:**
 ```python
-result = aevo.execute("(+ 1 2)")  # "3"
+result = evo.execute("(+ 1 2)")  # "3"
 ```
 
 #### `eval(code: str) -> object`
 
-执行Aevolang代码并返回Python对象。
+执行Evo-lang代码并返回Python对象。
 
-Execute Aevolang code and return Python object.
+Execute Evo-lang code and return Python object.
 
 **参数 / Parameters:**
-- `code`: Aevolang代码字符串 / Aevolang code string
+- `code`: Evo-lang代码字符串 / Evo-lang code string
 
 **返回 / Returns:**
 - Python对象（int, float, str, bool, None） / Python object (int, float, str, bool, None)
 
 **示例 / Example:**
 ```python
-result = aevo.eval("(* 3 4)")  # 12 (int)
+result = evo.eval("(* 3 4)")  # 12 (int)
 ```
 
 #### `parse(code: str) -> object`
 
-解析Aevolang代码并返回AST（抽象语法树）。
+解析Evo-lang代码并返回AST（抽象语法树）。
 
-Parse Aevolang code and return AST (Abstract Syntax Tree).
+Parse Evo-lang code and return AST (Abstract Syntax Tree).
 
 **参数 / Parameters:**
-- `code`: Aevolang代码字符串 / Aevolang code string
+- `code`: Evo-lang代码字符串 / Evo-lang code string
 
 **返回 / Returns:**
 - AST的Python表示 / Python representation of AST
 
 **示例 / Example:**
 ```python
-ast = aevo.parse("(+ 1 2)")
+ast = evo.parse("(+ 1 2)")
 ```
 
 ### 类 / Classes
 
-#### `AevoInterpreter`
+#### `EvoInterpreter`
 
-Aevolang解释器类。
+Evo-lang解释器类。
 
-Aevolang interpreter class.
+Evo-lang interpreter class.
 
 **方法 / Methods:**
 
@@ -154,15 +154,15 @@ Aevolang interpreter class.
 
 **示例 / Example:**
 ```python
-interpreter = aevo.AevoInterpreter()
+interpreter = evo.EvoInterpreter()
 result = interpreter.execute("(+ 1 2)")
 ```
 
-#### `AevoParser`
+#### `EvoParser`
 
-Aevolang解析器类。
+Evo-lang解析器类。
 
-Aevolang parser class.
+Evo-lang parser class.
 
 **方法 / Methods:**
 
@@ -170,7 +170,7 @@ Aevolang parser class.
 
 **示例 / Example:**
 ```python
-parser = aevo.AevoParser(enable_nlu=True)
+parser = evo.EvoParser(enable_nlu=True)
 ast = parser.parse("(+ 1 2)")
 ```
 

@@ -1,10 +1,10 @@
-# Aevolang 示例代码 / Example Code
+# Evo-lang 示例代码 / Example Code
 
-本目录包含各种 Aevolang 示例程序，帮助你学习和理解语言特性。
+本目录包含各种 Evo-lang 示例程序，帮助你学习和理解语言特性。
 
 ## 示例文件 / Example Files
 
-### basic.aevo
+### basic.evo
 基础语法示例，包括：
 - 基本运算（加减乘除）
 - 变量绑定
@@ -12,20 +12,20 @@
 - 简单函数定义
 - 比较操作符
 
-### functions.aevo
+### functions.evo
 函数相关示例，包括：
 - 递归函数（阶乘、斐波那契）
 - 高阶函数概念
 - 辅助函数（判断奇偶、绝对值等）
 
-### advanced.aevo
+### advanced.evo
 高级特性示例，包括：
 - 嵌套函数
 - 复杂条件逻辑
 - 数学函数实现
 - 字符串操作
 
-### modules.aevo
+### modules.evo
 模块系统示例，包括：
 - 导入模块（import）
 - 调用模块函数（带命名空间）
@@ -43,10 +43,10 @@ cargo run
 
 ```rust
 use std::fs;
-use aevo::parser::AdaptiveParser;
-use aevo::runtime::Interpreter;
+use evo::parser::AdaptiveParser;
+use evo::runtime::Interpreter;
 
-let code = fs::read_to_string("examples/basic.aevo")?;
+let code = fs::read_to_string("examples/basic.evo")?;
 let parser = AdaptiveParser::new(true);
 let mut interpreter = Interpreter::new();
 
@@ -65,14 +65,14 @@ match parser.parse(&code) {
 
 建议按以下顺序学习：
 
-1. **basic.aevo** - 从基础语法开始
-2. **functions.aevo** - 学习函数定义和递归
-3. **advanced.aevo** - 探索高级特性
+1. **basic.evo** - 从基础语法开始
+2. **functions.evo** - 学习函数定义和递归
+3. **advanced.evo** - 探索高级特性
 
 ## 创建自己的示例 / Create Your Own Examples
 
-1. 创建 `.aevo` 文件
-2. 使用 Aevolang 语法编写代码
+1. 创建 `.evo` 文件
+2. 使用 Evo-lang 语法编写代码
 3. 在代码中加载并执行
 
 示例模板：

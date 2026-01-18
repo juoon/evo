@@ -1,5 +1,5 @@
-; Aevolang 基础示例 / Basic Examples
-; 这些示例展示了 Aevolang 的基本功能
+; Evo-lang 基础示例 / Basic Examples
+; 这些示例展示了 Evo-lang 的基本功能
 
 ; ============================================
 ; 1. 基本运算 / Basic Arithmetic
@@ -22,7 +22,7 @@
 ; ============================================
 
 (let x 10 (+ x 5))        ; 结果: 15
-(let name "Aevolang" name) ; 结果: "Aevolang"
+(let name "Evo-lang" name) ; 结果: "Evo-lang"
 
 ; ============================================
 ; 3. 条件表达式 / Conditional Expressions

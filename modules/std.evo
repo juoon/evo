@@ -1,9 +1,9 @@
 ; 标准库模块 / Standard library module
-; 提供常用工具函数，用Aevolang实现 / Provides common utility functions, implemented in Aevolang
+; 提供常用工具函数，用Evo-lang实现 / Provides common utility functions, implemented in Evo-lang
 
 ; 列表操作 / List operations
-; 注意：由于Aevolang当前不支持lambda，这些高级函数需要后续支持
-; Note: Since Aevolang doesn't support lambda yet, these advanced functions need future support
+; 注意：由于Evo-lang当前不支持lambda，这些高级函数需要后续支持
+; Note: Since Evo-lang doesn't support lambda yet, these advanced functions need future support
 ; 当前提供基础工具函数 / Currently provides basic utility functions
 
 (def list-tail (lst n)

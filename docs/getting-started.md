@@ -1,4 +1,4 @@
-# Aevolang 快速入门指南 / Getting Started Guide
+# Evo-lang 快速入门指南 / Getting Started Guide
 
 ## 安装 / Installation
 
@@ -12,7 +12,7 @@
 ```bash
 # 克隆仓库（如果从远程获取）
 git clone <repository-url>
-cd aevo
+cd evo
 
 # 构建项目
 cargo build
@@ -23,7 +23,7 @@ cargo run
 
 ## 基本语法 / Basic Syntax
 
-Aevolang 使用 S-expression 风格语法（类似 Lisp），所有代码都是表达式。
+Evo-lang 使用 S-expression 风格语法（类似 Lisp），所有代码都是表达式。
 
 ### 字面量 / Literals
 
@@ -35,7 +35,7 @@ true        ; 布尔值 / Boolean
 false       ; 布尔值 / Boolean
 null        ; 空值 / Null
 (list 1 2 3)                    ; 列表 / List
-(dict "name" "Aevo" "v" 1.0)    ; 字典 / Dictionary
+(dict "name" "Evo" "v" 1.0)    ; 字典 / Dictionary
 ```
 
 ### 算术运算 / Arithmetic Operations
@@ -108,7 +108,7 @@ null        ; 空值 / Null
 
 ## 递归函数 / Recursive Functions
 
-Aevolang 支持递归函数调用：
+Evo-lang 支持递归函数调用：
 
 ```lisp
 ; 计算阶乘
@@ -132,11 +132,11 @@ cargo run
 
 ### 方式2: 在代码中使用
 
-在 Rust 代码中使用 Aevolang：
+在 Rust 代码中使用 Evo-lang：
 
 ```rust
-use aevo::parser::AdaptiveParser;
-use aevo::runtime::Interpreter;
+use evo::parser::AdaptiveParser;
+use evo::runtime::Interpreter;
 
 let parser = AdaptiveParser::new(true);
 let mut interpreter = Interpreter::new();

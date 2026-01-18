@@ -1,4 +1,4 @@
-# Aevolang 高级特性 / Advanced Features
+# Evo-lang 高级特性 / Advanced Features
 
 ## 函数作用域 / Function Scope
 
@@ -12,7 +12,7 @@
 
 ## 递归 / Recursion
 
-Aevolang 完全支持递归函数调用：
+Evo-lang 完全支持递归函数调用：
 
 ```lisp
 (def factorial (n)
@@ -89,7 +89,7 @@ Aevolang 完全支持递归函数调用：
 
 ## 自然语言理解（NLU） / Natural Language Understanding
 
-Aevolang 现在支持基于规则的自然语言理解，可以将自然语言输入转换为代码结构。
+Evo-lang 现在支持基于规则的自然语言理解，可以将自然语言输入转换为代码结构。
 
 ### 函数定义 / Function Definition
 
@@ -141,9 +141,9 @@ Aevolang 现在支持基于规则的自然语言理解，可以将自然语言�
 在 Rust 代码中使用：
 
 ```rust
-use aevo::parser::NLUParser;
-use aevo::parser::AdaptiveParser;
-use aevo::runtime::Interpreter;
+use evo::parser::NLUParser;
+use evo::parser::AdaptiveParser;
+use evo::runtime::Interpreter;
 
 let nlu_parser = NLUParser::new_rule_based();
 let code_parser = AdaptiveParser::new(true);
@@ -185,10 +185,10 @@ match nlu_parser.parse("定义一个函数add，参数是x和y，x加y") {
 
 ## 进化引擎自举 / Evolution Bootstrapping
 
-进化引擎开始使用 Aevolang 模块来生成语法规则变体，实现“语言用语言定义规则”的自举能力。
+进化引擎开始使用 Evo-lang 模块来生成语法规则变体，实现“语言用语言定义规则”的自举能力。
 
 ```lisp
-; 进化规则模块（modules/evolution.aevo）
+; 进化规则模块（modules/evolution.evo）
 (import "evolution")
 (evolution.bootstrap_rules)
 ```
@@ -197,7 +197,7 @@ match nlu_parser.parse("定义一个函数add，参数是x和y，x加y") {
 
 ### 列表操作 ✅ 已实现
 
-Aevolang 现在支持列表数据结构及其基本操作：
+Evo-lang 现在支持列表数据结构及其基本操作：
 
 ```lisp
 ; 创建列表
@@ -214,24 +214,24 @@ Aevolang 现在支持列表数据结构及其基本操作：
 
 ### 字典操作 ✅ 已实现
 
-Aevolang 现在支持字典（键值对）数据结构：
+Evo-lang 现在支持字典（键值对）数据结构：
 
 ```lisp
 ; 创建字典
-(dict "name" "Aevolang" "version" "1.0")
+(dict "name" "Evo-lang" "version" "1.0")
 (dict "x" 1 "y" 2)
 
 ; 字典操作
-(dict-get (dict "name" "Aevo") "name")    ; 获取值
+(dict-get (dict "name" "Evo") "name")    ; 获取值
 (dict-set (dict "x" 1) "y" 2)            ; 设置键值
 (dict-keys (dict "a" 1 "b" 2))           ; 获取所有键
 (dict-values (dict "a" 1 "b" 2))         ; 获取所有值
-(dict-has (dict "name" "Aevo") "name")   ; 检查键是否存在
+(dict-has (dict "name" "Evo") "name")   ; 检查键是否存在
 ```
 
 ## 模块系统 / Module System ✅ 已实现
 
-Aevolang 现在支持模块导入和命名空间调用：
+Evo-lang 现在支持模块导入和命名空间调用：
 
 ```lisp
 ; 导入模块

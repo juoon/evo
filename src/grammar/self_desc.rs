@@ -43,8 +43,8 @@ impl SelfDescribingRule {
 }
 
 /// 语法定义语法规则（元规则）/ Grammar definition syntax rule (meta-rule)
-/// 这是最基础的元规则，允许用Aevolang定义语法规则
-/// This is the most fundamental meta-rule that allows defining grammar rules in Aevolang
+/// 这是最基础的元规则，允许用Evo-lang定义语法规则
+/// This is the most fundamental meta-rule that allows defining grammar rules in Evo-lang
 pub fn syntax_definition_rule() -> SelfDescribingRule {
     let pattern = Pattern {
         elements: vec![

@@ -1,6 +1,6 @@
 // Python桥接 / Python bridge
-// 实现Aevolang与Python之间的互操作
-// Implements interoperability between Aevolang and Python
+// 实现Evo-lang与Python之间的互操作
+// Implements interoperability between Evo-lang and Python
 
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyList, PyModule as PyModuleType, PyTuple};
@@ -184,8 +184,8 @@ pub enum PyValue {
 }
 
 impl PyValue {
-    /// 从Aevolang Value转换 / Convert from Aevolang Value
-    pub fn from_aevo_value(value: &crate::runtime::interpreter::Value) -> Self {
+    /// 从Evo-lang Value转换 / Convert from Evo-lang Value
+    pub fn from_evo_value(value: &crate::runtime::interpreter::Value) -> Self {
         match value {
             crate::runtime::interpreter::Value::Int(i) => PyValue::Int(*i),
             crate::runtime::interpreter::Value::Float(f) => PyValue::Float(*f),
@@ -196,18 +196,18 @@ impl PyValue {
                 PyValue::String(format!("<lambda({})>", params.join(", ")))
             }
             crate::runtime::interpreter::Value::List(list) => {
-                PyValue::List(list.iter().map(|v| PyValue::from_aevo_value(v)).collect())
+                PyValue::List(list.iter().map(|v| PyValue::from_evo_value(v)).collect())
             }
             crate::runtime::interpreter::Value::Dict(dict) => PyValue::Dict(
                 dict.iter()
-                    .map(|(k, v)| (k.clone(), PyValue::from_aevo_value(v)))
+                    .map(|(k, v)| (k.clone(), PyValue::from_evo_value(v)))
                     .collect(),
             ),
         }
     }
 
-    /// 转换为Aevolang Value / Convert to Aevolang Value
-    pub fn to_aevo_value(&self) -> crate::runtime::interpreter::Value {
+    /// 转换为Evo-lang Value / Convert to Evo-lang Value
+    pub fn to_evo_value(&self) -> crate::runtime::interpreter::Value {
         match self {
             PyValue::Int(i) => crate::runtime::interpreter::Value::Int(*i),
             PyValue::Float(f) => crate::runtime::interpreter::Value::Float(*f),
@@ -215,11 +215,11 @@ impl PyValue {
             PyValue::Bool(b) => crate::runtime::interpreter::Value::Bool(*b),
             PyValue::None => crate::runtime::interpreter::Value::Null,
             PyValue::List(list) => crate::runtime::interpreter::Value::List(
-                list.iter().map(|v| v.to_aevo_value()).collect(),
+                list.iter().map(|v| v.to_evo_value()).collect(),
             ),
             PyValue::Dict(dict) => crate::runtime::interpreter::Value::Dict(
                 dict.iter()
-                    .map(|(k, v)| (k.clone(), v.to_aevo_value()))
+                    .map(|(k, v)| (k.clone(), v.to_evo_value()))
                     .collect(),
             ),
         }

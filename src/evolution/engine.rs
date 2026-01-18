@@ -85,12 +85,12 @@ impl EvolutionEngine {
         &self,
         intent: &crate::parser::nlu::ProgrammingIntent,
     ) -> Result<Vec<GrammarRule>, EvolutionError> {
-        let aevo_intent = self.intent_to_aevo_dict(intent);
+        let evo_intent = self.intent_to_evo_dict(intent);
         let code = format!(
             "(import \"evolution\")\n(evolution.generate_variants {})",
-            aevo_intent
+            evo_intent
         );
-        let value = self.execute_aevo_code(&code)?;
+        let value = self.execute_evo_code(&code)?;
         self.rules_from_value(&value)
     }
 
@@ -851,49 +851,49 @@ impl EvolutionEngine {
         Self::rules_from_value_static(&value).unwrap_or_default()
     }
 
-    /// 执行Aevolang代码 / Execute Aevolang code
-    fn execute_aevo_code(&self, code: &str) -> Result<Value, EvolutionError> {
+    /// 执行Evo-lang代码 / Execute Evo-lang code
+    fn execute_evo_code(&self, code: &str) -> Result<Value, EvolutionError> {
         let mut interpreter = Interpreter::new();
         let parser = AdaptiveParser::new(true);
         let ast = parser.parse(code).map_err(|e| {
-            EvolutionError::IntegrationFailed(format!("Failed to parse aevo code: {:?}", e))
+            EvolutionError::IntegrationFailed(format!("Failed to parse evo code: {:?}", e))
         })?;
         interpreter.execute(&ast).map_err(|e| {
-            EvolutionError::IntegrationFailed(format!("Failed to execute aevo code: {:?}", e))
+            EvolutionError::IntegrationFailed(format!("Failed to execute evo code: {:?}", e))
         })
     }
 
-    /// Intent 转换为 Aevolang 字典文本 / Convert intent to Aevolang dict literal
-    fn intent_to_aevo_dict(&self, intent: &crate::parser::nlu::ProgrammingIntent) -> String {
-        let entities = self.list_to_aevo(&intent.entities);
-        let params = self.pairs_to_aevo(&intent.parameters);
+    /// Intent 转换为 Evo-lang 字典文本 / Convert intent to Evo-lang dict literal
+    fn intent_to_evo_dict(&self, intent: &crate::parser::nlu::ProgrammingIntent) -> String {
+        let entities = self.list_to_evo(&intent.entities);
+        let params = self.pairs_to_evo(&intent.parameters);
         let context = match &intent.context {
-            Some(value) => self.string_to_aevo(value),
+            Some(value) => self.string_to_evo(value),
             None => "null".to_string(),
         };
         format!(
             "(dict \"action\" {} \"entities\" {} \"parameters\" {} \"context\" {})",
-            self.string_to_aevo(&intent.action),
+            self.string_to_evo(&intent.action),
             entities,
             params,
             context
         )
     }
 
-    fn string_to_aevo(&self, input: &str) -> String {
+    fn string_to_evo(&self, input: &str) -> String {
         let escaped = input.replace('\\', "\\\\").replace('"', "\\\"");
         format!("\"{}\"", escaped)
     }
 
-    fn list_to_aevo(&self, items: &[String]) -> String {
-        let values: Vec<String> = items.iter().map(|item| self.string_to_aevo(item)).collect();
+    fn list_to_evo(&self, items: &[String]) -> String {
+        let values: Vec<String> = items.iter().map(|item| self.string_to_evo(item)).collect();
         format!("(list {})", values.join(" "))
     }
 
-    fn pairs_to_aevo(&self, pairs: &[(String, String)]) -> String {
+    fn pairs_to_evo(&self, pairs: &[(String, String)]) -> String {
         let values: Vec<String> = pairs
             .iter()
-            .flat_map(|(k, v)| vec![self.string_to_aevo(k), self.string_to_aevo(v)])
+            .flat_map(|(k, v)| vec![self.string_to_evo(k), self.string_to_evo(v)])
             .collect();
         format!("(list {})", values.join(" "))
     }
