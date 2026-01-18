@@ -1,10 +1,238 @@
-; 模块示例：math / Module example: math
-; 提供常用数学函数 / Provides common math functions
+; 数学模块 / Math module
+; 提供常用数学函数和常量 / Provides common math functions and constants
+; 注意：标准库中已有部分数学函数（std.abs, std.max, std.min等），此模块提供补充功能
+; Note: Some math functions are in std module (std.abs, std.max, std.min, etc.), this module provides supplementary functions
 
+; 基础运算 / Basic operations
 (def add (x y) (+ x y))
 (def sub (x y) (- x y))
 (def mul (x y) (* x y))
-(def square (x) (* x x))
+(def div (x y) (/ x y))
 
-; 常量
-(let pi 3.14159 pi)
+; 幂运算 / Power operations
+(def square (x) (* x x))
+(def cube (x) (* x (* x x)))
+(def power (base exp)
+  (if (= exp 0)
+    1
+    (if (= exp 1)
+      base
+      (* base (power base (- exp 1))))))
+
+; 常量 / Constants
+(let pi 3.141592653589793 pi)
+(let e 2.718281828459045 e)
+
+; ========================================
+; 三角函数（简化近似实现） / Trigonometric functions (simplified approximation)
+; ========================================
+
+; 角度转弧度 / Convert degrees to radians
+(def to-radians (degrees)
+  (/ (* degrees pi) 180))
+
+; 弧度转角度 / Convert radians to degrees
+(def to-degrees (radians)
+  (/ (* radians 180) pi))
+
+; 正弦函数（泰勒级数近似） / Sine function (Taylor series approximation)
+(def sin (x)
+  (sin-helper x 0 1 1))
+
+(def sin-helper (x n term result)
+  (if (> n 10)
+    result
+    (let next-term (* term (/ (* x x) (* (* (+ (* 2 n) 1) (+ (* 2 n) 2)) -1)))
+      (sin-helper x (+ n 1) next-term (+ result next-term)))))
+
+; 余弦函数（泰勒级数近似） / Cosine function (Taylor series approximation)
+(def cos (x)
+  (cos-helper x 0 1 1))
+
+(def cos-helper (x n term result)
+  (if (> n 10)
+    result
+    (let next-term (* term (/ (* x x) (* (* (+ (* 2 n) 1) (+ (* 2 n) 2)) -1)))
+      (cos-helper x (+ n 1) next-term (+ result next-term)))))
+
+; 正切函数 / Tangent function
+(def tan (x)
+  (let cos-x (cos x)
+    (if (= cos-x 0)
+      0
+      (/ (sin x) cos-x))))
+
+; ========================================
+; 对数函数（简化实现） / Logarithmic functions (simplified)
+; ========================================
+
+; 自然对数（简化近似） / Natural logarithm (simplified approximation)
+(def ln (x)
+  (if (<= x 0)
+    0
+    (ln-helper x 1 0)))
+
+(def ln-helper (x term sum)
+  (if (< term 0.0001)
+    sum
+    (ln-helper x (/ term (- 1 x)) (+ sum term))))
+
+; 常用对数（以10为底） / Common logarithm (base 10)
+(def log10 (x)
+  (if (<= x 0)
+    0
+    (/ (ln x) (ln 10))))
+
+; 对数（任意底） / Logarithm (arbitrary base)
+(def log (base x)
+  (if (or (<= base 0) (<= x 0))
+    0
+    (/ (ln x) (ln base))))
+
+; ========================================
+; 统计函数 / Statistical functions
+; ========================================
+
+; 平均值 / Average
+(def mean (lst)
+  (if (= (list-length lst) 0)
+    0
+    (/ (sum lst) (list-length lst))))
+
+; 求和辅助函数（如果std.sum不可用） / Sum helper (if std.sum not available)
+(def sum (lst)
+  (if (= (list-length lst) 0)
+    0
+    (+ (list-get lst 0) (sum (list-slice lst 1)))))
+
+; 最大值（列表） / Maximum (list)
+(def max-list (lst)
+  (max-list-helper lst (list-get lst 0)))
+
+(def max-list-helper (lst current-max)
+  (if (= (list-length lst) 0)
+    current-max
+    (let first (list-get lst 0)
+      (let new-max (if (> first current-max)
+        first
+        current-max)
+        (max-list-helper (list-slice lst 1) new-max)))))
+
+; 最小值（列表） / Minimum (list)
+(def min-list (lst)
+  (min-list-helper lst (list-get lst 0)))
+
+(def min-list-helper (lst current-min)
+  (if (= (list-length lst) 0)
+    current-min
+    (let first (list-get lst 0)
+      (let new-min (if (< first current-min)
+        first
+        current-min)
+        (min-list-helper (list-slice lst 1) new-min)))))
+
+; 中位数 / Median
+(def median (lst)
+  (if (= (list-length lst) 0)
+    0
+    (median-helper (sort-list lst))))
+
+(def median-helper (sorted)
+  (let len (list-length sorted)
+    (if (= (% len 2) 0)
+      (/ (+ (list-get sorted (/ len 2)) (list-get sorted (- (/ len 2) 1))) 2)
+      (list-get sorted (/ (- len 1) 2)))))
+
+; 排序辅助函数（简单冒泡排序） / Sort helper (simple bubble sort)
+(def sort-list (lst)
+  (sort-list-helper lst (list-length lst)))
+
+(def sort-list-helper (lst n)
+  (if (<= n 1)
+    lst
+    (sort-list-helper (bubble-pass lst) (- n 1))))
+
+(def bubble-pass (lst)
+  (bubble-pass-helper lst (list)))
+
+(def bubble-pass-helper (lst result)
+  (if (<= (list-length lst) 1)
+    (concat result lst)
+    (let first (list-get lst 0)
+      (let second (list-get lst 1)
+        (if (> first second)
+          (bubble-pass-helper (list-append (list second) (list-slice lst 2)) (list-append result (list first)))
+          (bubble-pass-helper (list-slice lst 1) (list-append result (list first))))))))
+
+; 连接列表辅助函数（如果std.concat不可用） / Concat helper (if std.concat not available)
+(def concat (lst1 lst2)
+  (if (= (list-length lst1) 0)
+    lst2
+    (list-append
+      (list (list-get lst1 0))
+      (concat (list-slice lst1 1) lst2))))
+
+; ========================================
+; 舍入函数 / Rounding functions
+; ========================================
+
+; 四舍五入 / Round
+(def round (x)
+  (let fractional (- x (floor x))
+    (if (>= fractional 0.5)
+      (+ (floor x) 1)
+      (floor x))))
+
+; 向下取整 / Floor
+(def floor (x)
+  (if (< x 0)
+    (- (ceil (- x)) 0)
+    (floor-helper x 0)))
+
+(def floor-helper (x n)
+  (if (>= n x)
+    (- n 1)
+    (floor-helper x (+ n 1))))
+
+; 向上取整 / Ceil
+(def ceil (x)
+  (if (< x 0)
+    (- (floor (- x)) 0)
+    (ceil-helper x 0)))
+
+(def ceil-helper (x n)
+  (if (>= n x)
+    n
+    (ceil-helper x (+ n 1))))
+
+; 截断（向零取整） / Truncate (towards zero)
+(def trunc (x)
+  (if (< x 0)
+    (ceil x)
+    (floor x)))
+
+; ========================================
+; 数值比较和工具函数 / Number comparison and utility functions
+; ========================================
+
+; 判断是否为偶数 / Check if number is even
+(def even? (n)
+  (= (% n 2) 0))
+
+; 判断是否为奇数 / Check if number is odd
+(def odd? (n)
+  (not (even? n)))
+
+; 符号函数 / Sign function
+(def sign (x)
+  (if (> x 0)
+    1
+    (if (< x 0)
+      -1
+      0)))
+
+; 绝对值（如果std.abs不可用） / Absolute value (if std.abs not available)
+(def abs (x)
+  (if (< x 0)
+    (- 0 x)
+    x))

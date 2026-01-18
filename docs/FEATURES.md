@@ -59,11 +59,24 @@
 - ✅ **模块导入** - 导入模块：`(import "module")` 或 `(import "module" "alias")`
 - ✅ **命名空间** - 模块命名空间调用：`(module.function ...)`
 - ✅ **搜索路径** - 默认搜索路径：`modules/`, `examples/`, 当前目录
+- ✅ **标准模块**
+  - `std` - 标准库模块：提供常用工具函数（40+ 个函数）
+  - `math` - 数学模块：提供数学函数和常量（30+ 个函数）
+  - `evolution` - 进化规则模块：提供进化规则生成函数
+  - `self_hosting` - 自举工具模块：提供代码分析、优化、验证等自举工具（18个工具）
 
 ### ✅ 标准库 (Standard Library)
 - ✅ **标准库模块** - 用Evo-lang实现的核心功能
-  - 标准库：`(import "std")` 提供常用工具函数
-- ✅ **数学函数** - `std.abs`, `std.max`, `std.min`, `std.factorial`, `std.power`, `std.sqrt-approx`, `std.gcd`, `std.lcm`, `std.fibonacci`, `std.fibonacci-sequence`
+  - 标准库：`(import "std")` 提供常用工具函数（40+ 个函数）
+- ✅ **数学模块** - `(import "math")` 提供数学函数和常量（30+ 个函数）
+  - **基础运算**：`math.add`, `math.sub`, `math.mul`, `math.div`, `math.square`, `math.cube`, `math.power`
+  - **数学常量**：`math.pi`, `math.e`
+  - **三角函数**：`math.sin`, `math.cos`, `math.tan`, `math.to_radians`, `math.to_degrees`
+  - **对数函数**：`math.ln`, `math.log10`, `math.log`
+  - **统计函数**：`math.mean`, `math.sum`, `math.max_list`, `math.min_list`, `math.median`, `math.sort_list`
+  - **舍入函数**：`math.round`, `math.floor`, `math.ceil`, `math.trunc`
+  - **数值工具**：`math.even?`, `math.odd?`, `math.sign`, `math.abs`
+- ✅ **数学函数（std模块）** - `std.abs`, `std.max`, `std.min`, `std.factorial`, `std.power`, `std.sqrt-approx`, `std.gcd`, `std.lcm`, `std.fibonacci`, `std.fibonacci-sequence`
 - ✅ **逻辑函数** - `std.and`, `std.or`, `std.not`
 - ✅ **列表操作函数** - `std.sum`, `std.product`, `std.reverse`, `std.contains`, `std.count`, `std.take`, `std.drop`, `std.concat`, `std.all-equal`, `std.any-equal`, `std.find_index`, `std.find`, `std.unique`, `std.any`, `std.all`, `std.partition`, `std.remove_if`, `std.group_by`, `std.frequencies`, `std.first`, `std.last`, `std.butlast`, `std.empty`, `std.not_empty`
 - ✅ **范围生成函数** - `std.range`, `std.range-step`

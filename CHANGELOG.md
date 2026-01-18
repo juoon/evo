@@ -203,6 +203,15 @@
     - 列表访问函数：first（获取第一个元素）、last（获取最后一个元素）、butlast（获取除最后一个外的所有元素）
     - 列表状态函数：empty（检查列表是否为空）、not_empty（检查列表是否非空）
     - 进一步增强标准库：新增14个列表操作和工具函数，提升列表处理能力
+38. ✅ ~~增强math模块 - 扩展数学函数库~~ - 已完成
+    - 基础运算：add、sub、mul、div、square、cube、power
+    - 数学常量：pi（精确值）、e（自然对数底数）
+    - 三角函数：sin（正弦）、cos（余弦）、tan（正切）、to_radians（角度转弧度）、to_degrees（弧度转角度）
+    - 对数函数：ln（自然对数）、log10（常用对数）、log（任意底对数）
+    - 统计函数：mean（平均值）、sum（求和）、max_list（最大值）、min_list（最小值）、median（中位数）、sort_list（排序）
+    - 舍入函数：round（四舍五入）、floor（向下取整）、ceil（向上取整）、trunc（截断）
+    - 数值工具：even?（判断偶数）、odd?（判断奇数）、sign（符号函数）、abs（绝对值）
+    - 大幅增强math模块：从4个基础函数扩展到30+个数学函数，提供完整的数学计算能力
 
 ## 计划中的功能 / Planned Features
 
