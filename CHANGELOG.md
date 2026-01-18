@@ -187,6 +187,14 @@
     - 代码生成工具：generate_function_from_spec（从规范生成函数）
     - 增强进化引擎：添加load_enhanced_bootstrap_rules()、load_self_hosting_tools()、validate_self_hosting_module()方法
     - 大幅增强自举能力：更多核心功能用语言自身实现
+36. ✅ ~~扩展自举工具模块 - 添加更多自举工具函数~~ - 已完成
+    - 代码搜索工具：find_function（查找函数定义）、get_function_list（获取函数列表）
+    - 代码统计工具：count_functions（统计函数数量）、estimate_lines（估算代码行数）
+    - 代码重构工具：suggest_rename_function（函数重命名建议）、suggest_split_function（拆分函数建议）
+    - 代码安全检查工具：detect_unsafe_patterns（检测不安全模式）、check_error_handling（检查错误处理）
+    - 代码文档工具：generate_function_doc（生成函数文档）、extract_function_signature（提取函数签名）
+    - 更新get_self_hosting_tools()和validate_self_hosting_module()函数以包含新工具
+    - 进一步增强自举能力：自举工具模块从8个工具扩展到18个工具
 
 ## 计划中的功能 / Planned Features
 

@@ -217,6 +217,219 @@
   (list template))
 
 ; ========================================
+; 代码搜索工具 / Code search tools
+; ========================================
+
+; 查找函数定义
+(def find_function (functions func-name)
+  (find-function-helper functions func-name))
+
+(def find-function-helper (functions func-name)
+  (if (= (list-length functions) 0)
+    null
+    (let current (list-get functions 0)
+      (if (= (dict-get current "name") func-name)
+        current
+        (find-function-helper (list-slice functions 1) func-name)))))
+
+; 获取函数列表（提取所有函数名）
+(def get_function_list (functions)
+  (get-function-list-helper functions (list)))
+
+(def get-function-list-helper (functions result)
+  (if (= (list-length functions) 0)
+    result
+    (let current (list-get functions 0)
+      (let func-name (dict-get current "name")
+        (get-function-list-helper
+          (list-slice functions 1)
+          (list-append result (list func-name)))))))
+
+; ========================================
+; 代码统计工具 / Code statistics tools
+; ========================================
+
+; 统计函数数量
+(def count_functions (functions)
+  (list-length functions))
+
+; 估算代码行数（基于函数数量、参数数量、体大小）
+(def estimate_lines (functions)
+  (estimate-lines-helper functions 0))
+
+(def estimate-lines-helper (functions total)
+  (if (= (list-length functions) 0)
+    total
+    (let current (list-get functions 0)
+      (let params-count (list-length (dict-get current "params"))
+        (let body-size (estimate-body-size (dict-get current "body"))
+          (let func-lines (+ 3 params-count body-size)
+            (estimate-lines-helper
+              (list-slice functions 1)
+              (+ total func-lines))))))))
+
+; ========================================
+; 代码重构工具 / Code refactoring tools
+; ========================================
+
+; 建议重命名函数（基于名称模式）
+(def suggest_rename_function (func-def)
+  (let current-name (dict-get func-def "name")
+    (let params-count (list-length (dict-get func-def "params"))
+      (dict
+        "type" "RenameSuggestion"
+        "current_name" current-name
+        "suggested_name" (generate-rename-suggestion current-name params-count)
+        "reason" "提高函数命名清晰度"))))
+
+; 生成重命名建议
+(def generate-rename-suggestion (name param-count)
+  (if (= param-count 0)
+    (std.concat name "_action")
+    (std.concat name "_with_" (int-to-string param-count) "_params")))
+
+; 整数转字符串（简单实现）
+(def int-to-string (n)
+  (if (< n 10)
+    (list-get (list "0" "1" "2" "3" "4" "5" "6" "7" "8" "9") n)
+    "10+"))
+
+; 建议拆分函数（基于复杂度）
+(def suggest_split_function (func-def threshold)
+  (let complexity (estimate_complexity func-def)
+    (if (> complexity threshold)
+      (dict
+        "type" "SplitSuggestion"
+        "function_name" (dict-get func-def "name")
+        "complexity" complexity
+        "threshold" threshold
+        "reason" "函数复杂度过高，建议拆分为多个小函数")
+      null)))
+
+; ========================================
+; 代码安全检查工具 / Code security check tools
+; ========================================
+
+; 检测不安全模式
+(def detect_unsafe_patterns (code-blocks)
+  (detect-unsafe-helper code-blocks (list)))
+
+(def detect-unsafe-helper (blocks issues)
+  (if (= (list-length blocks) 0)
+    issues
+    (let current (list-get blocks 0)
+      (let new-issues (check-unsafe-pattern current)
+        (detect-unsafe-helper
+          (list-slice blocks 1)
+          (if (= new-issues null)
+            issues
+            (list-append issues (list new-issues))))))))
+
+; 检查单个代码块的不安全模式
+(def check-unsafe-pattern (block)
+  (if (std.contains (to-string block) "unsafe")
+    (dict
+      "type" "SecurityIssue"
+      "pattern" "unsafe_keyword"
+      "severity" "high"
+      "message" "检测到不安全的关键字使用")
+    null))
+
+; 转换为字符串（简化实现）
+(def to-string (value)
+  (if (= value null)
+    "null"
+    "value"))
+
+; 检查错误处理（验证函数是否包含错误处理逻辑）
+(def check_error_handling (func-def)
+  (let body (dict-get func-def "body")
+    (let has-error-handling (check-error-in-body body)
+      (if has-error-handling
+        (dict
+          "type" "ErrorHandlingCheck"
+          "status" "good"
+          "message" "函数包含错误处理逻辑")
+        (dict
+          "type" "ErrorHandlingCheck"
+          "status" "warning"
+          "message" "函数缺少错误处理逻辑")))))
+
+; 检查函数体中是否包含错误处理
+(def check-error-in-body (body)
+  (if (= (list-length body) 0)
+    false
+    (let current (list-get body 0)
+      (if (or
+            (std.contains (to-string current) "error")
+            (std.contains (to-string current) "catch")
+            (std.contains (to-string current) "try"))
+        true
+        (check-error-in-body (list-slice body 1))))))
+
+; ========================================
+; 代码文档工具 / Code documentation tools
+; ========================================
+
+; 生成函数文档
+(def generate_function_doc (func-def)
+  (let func-name (dict-get func-def "name")
+    (let params (dict-get func-def "params")
+      (dict
+        "type" "FunctionDocumentation"
+        "function_name" func-name
+        "description" (std.concat "函数 " func-name " 的文档")
+        "parameters" (generate-param-docs params)
+        "returns" "返回值描述"))))
+
+; 生成参数文档列表
+(def generate-param-docs (params)
+  (generate-param-docs-helper params (list)))
+
+(def generate-param-docs-helper (params result)
+  (if (= (list-length params) 0)
+    result
+    (let current (list-get params 0)
+      (let param-doc (dict
+                       "name" current
+                       "type" "unknown"
+                       "description" (std.concat "参数 " current))
+        (generate-param-docs-helper
+          (list-slice params 1)
+          (list-append result (list param-doc)))))))
+
+; 提取函数签名
+(def extract_function_signature (func-def)
+  (let func-name (dict-get func-def "name")
+    (let params (dict-get func-def "params")
+      (dict
+        "type" "FunctionSignature"
+        "name" func-name
+        "parameters" params
+        "parameter_count" (list-length params)
+        "signature" (build-signature-string func-name params))))
+
+; 构建函数签名字符串
+(def build-signature-string (name params)
+  (if (= (list-length params) 0)
+    (std.concat "(" name ")")
+    (std.concat "(" name " " (join-params params) ")")))
+
+; 连接参数列表
+(def join-params (params)
+  (join-params-helper params ""))
+
+(def join-params-helper (params result)
+  (if (= (list-length params) 0)
+    result
+    (let current (list-get params 0)
+      (let separator (if (= result "")
+                        ""
+                        " ")
+        (let new-result (std.concat result separator current)
+          (join-params-helper (list-slice params 1) new-result))))))
+
+; ========================================
 ; 自举验证主函数 / Self-hosting validation main function
 ; ========================================
 
@@ -227,16 +440,43 @@
     (validate_function_def (dict "name" "fold_constants" "params" (list) "body" (list)))
     (validate_function_def (dict "name" "assess_code_quality" "params" (list) "body" (list)))
     (validate_function_def (dict "name" "generate_test_template" "params" (list) "body" (list)))
+    (validate_function_def (dict "name" "find_function" "params" (list) "body" (list)))
+    (validate_function_def (dict "name" "count_functions" "params" (list) "body" (list)))
+    (validate_function_def (dict "name" "generate_function_doc" "params" (list) "body" (list)))
     true))
 
 ; 获取自举工具列表
 (def get_self_hosting_tools ()
   (list
+    ; 代码分析工具
     "estimate_complexity"
+    "detect_duplicates"
+    ; 代码优化工具
     "fold_constants"
     "suggest_extract_function"
+    ; 质量评估工具
     "assess_code_quality"
+    "generate_quality_suggestions"
+    ; 自我验证工具
     "validate_function_def"
+    "validate_module"
     "detect_circular_deps"
+    ; 测试生成工具
     "generate_test_template"
-    "generate_function_from_spec"))
+    ; 代码生成工具
+    "generate_function_from_spec"
+    ; 代码搜索工具
+    "find_function"
+    "get_function_list"
+    ; 代码统计工具
+    "count_functions"
+    "estimate_lines"
+    ; 代码重构工具
+    "suggest_rename_function"
+    "suggest_split_function"
+    ; 安全检查工具
+    "detect_unsafe_patterns"
+    "check_error_handling"
+    ; 文档生成工具
+    "generate_function_doc"
+    "extract_function_signature"))

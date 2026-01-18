@@ -101,13 +101,18 @@
   - validate_rule()、validate_rules()：规则验证工具
   - find_rule_by_name()、find_rules_by_keyword()：规则查找工具
 - ✅ **自举工具模块** - 用Evo-lang实现的代码分析、优化、验证等自举能力
-  - self_hosting.evo模块：提供代码分析、优化、验证、测试生成等自举工具函数
+  - self_hosting.evo模块：提供代码分析、优化、验证、测试生成等自举工具函数（18个工具）
   - 代码分析工具：estimate_complexity（估计复杂度）、detect_duplicates（检测重复）
   - 代码优化工具：fold_constants（常量折叠）、suggest_extract_function（函数提取建议）
   - 质量评估工具：assess_code_quality（质量评估）、generate_quality_suggestions（质量建议）
   - 自我验证工具：validate_function_def（验证函数定义）、validate_module（验证模块）、detect_circular_deps（检测循环依赖）
   - 测试生成工具：generate_test_template（生成测试模板）
   - 代码生成工具：generate_function_from_spec（从规范生成函数）
+  - 代码搜索工具：find_function（查找函数定义）、get_function_list（获取函数列表）
+  - 代码统计工具：count_functions（统计函数数量）、estimate_lines（估算代码行数）
+  - 代码重构工具：suggest_rename_function（函数重命名建议）、suggest_split_function（拆分函数建议）
+  - 代码安全检查工具：detect_unsafe_patterns（检测不安全模式）、check_error_handling（检查错误处理）
+  - 代码文档工具：generate_function_doc（生成函数文档）、extract_function_signature（提取函数签名）
   - 进化引擎集成：load_enhanced_bootstrap_rules()、load_self_hosting_tools()、validate_self_hosting_module()
 - ✅ **知识图谱推理能力** - 智能相似度计算和自我反思
   - 规则相似度计算（名称、模式、产生式多维度）
