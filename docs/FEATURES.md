@@ -8,6 +8,15 @@
 - ✅ 项目基础结构和核心数据类型定义
 - ✅ 基础语法系统和《静夜思》解析示例
 - ✅ 自描述语法机制
+- ✅ **命令行接口 (CLI)** - 多种运行模式和交互式REPL
+  - `evo demo` - 运行演示程序，展示所有功能
+  - `evo run <file>` - 运行Evo-lang文件
+  - `evo evolve` - 进化模式：自动进化代码（支持--output、--prompt、--iterations参数）
+  - `evo repl` - 交互式REPL（Read-Eval-Print Loop）
+    - 支持逐行输入代码并即时执行
+    - 支持多行输入：自动检测括号匹配，支持跨行输入（如函数定义）
+    - REPL命令：:help（显示帮助）、:quit/:exit/:q（退出）、:clear（清屏）
+    - 智能输入处理：忽略字符串中的括号，正确处理转义字符
 
 ### ✅ 解析器 (Parser)
 - ✅ **完整的解析器实现** - 支持 S-expression 语法解析
@@ -156,7 +165,7 @@
   - 进化事件验证：验证事件的完整性和有效性
   - 进化事件冲突检测：检测多个事件之间的冲突
   - 进化事件合并：合并兼容的事件，选择最优事件（基于指标）
-  - 命令行支持：支持--evolution-mode、--prompt、--output参数
+  - 命令行支持：evo evolve命令支持--output、--prompt、--iterations参数
   - 进化模式：run_evolution_mode()函数，从prompt.txt读取目标进行自动进化
 
 #### 分析工具 (15个模块)

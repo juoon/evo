@@ -17,6 +17,7 @@ use grammar::*;
 use parser::*;
 use poetry::*;
 use runtime::*;
+use std::io::{self, Write};
 use std::path::PathBuf;
 
 #[derive(Parser)]
@@ -43,6 +44,14 @@ enum Commands {
         #[arg(short, long, default_value = "10")]
         iterations: usize,
     },
+    /// 运行Evo-lang文件 / Run Evo-lang file
+    Run {
+        /// 要运行的.evo文件路径 / Path to .evo file to run
+        #[arg(value_name = "FILE")]
+        file: PathBuf,
+    },
+    /// 交互式REPL / Interactive REPL
+    Repl,
 }
 
 fn main() {
@@ -55,6 +64,12 @@ fn main() {
             iterations,
         }) => {
             run_evolution_mode(&output, &prompt, iterations);
+        }
+        Some(Commands::Run { file }) => {
+            run_file(&file);
+        }
+        Some(Commands::Repl) => {
+            run_repl();
         }
         Some(Commands::Demo) | None => {
             run_demo();
@@ -2736,6 +2751,45 @@ fn demonstrate_dependency_analysis() {
     println!("Code dependency analysis can automatically analyze code dependencies, detect circular dependencies, and help optimize code structure");
 }
 
+/// 运行Evo-lang文件 / Run Evo-lang file
+fn run_file(file_path: &PathBuf) {
+    use std::fs;
+
+    // 读取文件 / Read file
+    let code = match fs::read_to_string(file_path) {
+        Ok(code) => code,
+        Err(e) => {
+            eprintln!("错误：无法读取文件 / Error: Cannot read file: {:?}", file_path);
+            eprintln!("详细信息 / Details: {}", e);
+            std::process::exit(1);
+        }
+    };
+
+    // 创建解析器和解释器 / Create parser and interpreter
+    let parser = AdaptiveParser::new(true);
+    let mut interpreter = Interpreter::new();
+
+    // 解析代码 / Parse code
+    match parser.parse(&code) {
+        Ok(ast) => {
+            // 执行代码 / Execute code
+            match interpreter.execute(&ast) {
+                Ok(value) => {
+                    println!("{}", value);
+                }
+                Err(e) => {
+                    eprintln!("执行错误 / Execution error: {:?}", e);
+                    std::process::exit(1);
+                }
+            }
+        }
+        Err(e) => {
+            eprintln!("解析错误 / Parse error: {:?}", e);
+            std::process::exit(1);
+        }
+    }
+}
+
 /// 运行进化模式 / Run evolution mode
 fn run_evolution_mode(output_dir: &PathBuf, prompt_file: &PathBuf, iterations: usize) {
     println!("Evo-lang 进化模式 / Evolution Mode");
@@ -2894,4 +2948,184 @@ fn read_goals_from_prompt(prompt_file: &PathBuf) -> Result<Vec<String>, std::io:
     }
 
     Ok(goals)
+}
+
+/// 运行交互式REPL / Run interactive REPL
+fn run_repl() {
+    println!("Evo-lang 交互式REPL / Interactive REPL");
+    println!("============================================================");
+    println!("输入代码执行，或输入 :help 查看帮助，:quit 退出");
+    println!("Enter code to execute, or type :help for help, :quit to exit");
+    println!();
+
+    // 创建解析器和解释器 / Create parser and interpreter
+    let parser = AdaptiveParser::new(true);
+    let mut interpreter = Interpreter::new();
+
+    // REPL循环 / REPL loop
+    loop {
+        // 读取多行输入 / Read multi-line input
+        let input = match read_multiline_input() {
+            Ok(input) => input,
+            Err(e) => {
+                eprintln!("读取输入错误 / Input error: {}", e);
+                continue;
+            }
+        };
+
+        // 处理REPL命令 / Handle REPL commands
+        let trimmed = input.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+
+        // 检查是否是REPL命令 / Check if it's a REPL command
+        match trimmed {
+            ":quit" | ":exit" | ":q" => {
+                println!("再见 / Goodbye!");
+                break;
+            }
+            ":help" | ":h" => {
+                print_help();
+                continue;
+            }
+            ":clear" | ":c" => {
+                // 清屏（跨平台）/ Clear screen (cross-platform)
+                #[cfg(windows)]
+                {
+                    let _ = std::process::Command::new("cmd")
+                        .args(["/C", "cls"])
+                        .status();
+                }
+                #[cfg(not(windows))]
+                {
+                    let _ = std::process::Command::new("clear").status();
+                }
+                continue;
+            }
+            _ => {}
+        }
+
+        // 解析代码 / Parse code
+        match parser.parse(&input) {
+            Ok(ast) => {
+                // 执行代码 / Execute code
+                match interpreter.execute(&ast) {
+                    Ok(value) => {
+                        // 只打印非Null值 / Only print non-Null values
+                        if !matches!(value, Value::Null) {
+                            println!("{}", value);
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("执行错误 / Execution error: {:?}", e);
+                    }
+                }
+            }
+            Err(e) => {
+                eprintln!("解析错误 / Parse error: {:?}", e);
+            }
+        }
+
+        println!(); // 空行，便于阅读 / Empty line for readability
+    }
+}
+
+/// 读取多行输入（支持括号匹配）/ Read multi-line input (supports bracket matching)
+fn read_multiline_input() -> io::Result<String> {
+    let mut input = String::new();
+    let mut open_parens = 0;
+    let mut open_brackets = 0;
+    let mut open_braces = 0;
+    let mut in_string = false;
+    let mut string_char = '\0';
+    let mut line_num = 0;
+
+    loop {
+        // 打印提示符 / Print prompt
+        if line_num == 0 {
+            print!("evo> ");
+        } else {
+            print!("... ");
+        }
+        io::stdout().flush()?;
+
+        // 读取一行 / Read a line
+        let mut line = String::new();
+        io::stdin().read_line(&mut line)?;
+
+        // 检查是否是REPL命令（只对第一行检查）/ Check if it's a REPL command (only for first line)
+        if line_num == 0 {
+            let trimmed = line.trim();
+            if trimmed.starts_with(':') {
+                input.push_str(&line);
+                return Ok(input);
+            }
+        }
+
+        // 添加到总输入 / Add to total input
+        input.push_str(&line);
+
+        // 统计括号（忽略字符串中的括号）/ Count brackets (ignore brackets in strings)
+        let chars: Vec<char> = line.chars().collect();
+        let mut i = 0;
+        while i < chars.len() {
+            let c = chars[i];
+
+            // 处理字符串 / Handle strings
+            if !in_string && (c == '"' || c == '\'') {
+                in_string = true;
+                string_char = c;
+            } else if in_string && c == string_char && (i == 0 || chars[i - 1] != '\\') {
+                in_string = false;
+                string_char = '\0';
+            }
+
+            // 统计括号（不在字符串中）/ Count brackets (not in strings)
+            if !in_string {
+                match c {
+                    '(' => open_parens += 1,
+                    ')' => open_parens -= 1,
+                    '[' => open_brackets += 1,
+                    ']' => open_brackets -= 1,
+                    '{' => open_braces += 1,
+                    '}' => open_braces -= 1,
+                    _ => {}
+                }
+            }
+
+            i += 1;
+        }
+
+        line_num += 1;
+
+        // 如果所有括号都匹配，返回输入 / If all brackets match, return input
+        if open_parens == 0 && open_brackets == 0 && open_braces == 0 && !in_string {
+            break;
+        }
+    }
+
+    Ok(input)
+}
+
+/// 打印帮助信息 / Print help information
+fn print_help() {
+    println!();
+    println!("Evo-lang REPL 帮助 / REPL Help");
+    println!("============================================================");
+    println!("可用命令 / Available commands:");
+    println!("  :help, :h    - 显示帮助信息 / Show help");
+    println!("  :quit, :exit, :q  - 退出REPL / Exit REPL");
+    println!("  :clear, :c   - 清屏 / Clear screen");
+    println!();
+    println!("使用示例 / Usage examples:");
+    println!("  evo> (+ 1 2)");
+    println!("  3");
+    println!();
+    println!("  evo> (def add (x y) (+ x y))");
+    println!("  evo> (add 3 4)");
+    println!("  7");
+    println!();
+    println!("支持多行输入（自动检测括号匹配）/ Supports multi-line input (auto-detects bracket matching)");
+    println!();
 }

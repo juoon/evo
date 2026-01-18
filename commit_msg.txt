@@ -1,15 +1,10 @@
-V1.0.64 修复标准库字符串函数无限递归问题
+V1.0.65 实现交互式REPL和文件运行功能
 
 主要变更：
-- 修复std.evo中string-split、string-join、string-trim、string-replace的无限递归bug
-- 原因分析：这些函数试图调用同名内置函数，但用户定义函数会覆盖内置函数，导致无限递归
-- 解决方案：删除这些多余的包装函数，直接使用解释器内置函数（string-length、string-split、string-join、string-trim、string-replace、string-substring、string-upper、string-lower都是解释器内置函数）
-- 保留自举实现：string-starts-with、string-ends-with、string-contains继续在标准库中用Evo-lang实现（这些函数调用内置函数，不会导致递归）
-
-- 更新CHANGELOG.md，记录bug修复（任务42）
-- 更新evolution-status.md，更新版本号为V1.0.64
+- 添加交互式REPL（Read-Eval-Print Loop）功能，支持逐行和多行输入，自动检测括号匹配。
+- 实现运行Evo-lang文件的功能，支持通过命令行指定文件路径。
+- 增强错误处理，提供友好的错误提示信息。
+- 更新文档，记录新功能和使用示例。
 
 影响范围：
-- 修复严重bug：标准库字符串函数不再导致无限递归和运行时错误
-- 提升稳定性：标准库现在可以安全使用所有字符串处理函数
-- 澄清设计：明确哪些函数是解释器内置函数，哪些是标准库自举实现
+- 提升用户体验，允许开发者在命令行中交互式测试和调试Evo-lang代码，增强开发效率。
