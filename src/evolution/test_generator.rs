@@ -231,7 +231,7 @@ impl TestGenerator {
     fn generate_unit_tests(
         &self,
         function_name: &str,
-        function_def: &[GrammarElement],
+        _function_def: &[GrammarElement],
     ) -> Vec<TestCase> {
         let mut tests = Vec::new();
 

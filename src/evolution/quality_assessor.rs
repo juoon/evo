@@ -428,7 +428,7 @@ impl QualityAssessor {
     }
 
     /// 分析质量趋势 / Analyze quality trend
-    fn analyze_trend(&self, current_score: f64) -> QualityTrend {
+    fn analyze_trend(&self, _current_score: f64) -> QualityTrend {
         if self.quality_history.len() < 2 {
             return QualityTrend::NoHistory;
         }

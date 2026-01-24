@@ -6,45 +6,45 @@
 ; 测试字符串基础操作 / Test basic string operations
 (print "=== 字符串基础操作测试 / Basic String Operations Test ===")
 
-(let str1 "Hello, World!")
+(let str1 "Hello, World!"
   (print "原字符串 / Original:" str1)
-  (print "长度 / Length:" (std.string-len str1))
-  (print "修剪 / Trim:" (std.string-trim "  Hello  ")))
+  (print "长度 / Length:" (string-length str1))
+  (print "修剪 / Trim:" (string-trim "  Hello  ")))
 
 ; 测试字符串分割和连接 / Test string split and join
 (print "\n=== 字符串分割和连接测试 / String Split and Join Test ===")
 
-(let str2 "apple,banana,orange")
-  (let parts (std.string-split str2 ",")
+(let str2 "apple,banana,orange"
+  (let parts (string-split str2 ",")
     (print "分割结果 / Split result:" parts)
-    (print "连接结果 / Join result:" (std.string-join parts "-"))))
+    (print "连接结果 / Join result:" (string-join parts "-"))))
 
 ; 测试字符串转换 / Test string conversion
 (print "\n=== 字符串转换测试 / String Conversion Test ===")
 
-(let str3 "Hello World")
-  (print "转大写 / Upper:" (std.string-upper str3))
-  (print "转小写 / Lower:" (std.string-lower str3)))
+(let str3 "Hello World"
+  (print "转大写 / Upper:" (string-upper str3))
+  (print "转小写 / Lower:" (string-lower str3)))
 
 ; 测试字符串查找和检查 / Test string search and check
 (print "\n=== 字符串查找和检查测试 / String Search and Check Test ===")
 
-(let str4 "Hello, World!")
-  (print "前缀检查 / Starts with 'Hello':" (std.string-starts-with str4 "Hello"))
-  (print "后缀检查 / Ends with '!':" (std.string-ends-with str4 "!"))
-  (print "包含检查 / Contains 'World':" (std.string-contains str4 "World"))
-  (print "子串提取 / Substring (0-5):" (std.string-substring str4 0 5)))
+(let str4 "Hello, World!"
+  (print "前缀检查 / Starts with 'Hello':" (string-starts-with str4 "Hello"))
+  (print "后缀检查 / Ends with '!':" (string-ends-with str4 "!"))
+  (print "包含检查 / Contains 'World':" (string-contains str4 "World"))
+  (print "子串提取 / Substring (0-5):" (string-substring str4 0 5)))
 
 ; 测试字符串替换 / Test string replace
 (print "\n=== 字符串替换测试 / String Replace Test ===")
 
-(let str5 "Hello, World!")
-  (print "替换结果 / Replace 'World' with 'Evo':" (std.string-replace str5 "World" "Evo")))
+(let str5 "Hello, World!"
+  (print "替换结果 / Replace 'World' with 'Evo':" (string-replace str5 "World" "Evo")))
 
 ; 测试字符串连接（使用+操作符） / Test string concatenation (using + operator)
 (print "\n=== 字符串连接测试 / String Concatenation Test ===")
 
-(let str6 (+ "Hello, " "Evo-lang!"))
+(let str6 (+ "Hello, " "Evo-lang!")
   (print "连接结果 / Concatenation result:" str6))
 
 (print "\n=== 所有测试完成 / All Tests Completed ===")

@@ -134,7 +134,7 @@
       new-suggestions)
       (if (< performance 60)
         (list-append new-suggestions2 (list "优化性能：减少不必要的计算、使用缓存"))
-        new-suggestions2)))))
+        new-suggestions2))))
 
 ; ========================================
 ; 自我验证工具 / Self-validation tools
@@ -144,15 +144,17 @@
 (def validate_function_def (func-def)
   (and
     (std.dict-has-key func-def "name")
-    (std.dict-has-key func-def "params")
-    (std.dict-has-key func-def "body")))
+    (and
+      (std.dict-has-key func-def "params")
+      (std.dict-has-key func-def "body"))))
 
 ; 验证模块的完整性
 (def validate_module (module-def)
   (and
     (std.dict-has-key module-def "name")
-    (std.dict-has-key module-def "functions")
-    (validate-functions (dict-get module-def "functions"))))
+    (and
+      (std.dict-has-key module-def "functions")
+      (validate-functions (dict-get module-def "functions")))))
 
 ; 验证函数列表
 (def validate-functions (functions)
@@ -407,7 +409,7 @@
         "name" func-name
         "parameters" params
         "parameter_count" (list-length params)
-        "signature" (build-signature-string func-name params))))
+        "signature" (build-signature-string func-name params)))))
 
 ; 构建函数签名字符串
 (def build-signature-string (name params)
@@ -437,13 +439,19 @@
 (def validate_self_hosting_module ()
   (and
     (validate_function_def (dict "name" "estimate_complexity" "params" (list) "body" (list)))
-    (validate_function_def (dict "name" "fold_constants" "params" (list) "body" (list)))
-    (validate_function_def (dict "name" "assess_code_quality" "params" (list) "body" (list)))
-    (validate_function_def (dict "name" "generate_test_template" "params" (list) "body" (list)))
-    (validate_function_def (dict "name" "find_function" "params" (list) "body" (list)))
-    (validate_function_def (dict "name" "count_functions" "params" (list) "body" (list)))
-    (validate_function_def (dict "name" "generate_function_doc" "params" (list) "body" (list)))
-    true))
+    (and
+      (validate_function_def (dict "name" "fold_constants" "params" (list) "body" (list)))
+      (and
+        (validate_function_def (dict "name" "assess_code_quality" "params" (list) "body" (list)))
+        (and
+          (validate_function_def (dict "name" "generate_test_template" "params" (list) "body" (list)))
+          (and
+            (validate_function_def (dict "name" "find_function" "params" (list) "body" (list)))
+            (and
+              (validate_function_def (dict "name" "count_functions" "params" (list) "body" (list)))
+              (and
+                (validate_function_def (dict "name" "generate_function_doc" "params" (list) "body" (list)))
+                true))))))))
 
 ; 获取自举工具列表
 (def get_self_hosting_tools ()

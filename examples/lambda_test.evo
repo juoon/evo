@@ -1,0 +1,18 @@
+(import "std")
+
+; 测试基本lambda功能
+(let double (lambda (x) (* x 2))
+  (print "Double of 5:" (double 5)))
+
+; 测试lambda作为参数传递给map
+(let numbers (list 1 2 3 4 5)
+  (let doubled (std.map (lambda (x) (* x 2)) numbers)
+    (print "Doubled list:" doubled))
+  
+  ; 测试filter函数（在numbers作用域内）
+  (let even-numbers (std.filter (lambda (x) (= (% x 2) 0)) numbers)
+    (print "Even numbers:" even-numbers))
+  
+  ; 测试reduce函数（在numbers作用域内）
+  (let sum (std.reduce (lambda (acc x) (+ acc x)) 0 numbers)
+    (print "Sum:" sum)))

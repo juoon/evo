@@ -788,6 +788,7 @@ fn format_expr(expr: &crate::grammar::core::Expr) -> String {
                 crate::grammar::core::BinOp::Sub => "-",
                 crate::grammar::core::BinOp::Mul => "*",
                 crate::grammar::core::BinOp::Div => "/",
+                crate::grammar::core::BinOp::Mod => "%",
                 crate::grammar::core::BinOp::Eq => "=",
                 crate::grammar::core::BinOp::Ne => "!=",
                 crate::grammar::core::BinOp::Lt => "<",
@@ -847,6 +848,31 @@ fn format_expr(expr: &crate::grammar::core::Expr) -> String {
                     format_expr(catch_body)
                 )
             }
+        }
+        crate::grammar::core::Expr::Lambda { params, body } => {
+            let mut result = "(lambda (".to_string();
+            for (i, param) in params.iter().enumerate() {
+                if i > 0 {
+                    result.push(' ');
+                }
+                result.push_str(param);
+            }
+            result.push_str(") ");
+            result.push_str(&format_expr(body));
+            result.push(')');
+            result
+        }
+        crate::grammar::core::Expr::Begin(exprs) => {
+            let mut result = "(begin".to_string();
+            for expr in exprs {
+                result.push(' ');
+                result.push_str(&format_expr(expr));
+            }
+            result.push(')');
+            result
+        }
+        crate::grammar::core::Expr::Assign(var, expr) => {
+            format!("(set! {} {})", var, format_expr(expr))
         }
     }
 }
@@ -2759,7 +2785,10 @@ fn run_file(file_path: &PathBuf) {
     let code = match fs::read_to_string(file_path) {
         Ok(code) => code,
         Err(e) => {
-            eprintln!("错误：无法读取文件 / Error: Cannot read file: {:?}", file_path);
+            eprintln!(
+                "错误：无法读取文件 / Error: Cannot read file: {:?}",
+                file_path
+            );
             eprintln!("详细信息 / Details: {}", e);
             std::process::exit(1);
         }
@@ -2776,6 +2805,9 @@ fn run_file(file_path: &PathBuf) {
             match interpreter.execute(&ast) {
                 Ok(value) => {
                     println!("{}", value);
+                    // 强制刷新输出缓冲区 / Force flush output buffer
+                    use std::io::Write;
+                    std::io::stdout().flush().unwrap();
                 }
                 Err(e) => {
                     eprintln!("执行错误 / Execution error: {:?}", e);

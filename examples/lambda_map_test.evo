@@ -1,0 +1,5 @@
+; 列表操作演示 / List operations demo
+(import "std")
+(let numbers (list 1 2 3 4 5)
+  (let doubled (std.map (lambda (x) (* x 2)) numbers)
+    (print "Doubled:" doubled)))

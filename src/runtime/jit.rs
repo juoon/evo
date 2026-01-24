@@ -195,9 +195,13 @@ impl JITCompiler {
             // 字面量和变量保持不变 / Literals and variables remain unchanged
             Expr::Literal(_) | Expr::Var(_) => Ok(expr.clone()),
             // 其他表达式暂不支持优化 / Other expressions don't support optimization yet
-            Expr::Match(_, _) | Expr::For { .. } | Expr::While { .. } | Expr::Try { .. } => {
-                Ok(expr.clone())
-            }
+            Expr::Match(_, _)
+            | Expr::For { .. }
+            | Expr::While { .. }
+            | Expr::Try { .. }
+            | Expr::Lambda { .. }
+            | Expr::Begin(_)
+            | Expr::Assign(_, _) => Ok(expr.clone()),
         }
     }
 
@@ -229,6 +233,18 @@ impl JITCompiler {
                     return Err(InterpreterError::division_by_zero(None));
                 }
                 Ok(Literal::Float(a / b))
+            }
+            (BinOp::Mod, Literal::Int(a), Literal::Int(b)) => {
+                if *b == 0 {
+                    return Err(InterpreterError::division_by_zero(None));
+                }
+                Ok(Literal::Int(a % b))
+            }
+            (BinOp::Mod, Literal::Float(a), Literal::Float(b)) => {
+                if *b == 0.0 {
+                    return Err(InterpreterError::division_by_zero(None));
+                }
+                Ok(Literal::Float(a % b))
             }
             // 比较运算 / Comparison operations
             (BinOp::Eq, left, right) => {

@@ -1,0 +1,8 @@
+(import "std")
+
+; 测试基本的filter函数
+(let numbers (list 1 2 3 4 5)
+  (print "Original list:" numbers)
+  ; 不使用lambda，直接使用even?函数（如果存在的话）
+  (let even-numbers (std.filter (lambda (x) (= (% x 2) 0)) numbers)
+    (print "Even numbers:" even-numbers)))

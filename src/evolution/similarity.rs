@@ -315,8 +315,8 @@ impl SimilarityDetector {
     /// 确定相似类型 / Determine similarity type
     fn determine_similarity_type(
         &self,
-        block1: &CodeBlock,
-        block2: &CodeBlock,
+        _block1: &CodeBlock,
+        _block2: &CodeBlock,
         similarity: f64,
     ) -> SimilarityType {
         if similarity >= 0.99 {
@@ -345,7 +345,7 @@ impl SimilarityDetector {
         let mut duplicates = Vec::new();
 
         // 找出出现多次的代码块 / Find blocks that appear multiple times
-        for (hash, indices) in hash_map {
+        for (_hash, indices) in hash_map {
             if indices.len() > 1 {
                 let block = blocks[indices[0]].clone();
                 let locations: Vec<String> = indices

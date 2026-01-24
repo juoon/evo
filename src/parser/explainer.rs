@@ -49,6 +49,9 @@ impl CodeExplainer {
             Expr::For { .. } => "For loop".to_string(),
             Expr::While { .. } => "While loop".to_string(),
             Expr::Try { .. } => "Try-catch expression".to_string(),
+            Expr::Lambda { .. } => "Lambda expression".to_string(),
+            Expr::Begin(_) => "Begin expression".to_string(),
+            Expr::Assign(_, _) => "Assignment expression".to_string(),
         }
     }
 
@@ -319,6 +322,8 @@ impl CodeExplainer {
             (BinOp::Mul, Language::English) => "times",
             (BinOp::Div, Language::Chinese) => "除",
             (BinOp::Div, Language::English) => "divided by",
+            (BinOp::Mod, Language::Chinese) => "取模",
+            (BinOp::Mod, Language::English) => "modulo",
             (BinOp::Eq, Language::Chinese) => "等于",
             (BinOp::Eq, Language::English) => "equals",
             (BinOp::Ne, Language::Chinese) => "不等于",

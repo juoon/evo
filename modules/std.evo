@@ -33,29 +33,26 @@
     (list-drop-first-helper
       lst
       (+ idx 1)
-      (list-append result (list (list-get lst idx))))))
+      (list-append result (list-get lst idx)))))
 
 (def map (func lst)
   (if (= (list-length lst) 0)
     (list)
-    (list-append
-      (list (func (list-get lst 0)))
-      (map func (list-slice lst 1)))))
+    (concat (list (func (list-get lst 0)))
+           (std.map func (list-slice lst 1)))))
 
 (def filter (pred lst)
   (if (= (list-length lst) 0)
     (list)
-    (let first (list-get lst 0)
-      (if (pred first)
-        (list-append
-          (list first)
-          (filter pred (list-slice lst 1)))
-        (filter pred (list-slice lst 1))))))
+    (if (pred (list-get lst 0))
+      (concat (list (list-get lst 0))
+         (std.filter pred (list-slice lst 1)))
+      (std.filter pred (list-slice lst 1)))))
 
 (def reduce (func init lst)
   (if (= (list-length lst) 0)
     init
-    (reduce func (func init (list-get lst 0)) (list-slice lst 1))))
+    (std.reduce func (func init (list-get lst 0)) (list-slice lst 1))))
 
 ; 数学函数 / Math functions
 (def abs (x)
@@ -80,9 +77,42 @@
       1
       (* n (factorial (- n 1))))))
 
-; 字符串操作（简化版，基于列表） / String operations (simplified, based on lists)
-(def string-length (str)
-  (list-length str))
+; 字符串操作（使用解释器内置函数） / String operations (use built-in interpreter functions)
+; 注意：string-length 等字符串函数是解释器内置的，这里提供模块包装
+; Note: string-length and other string functions are built-in, we provide module wrappers here
+
+; 字符串长度（调用内置函数）
+; String length (call built-in function)
+; 注意：直接使用内置函数，不需要额外包装
+; Note: Use built-in function directly, no need for extra wrapper
+
+; 字符串修剪（调用内置函数）
+; String trim (call built-in function)
+; 注意：直接使用内置函数，不需要额外包装
+
+; 字符串分割（调用内置函数）
+; String split (call built-in function)
+; 注意：直接使用内置函数，不需要额外包装
+
+; 字符串连接（调用内置函数）
+; String join (call built-in function)
+; 注意：直接使用内置函数，不需要额外包装
+
+; 字符串转大写（调用内置函数）
+; String upper (call built-in function)
+; 注意：直接使用内置函数，不需要额外包装
+
+; 字符串转小写（调用内置函数）
+; String lower (call built-in function)
+; 注意：直接使用内置函数，不需要额外包装
+
+; 字符串子串（调用内置函数）
+; String substring (call built-in function)
+; 注意：直接使用内置函数，不需要额外包装
+
+; 字符串替换（调用内置函数）
+; String replace (call built-in function)
+; 注意：直接使用内置函数，不需要额外包装
 
 ; 工具函数 / Utility functions
 (def identity (x) x)
@@ -239,11 +269,7 @@
 
 ; 连接两个列表 / Concatenate two lists
 (def concat (lst1 lst2)
-  (if (= (list-length lst1) 0)
-    lst2
-    (list-append
-      (list (list-get lst1 0))
-      (concat (list-slice lst1 1) lst2))))
+  (list-concat lst1 lst2))
 
 ; 检查列表中所有元素是否相等 / Check if all elements in list are equal
 (def all-equal (lst)
@@ -1050,7 +1076,7 @@
       result
       (let new-current (list-append current (list (list-get lst start)))
         (let result1 (list-combinations-helper lst n (+ start 1) new-current result)
-          (list-combinations-helper lst n (+ start 1) current result1)))))
+          (list-combinations-helper lst n (+ start 1) current result1))))))
 
 ; 列表的排列（简化实现，生成前n个排列） / Permutations of list (simplified, generate first n permutations)
 (def list-permutations (lst)

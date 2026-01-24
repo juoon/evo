@@ -49,13 +49,13 @@ impl ExecutionModeSelector {
     }
 
     /// 分析代码特征 / Analyze code characteristics
-    fn analyze_characteristics(&self, ast: &[GrammarElement]) -> CodeCharacteristics {
+    fn analyze_characteristics(&self, _ast: &[GrammarElement]) -> CodeCharacteristics {
         // TODO: 实现特征分析逻辑 / Implement characteristic analysis logic
         CodeCharacteristics::default()
     }
 
     /// 实时调整模式 / Adapt runtime mode
-    pub fn adapt_runtime(&mut self, mode: ExecutionMode, runtime_data: &RuntimeMetrics) {
+    pub fn adapt_runtime(&mut self, _mode: ExecutionMode, _runtime_data: &RuntimeMetrics) {
         // TODO: 实现运行时调整逻辑 / Implement runtime adaptation logic
     }
 }

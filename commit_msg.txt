@@ -1,10 +1,17 @@
-V1.0.65 实现交互式REPL和文件运行功能
+V1.0.66 Enhance Evo-lang with lambda support and core improvements
 
-主要变更：
-- 添加交互式REPL（Read-Eval-Print Loop）功能，支持逐行和多行输入，自动检测括号匹配。
-- 实现运行Evo-lang文件的功能，支持通过命令行指定文件路径。
-- 增强错误处理，提供友好的错误提示信息。
-- 更新文档，记录新功能和使用示例。
+主要修改：
 
-影响范围：
-- 提升用户体验，允许开发者在命令行中交互式测试和调试Evo-lang代码，增强开发效率。
+1. 语法增强：支持lambda表达式语法，添加Expr::Begin、Expr::Assign、Expr::Lambda变体
+2. 解释器改进：
+   - 添加lambda表达式支持和模块内函数递归调用
+   - 优化print函数输出，实现list-concat/concat函数
+   - 增强dict-get函数支持默认值，修复map/filter/reduce实现
+3. JIT编译器：支持lambda表达式及相关变体，实现取模运算常量折叠
+4. 模块系统：为模块函数添加module_name字段，支持递归调用
+5. 示例和模块文件：
+   - 修改4个示例文件，添加3个lambda相关示例
+   - 更新self_hosting.evo和std.evo，移除递归定义
+6. Evolution模块：增强代码分析器，修复多处方法签名
+
+这些修改显著增强了Evo-lang的lambda表达式支持、模块系统和函数式编程能力，使语言更加完整易用。

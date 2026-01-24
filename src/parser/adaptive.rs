@@ -153,9 +153,9 @@ impl Tokenizer {
                 }
             }
             _ if ch.is_ascii_digit() => self.read_number(None),
-            _ if ch.is_alphabetic() || ch == '_' => self.read_symbol(None),
-            _ if ch == '*' || ch == '/' => {
-                // 处理乘法和除法操作符
+            _ if ch.is_alphabetic() || ch == '_' || ch == '.' => self.read_symbol(None),
+            _ if ch == '*' || ch == '/' || ch == '%' => {
+                // 处理乘法、除法和取模操作符
                 Ok(Token::Symbol(self.advance().to_string()))
             }
             _ if ch == '>' || ch == '<' || ch == '=' || ch == '!' => {
@@ -260,8 +260,15 @@ impl Tokenizer {
             && (self.peek().is_alphanumeric()
                 || self.peek() == '_'
                 || self.peek() == '-'
-                || self.peek() == '?')
+                || self.peek() == '?'
+                || self.peek() == '.')
         {
+            symbol.push(self.advance());
+        }
+
+        // 允许 ! 作为标识符的结尾（如 set!, def! 等）
+        // Allow ! at the end of identifiers (e.g., set!, def!)
+        if !self.is_at_end() && self.peek() == '!' {
             symbol.push(self.advance());
         }
 
@@ -359,12 +366,24 @@ impl ParserState {
         }
 
         let first = self.parse_element()?;
-
         // 检查是否是特殊形式（如 def, let, if, list, dict 等）
-        if let GrammarElement::Atom(ref atom) = &first {
-            match atom.as_str() {
+        // 支持 Atom 和 Expr(Var(...)) 两种形式
+        let keyword: Option<&str> = match &first {
+            GrammarElement::Atom(s) => Some(s.as_str()),
+            GrammarElement::Expr(boxed_expr) => {
+                if let Expr::Var(s) = boxed_expr.as_ref() {
+                    Some(s.as_str())
+                } else {
+                    None
+                }
+            }
+            _ => None,
+        };
+
+        if let Some(keyword) = keyword {
+            match keyword {
                 "def" | "function" => {
-                    return self.parse_function_def(atom.clone());
+                    return self.parse_function_def(keyword.to_string());
                 }
                 "let" => {
                     return self.parse_let();
@@ -393,9 +412,41 @@ impl ParserState {
                 "dict" | "map" => {
                     return self.parse_dict_literal();
                 }
+                "set!" => {
+                    // (set! var value)
+                    let var_elem = self.parse_element()?;
+                    let var_str = match &var_elem {
+                        GrammarElement::Atom(s) => s.clone(),
+                        GrammarElement::Expr(boxed_expr) => {
+                            if let Expr::Var(s) = boxed_expr.as_ref() {
+                                s.clone()
+                            } else {
+                                return Err(ParseError::syntax_error(
+                                    "set! variable must be an atom or variable".to_string(),
+                                    None,
+                                ));
+                            }
+                        }
+                        _ => {
+                            return Err(ParseError::syntax_error(
+                                "set! variable must be an atom or variable".to_string(),
+                                None,
+                            ));
+                        }
+                    };
+
+                    let value_elem = self.parse_element()?;
+                    self.consume(&Token::RightParen, "Expected ')' after set! expression")?;
+
+                    let value_expr = self.element_to_expr(&value_elem)?;
+                    return Ok(GrammarElement::Expr(Box::new(Expr::Assign(
+                        var_str,
+                        Box::new(value_expr),
+                    ))));
+                }
                 _ => {
                     // 函数调用
-                    let func_name = atom.clone();
+                    let func_name = keyword.to_string();
                     let mut args = Vec::new();
                     while !self.check(&Token::RightParen) {
                         args.push(self.parse_element()?);
@@ -403,6 +454,37 @@ impl ParserState {
                     self.consume(&Token::RightParen, "Expected ')'")?;
 
                     // 转换为函数调用表达式
+                    // 检查参数中是否包含 lambda 表达式
+                    // Check if arguments contain lambda expressions
+                    let has_lambda = args.iter().any(|e| {
+                        if let GrammarElement::List(l) = e {
+                            !l.is_empty()
+                                && match &l[0] {
+                                    GrammarElement::Atom(s) => s == "lambda",
+                                    GrammarElement::Expr(boxed_expr) => {
+                                        if let Expr::Var(s) = boxed_expr.as_ref() {
+                                            s == "lambda"
+                                        } else {
+                                            false
+                                        }
+                                    }
+                                    _ => false,
+                                }
+                        } else {
+                            false
+                        }
+                    });
+
+                    if has_lambda {
+                        // 包含 lambda 表达式，不能转换为 Expr::Call，保持为 GrammarElement::List
+                        // Contains lambda expressions, cannot convert to Expr::Call, keep as GrammarElement::List
+                        let mut elements = vec![GrammarElement::Atom(func_name)];
+                        for arg in args {
+                            elements.push(arg);
+                        }
+                        return Ok(GrammarElement::List(elements));
+                    }
+
                     let expr_args: Vec<Expr> = args
                         .iter()
                         .map(|e| self.element_to_expr(e))
@@ -430,34 +512,50 @@ impl ParserState {
         let name = self.parse_element()?;
         let name_str = match name {
             GrammarElement::Atom(s) => s,
+            GrammarElement::Expr(boxed_expr) => {
+                if let crate::grammar::core::Expr::Var(s) = boxed_expr.as_ref() {
+                    s.clone()
+                } else {
+                    return Err(ParseError::syntax_error(
+                        "Function name must be an atom or variable".to_string(),
+                        None,
+                    ));
+                }
+            }
             _ => {
                 return Err(ParseError::syntax_error(
-                    "Function name must be an atom".to_string(),
+                    "Function name must be an atom or variable".to_string(),
                     None,
                 ))
             }
         };
 
-        // 解析参数列表
-        let args = if self.check(&Token::LeftParen) {
-            self.parse_list()?
+        // 解析参数列表（直接解析，不进行关键字检查）
+        let args_list = if self.check(&Token::LeftParen) {
+            self.consume(&Token::LeftParen, "Expected '(' for parameter list")?;
+            let mut params = Vec::new();
+            while !self.check(&Token::RightParen) {
+                let param_elem = self.parse_element()?;
+                params.push(param_elem);
+            }
+            self.consume(&Token::RightParen, "Expected ')' after parameter list")?;
+            params
         } else {
-            GrammarElement::List(Vec::new())
+            Vec::new()
         };
 
-        let args_list = match args {
-            GrammarElement::List(l) => l,
-            _ => Vec::new(),
-        };
-
-        let arg_names: Vec<String> = args_list
+        let _arg_names: Vec<String> = args_list
             .iter()
-            .filter_map(|e| {
-                if let GrammarElement::Atom(s) = e {
-                    Some(s.clone())
-                } else {
-                    None
+            .filter_map(|e| match e {
+                GrammarElement::Atom(s) => Some(s.clone()),
+                GrammarElement::Expr(boxed_expr) => {
+                    if let crate::grammar::core::Expr::Var(s) = boxed_expr.as_ref() {
+                        Some(s.clone())
+                    } else {
+                        None
+                    }
                 }
+                _ => None,
             })
             .collect();
 
@@ -477,10 +575,30 @@ impl ParserState {
     }
 
     fn parse_let(&mut self) -> Result<GrammarElement, ParseError> {
-        // (let name value body)
+        // (let name value body...) 或 (let name value) - body 是可选的，但至少需要 name 和 value
         let name = self.parse_element()?;
         let value = self.parse_element()?;
-        let body = self.parse_element()?;
+
+        // 检查是否有 body（如果下一个token是右括号，则没有body）
+        let body = if self.check(&Token::RightParen) {
+            // 没有body，使用 null 作为默认值
+            GrammarElement::Expr(Box::new(Expr::Literal(Literal::Null)))
+        } else {
+            // 有body，解析所有剩余的表达式作为body
+            let mut body_exprs = Vec::new();
+            while !self.check(&Token::RightParen) {
+                body_exprs.push(self.parse_element()?);
+            }
+
+            if body_exprs.is_empty() {
+                GrammarElement::Expr(Box::new(Expr::Literal(Literal::Null)))
+            } else if body_exprs.len() == 1 {
+                body_exprs.into_iter().next().unwrap()
+            } else {
+                // 多个表达式，包装在一个列表中
+                GrammarElement::List(body_exprs)
+            }
+        };
 
         // 消费结束括号
         self.consume(&Token::RightParen, "Expected ')' after let expression")?;
@@ -519,16 +637,19 @@ impl ParserState {
 
     fn parse_lambda(&mut self) -> Result<GrammarElement, ParseError> {
         // (lambda (params...) body)
-        // 解析参数列表
-        let args = if self.check(&Token::LeftParen) {
-            self.parse_list()?
+        // 解析参数列表 - 使用专门的参数列表解析函数
+        // Parse parameter list - use dedicated parameter list parsing function
+        let args_list = if self.check(&Token::LeftParen) {
+            self.consume(&Token::LeftParen, "Expected '(' for parameter list")?;
+            let mut params = Vec::new();
+            while !self.check(&Token::RightParen) {
+                let param = self.parse_element()?;
+                params.push(param);
+            }
+            self.consume(&Token::RightParen, "Expected ')' after parameter list")?;
+            params
         } else {
-            GrammarElement::List(Vec::new())
-        };
-
-        let args_list = match args {
-            GrammarElement::List(l) => l,
-            _ => Vec::new(),
+            Vec::new()
         };
 
         // 解析函数体
@@ -563,7 +684,22 @@ impl ParserState {
 
             // 解析模式
             let pattern_elem = self.parse_element()?;
-            let pattern = self.element_to_pattern(&pattern_elem)?;
+            // 特殊处理：如果模式被解析为 Expr::Call("_", ...)，直接转换为通配符模式
+            // 这可以避免 _ 被错误地解析为函数调用
+            let pattern = if let GrammarElement::Expr(boxed_expr) = &pattern_elem {
+                if let Expr::Call(name, _) = boxed_expr.as_ref() {
+                    if name == "_" {
+                        use crate::grammar::core::Pattern::Wildcard;
+                        Wildcard
+                    } else {
+                        self.element_to_pattern(&pattern_elem)?
+                    }
+                } else {
+                    self.element_to_pattern(&pattern_elem)?
+                }
+            } else {
+                self.element_to_pattern(&pattern_elem)?
+            };
 
             // 解析表达式
             let expr_elem = self.parse_element()?;
@@ -583,11 +719,15 @@ impl ParserState {
     }
 
     fn parse_for(&mut self) -> Result<GrammarElement, ParseError> {
-        // (for var iterable body)
+        // (for var iterable body...)
         let var_elem = self.parse_element()?;
         let iterable_elem = self.parse_element()?;
-        let body_elem = self.parse_element()?;
 
+        // 解析body部分，可能包含多个表达式
+        let mut body_elements = Vec::new();
+        while !self.check(&Token::RightParen) {
+            body_elements.push(self.parse_element()?);
+        }
         self.consume(&Token::RightParen, "Expected ')' after for expression")?;
 
         // 提取变量名
@@ -612,7 +752,18 @@ impl ParserState {
         };
 
         let iterable_expr = self.element_to_expr(&iterable_elem)?;
-        let body_expr = self.element_to_expr(&body_elem)?;
+
+        // 如果body有多个表达式，将它们包装在begin表达式中
+        let body_expr = if body_elements.len() == 1 {
+            self.element_to_expr(&body_elements[0])?
+        } else {
+            // 创建begin表达式
+            let body_exprs: Vec<Expr> = body_elements
+                .iter()
+                .map(|elem| self.element_to_expr(elem))
+                .collect::<Result<Vec<_>, _>>()?;
+            Expr::Begin(body_exprs)
+        };
 
         Ok(GrammarElement::Expr(Box::new(Expr::For {
             var,
@@ -622,14 +773,29 @@ impl ParserState {
     }
 
     fn parse_while(&mut self) -> Result<GrammarElement, ParseError> {
-        // (while condition body)
+        // (while condition body...)
         let condition_elem = self.parse_element()?;
-        let body_elem = self.parse_element()?;
 
+        // 解析body部分，可能包含多个表达式
+        let mut body_elements = Vec::new();
+        while !self.check(&Token::RightParen) {
+            body_elements.push(self.parse_element()?);
+        }
         self.consume(&Token::RightParen, "Expected ')' after while expression")?;
 
         let condition_expr = self.element_to_expr(&condition_elem)?;
-        let body_expr = self.element_to_expr(&body_elem)?;
+
+        // 如果body有多个表达式，将它们包装在begin表达式中
+        let body_expr = if body_elements.len() == 1 {
+            self.element_to_expr(&body_elements[0])?
+        } else {
+            // 创建begin表达式
+            let body_exprs: Vec<Expr> = body_elements
+                .iter()
+                .map(|elem| self.element_to_expr(elem))
+                .collect::<Result<Vec<_>, _>>()?;
+            Expr::Begin(body_exprs)
+        };
 
         Ok(GrammarElement::Expr(Box::new(Expr::While {
             condition: Box::new(condition_expr),
@@ -638,9 +804,78 @@ impl ParserState {
     }
 
     fn parse_try(&mut self) -> Result<GrammarElement, ParseError> {
-        // (try try_body catch_body)
+        // (try try_body catch [var] catch_body)
         let try_body_elem = self.parse_element()?;
-        let catch_body_elem = self.parse_element()?;
+
+        // 检查是否有 catch 关键字
+        let (catch_var, catch_body_elem) = if self.check(&Token::Symbol("catch".to_string())) {
+            self.advance_token(); // 消费 catch
+
+            // 检查是否有 catch 变量名（可选）
+            // 如果下一个 token 是标识符（Symbol），且后面还有元素，则它是变量名
+            let var_name =
+                if !self.check(&Token::RightParen) && matches!(self.peek(), Token::Symbol(_)) {
+                    // 可能是变量名，先解析看看
+                    let next_elem = self.parse_element()?;
+                    // 检查是否是简单的标识符（变量名）
+                    match &next_elem {
+                        GrammarElement::Atom(name) => {
+                            // 检查后面是否还有元素（不是右括号）
+                            if !self.check(&Token::RightParen) {
+                                // 后面还有元素，name 是变量名
+                                Some(name.clone())
+                            } else {
+                                // 后面是右括号，name 是 catch_body
+                                return Ok(GrammarElement::Expr(Box::new(Expr::Try {
+                                    try_body: Box::new(self.element_to_expr(&try_body_elem)?),
+                                    catch_var: None,
+                                    catch_body: Box::new(self.element_to_expr(&next_elem)?),
+                                })));
+                            }
+                        }
+                        GrammarElement::Expr(boxed_expr) => {
+                            if let Expr::Var(name) = boxed_expr.as_ref() {
+                                // 检查后面是否还有元素
+                                if !self.check(&Token::RightParen) {
+                                    Some(name.clone())
+                                } else {
+                                    // 后面是右括号，这是 catch_body
+                                    return Ok(GrammarElement::Expr(Box::new(Expr::Try {
+                                        try_body: Box::new(self.element_to_expr(&try_body_elem)?),
+                                        catch_var: None,
+                                        catch_body: Box::new(*boxed_expr.clone()),
+                                    })));
+                                }
+                            } else {
+                                // 不是变量名，这是 catch_body
+                                return Ok(GrammarElement::Expr(Box::new(Expr::Try {
+                                    try_body: Box::new(self.element_to_expr(&try_body_elem)?),
+                                    catch_var: None,
+                                    catch_body: Box::new(*boxed_expr.clone()),
+                                })));
+                            }
+                        }
+                        _ => {
+                            // 不是变量名，这是 catch_body
+                            return Ok(GrammarElement::Expr(Box::new(Expr::Try {
+                                try_body: Box::new(self.element_to_expr(&try_body_elem)?),
+                                catch_var: None,
+                                catch_body: Box::new(self.element_to_expr(&next_elem)?),
+                            })));
+                        }
+                    }
+                } else {
+                    None
+                };
+
+            // 解析 catch_body
+            let catch_body = self.parse_element()?;
+            (var_name, catch_body)
+        } else {
+            // 没有 catch 关键字，直接解析 catch_body
+            let catch_body = self.parse_element()?;
+            (None, catch_body)
+        };
 
         self.consume(&Token::RightParen, "Expected ')' after try expression")?;
 
@@ -649,7 +884,7 @@ impl ParserState {
 
         Ok(GrammarElement::Expr(Box::new(Expr::Try {
             try_body: Box::new(try_body_expr),
-            catch_var: None, // 暂时不支持 catch 变量名
+            catch_var,
             catch_body: Box::new(catch_body_expr),
         })))
     }
@@ -666,7 +901,35 @@ impl ParserState {
             }
             GrammarElement::Expr(boxed_expr) => match boxed_expr.as_ref() {
                 Expr::Literal(lit) => Ok(Literal(lit.clone())),
-                Expr::Var(name) => Ok(Var(name.clone())),
+                Expr::Var(name) => {
+                    // 如果变量名是 "_"，这是通配符模式
+                    if name == "_" {
+                        Ok(Wildcard)
+                    } else {
+                        Ok(Var(name.clone()))
+                    }
+                }
+                // 允许Call表达式，因为在某些情况下列表可能被解析为Call
+                // 如果模式是 (list ...) 这样的，需要特殊处理
+                // 如果函数名是 "_"，这可能是错误解析导致的，应该被忽略
+                Expr::Call(name, _) => {
+                    // 如果函数名是 "_"，这可能是错误解析，应该返回通配符模式
+                    if name == "_" {
+                        Ok(Wildcard)
+                    } else if name == "list" || name == "vec" {
+                        // 对于 list/vec 模式，需要在 parse_match 中特殊处理
+                        // 这里暂时返回错误，因为它应该已经在 parse_list 中处理
+                        Err(ParseError::syntax_error(
+                            "List pattern should not be parsed as function call".to_string(),
+                            None,
+                        ))
+                    } else {
+                        Err(ParseError::syntax_error(
+                            "Invalid pattern in match expression".to_string(),
+                            None,
+                        ))
+                    }
+                }
                 _ => Err(ParseError::syntax_error(
                     "Invalid pattern in match expression".to_string(),
                     None,
@@ -832,6 +1095,7 @@ impl ParserState {
             "-" => Some(BinOp::Sub),
             "*" => Some(BinOp::Mul),
             "/" => Some(BinOp::Div),
+            "%" => Some(BinOp::Mod),
             "=" | "==" => Some(BinOp::Eq),
             "!=" | "<>" => Some(BinOp::Ne),
             "<" => Some(BinOp::Lt),
@@ -848,10 +1112,9 @@ impl ParserState {
             GrammarElement::Atom(s) => {
                 // 尝试解析为变量或操作符
                 if s.starts_with("op:") {
-                    Err(ParseError::syntax_error(
-                        "Operator in wrong context".to_string(),
-                        None,
-                    ))
+                    // 操作符可以作为函数参数使用，将其转换为变量
+                    let op_name = s.strip_prefix("op:").unwrap_or(s);
+                    Ok(Expr::Var(op_name.to_string()))
                 } else {
                     Ok(Expr::Var(s.clone()))
                 }
@@ -860,32 +1123,134 @@ impl ParserState {
                 if l.is_empty() {
                     Ok(Expr::Literal(Literal::Null))
                 } else {
-                    // 获取函数名（支持 Atom 和 Expr(Var(...)) 两种形式）
-                    let func_name = match &l[0] {
-                        GrammarElement::Atom(s) => s.clone(),
+                    // 检查是否是 list 或 vec 字面量
+                    let is_list_literal = match &l[0] {
+                        GrammarElement::Atom(s) => s == "list" || s == "vec",
                         GrammarElement::Expr(boxed_expr) => {
                             if let Expr::Var(s) = boxed_expr.as_ref() {
-                                s.clone()
+                                s == "list" || s == "vec"
                             } else {
+                                false
+                            }
+                        }
+                        _ => false,
+                    };
+
+                    if is_list_literal {
+                        // 列表字面量：转换为 Literal::List
+                        let expr_items: Vec<Expr> = l[1..]
+                            .iter()
+                            .map(|e| self.element_to_expr(e))
+                            .collect::<Result<Vec<_>, _>>()?;
+                        Ok(Expr::Literal(Literal::List(expr_items)))
+                    } else {
+                        // 检查是否是 dict 或 map 字面量
+                        let is_dict_literal = match &l[0] {
+                            GrammarElement::Atom(s) => s == "dict" || s == "map",
+                            GrammarElement::Expr(boxed_expr) => {
+                                if let Expr::Var(s) = boxed_expr.as_ref() {
+                                    s == "dict" || s == "map"
+                                } else {
+                                    false
+                                }
+                            }
+                            _ => false,
+                        };
+
+                        if is_dict_literal {
+                            // 字典字面量：转换为 Literal::Dict
+                            if l.len() % 2 != 1 {
                                 return Err(ParseError::syntax_error(
-                                    "Function name must be an atom or variable".to_string(),
+                                    "Dictionary literal requires even number of key-value pairs"
+                                        .to_string(),
                                     None,
                                 ));
                             }
+                            let mut pairs = Vec::new();
+                            for i in (1..l.len()).step_by(2) {
+                                let key_elem = &l[i];
+                                let value_elem = &l[i + 1];
+                                let key = match key_elem {
+                                    GrammarElement::Atom(s) => s.clone(),
+                                    GrammarElement::Expr(boxed_expr) => {
+                                        if let Expr::Var(s) = boxed_expr.as_ref() {
+                                            s.clone()
+                                        } else if let Expr::Literal(Literal::String(s)) =
+                                            boxed_expr.as_ref()
+                                        {
+                                            s.clone()
+                                        } else {
+                                            return Err(ParseError::syntax_error(
+                                                "Dictionary key must be a string or atom"
+                                                    .to_string(),
+                                                None,
+                                            ));
+                                        }
+                                    }
+                                    _ => {
+                                        return Err(ParseError::syntax_error(
+                                            "Dictionary key must be a string or atom".to_string(),
+                                            None,
+                                        ));
+                                    }
+                                };
+                                let value_expr = self.element_to_expr(value_elem)?;
+                                pairs.push((key, value_expr));
+                            }
+                            Ok(Expr::Literal(Literal::Dict(pairs)))
+                        } else {
+                            // 检查是否是 lambda 表达式（特殊形式，不能转换为 Expr::Call）
+                            // Check if this is a lambda expression (special form, cannot convert to Expr::Call)
+                            let is_lambda = match &l[0] {
+                                GrammarElement::Atom(s) => s == "lambda",
+                                GrammarElement::Expr(boxed_expr) => {
+                                    if let Expr::Var(s) = boxed_expr.as_ref() {
+                                        s == "lambda"
+                                    } else {
+                                        false
+                                    }
+                                }
+                                _ => false,
+                            };
+
+                            if is_lambda {
+                                // lambda 表达式不能转换为 Expr，返回错误让调用者直接评估 GrammarElement
+                                // Lambda expressions cannot be converted to Expr, return error to let caller evaluate GrammarElement directly
+                                // 注意：这个错误会被调用者捕获，然后直接评估 GrammarElement
+                                // Note: This error will be caught by caller, which will then evaluate GrammarElement directly
+                                return Err(ParseError::syntax_error(
+                                    "Lambda expressions must be evaluated as GrammarElement, not converted to Expr".to_string(),
+                                    None,
+                                ));
+                            }
+
+                            // 函数调用
+                            let func_name = match &l[0] {
+                                GrammarElement::Atom(s) => s.clone(),
+                                GrammarElement::Expr(boxed_expr) => {
+                                    if let Expr::Var(s) = boxed_expr.as_ref() {
+                                        s.clone()
+                                    } else {
+                                        return Err(ParseError::syntax_error(
+                                            "Function name must be an atom or variable".to_string(),
+                                            None,
+                                        ));
+                                    }
+                                }
+                                _ => {
+                                    return Err(ParseError::syntax_error(
+                                        "Function name must be an atom or variable".to_string(),
+                                        None,
+                                    ));
+                                }
+                            };
+                            let args: Vec<Expr> = l[1..]
+                                .iter()
+                                .map(|e| self.element_to_expr(e))
+                                .collect::<Result<Vec<_>, _>>()?;
+                            Ok(Expr::Call(func_name, args))
                         }
-                        _ => {
-                            return Err(ParseError::syntax_error(
-                                "Function name must be an atom or variable".to_string(),
-                                None,
-                            ));
-                        }
-                    };
-                    // 函数调用
-                    let args: Vec<Expr> = l[1..]
-                        .iter()
-                        .map(|e| self.element_to_expr(e))
-                        .collect::<Result<Vec<_>, _>>()?;
-                    Ok(Expr::Call(func_name, args))
+                    }
                 }
             }
             GrammarElement::NaturalLang(_) => Err(ParseError::syntax_error(

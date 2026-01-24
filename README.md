@@ -67,6 +67,13 @@ modules/                 # 模块目录 / Module directory
 - **意象提取** - 自动识别诗歌中的意象元素及其含义 / Imagery extraction - automatic recognition of imagery elements
 - **情感分析** - 丰富的情感词典，支持多种情感类型 / Emotion analysis - rich emotion dictionary supporting multiple emotion types
 
+### 6. 函数式编程支持 / Functional Programming Support ✅ 已实现
+- **Lambda表达式** - 完整的闭包支持，支持匿名函数定义和调用
+- **高阶函数** - 支持函数作为参数传递和返回值
+- **函数式操作** - 内置map、filter、reduce等函数式编程工具
+- **模块递归** - 支持模块内函数的递归调用
+- **列表和字符串操作** - 增强的列表和字符串处理函数，支持多参数连接
+
 ## 快速开始 / Quick Start
 
 ### 安装 / Installation

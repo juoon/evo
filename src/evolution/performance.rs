@@ -371,7 +371,7 @@ impl PerformanceAnalyzer {
     /// 生成优化建议 / Generate optimization suggestions
     fn generate_suggestions(
         &self,
-        metrics: &PerformanceMetrics,
+        _metrics: &PerformanceMetrics,
         bottlenecks: &[Bottleneck],
         analysis: &CodeAnalysis,
     ) -> Vec<OptimizationSuggestion> {

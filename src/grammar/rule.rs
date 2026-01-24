@@ -154,7 +154,7 @@ impl GrammarRule {
     }
 
     /// 检查模式匹配 / Check pattern matching
-    pub fn matches(&self, input: &[GrammarElement]) -> bool {
+    pub fn matches(&self, _input: &[GrammarElement]) -> bool {
         // TODO: 实现模式匹配逻辑 / Implement pattern matching logic
         false
     }

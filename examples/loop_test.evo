@@ -11,19 +11,22 @@
 ; For循环测试 - 累加 / For loop test - sum
 (let sum 0
   (for x (list 10 20 30)
-    (let sum (+ sum x) sum))
-  sum)  ; 应该返回 60
+    (set! sum (+ sum x)))
+  (print "累加结果 / Sum result:" sum)
+  sum)  ; 打印并返回 60
 
 ; While循环测试 / While loop test
 (let count 0
   (while (< count 5)
-    (let count (+ count 1) count))
-  count)  ; 应该返回 5
+    (set! count (+ count 1)))
+  (print "While循环结果 / While loop result:" count)
+  count)  ; 打印并返回 5
 
 ; While循环测试 - 计算阶乘 / While loop test - calculate factorial
 (let n 5
   (let result 1
     (while (> n 0)
-      (let result (* result n)
-        (let n (- n 1) result)))
-    result))  ; 应该返回 120
+      (set! result (* result n))
+      (set! n (- n 1)))
+    (print "阶乘结果 / Factorial result:" result)
+    result))  ; 打印并返回 120

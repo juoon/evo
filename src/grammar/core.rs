@@ -57,6 +57,18 @@ pub enum Expr {
         /// Catch处理块 / Catch handler block
         catch_body: Box<Expr>,
     },
+    /// Lambda表达式 / Lambda expression
+    Lambda {
+        /// 参数列表 / Parameter list
+        params: Vec<String>,
+        /// Lambda函数体 / Lambda body
+        body: Box<Expr>,
+    },
+    /// 表达式块（按顺序执行多个表达式，返回最后一个表达式的结果）
+    /// Expression block (execute multiple expressions in sequence, return result of last one)
+    Begin(Vec<Expr>),
+    /// 赋值表达式 / Assignment expression (set!)
+    Assign(String, Box<Expr>),
 }
 
 /// 字面量类型 / Literal type
@@ -89,6 +101,8 @@ pub enum BinOp {
     Mul,
     /// 除法 / Divide
     Div,
+    /// 取模 / Modulo
+    Mod,
     /// 等于 / Equal
     Eq,
     /// 不等于 / Not equal

@@ -422,6 +422,13 @@ impl CodeRefactorer {
                                 return expr.clone();
                             }
                         }
+                        BinOp::Mod => {
+                            if *b != 0 {
+                                a % b
+                            } else {
+                                return expr.clone();
+                            }
+                        }
                         _ => return expr.clone(),
                     };
                     return Expr::Literal(Literal::Int(result));
